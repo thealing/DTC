@@ -51,7 +51,7 @@ bool string_find(It& it, It end, char c)
 		it++;
 	}
 
-	return *it == c;
+	return it != end;
 }
 
 template<typename It>

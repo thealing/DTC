@@ -136,11 +136,13 @@ It parser_parse_typedef(It start, It end, Block& block)
 
 	while (it != declaration_end)
 	{
-		string_find(it, declaration_end, '(');
+		bool has_first_par_list = string_find(it, declaration_end, '(');
 
 		auto par_it = it;
 
 		string_skip_par_list(par_it, declaration_end);
+
+		auto par_end = par_it;
 
 		bool has_second_par_list = string_find(par_it, declaration_end, '(');
 
@@ -148,15 +150,25 @@ It parser_parse_typedef(It start, It end, Block& block)
 		{
 			it++;
 
-			auto rit = std::reverse_iterator(par_it);
-
-			string_find(rit, rend, ')');
-
-			rit++;
-
-			declaration_end = rit.base();
+			declaration_end = prev(par_end);
 
 			continue;
+		}
+
+		if (has_first_par_list)
+		{
+			auto rit = std::reverse_iterator(par_it);
+
+			string_skip_space(rit, rend);
+
+			if (*rit == ']')
+			{
+				it++;
+
+				declaration_end = prev(par_end);
+
+				continue;
+			}
 		}
 
 		auto rit = std::reverse_iterator(it);
