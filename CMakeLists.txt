@@ -34,6 +34,10 @@ add_compile_definitions(UNICODE _UNICODE)
 
 add_compile_definitions(NOMINMAX)
 
-add_executable("${PROJECT_NAME}" "Source.cpp" "source/main/client.hpp" "source/core/parser.hpp" "source/core/char.hpp" "source/engine/types.hpp" "source/engine/value_type.hpp")
+add_executable("${PROJECT_NAME}" "Source.cpp")
 
 set_target_properties("${PROJECT_NAME}" PROPERTIES OUTPUT_NAME "${PROJECT_NAME}" PDB_NAME "${PROJECT_NAME}.exe" PREFIX "")
+
+# DEBUG
+
+add_executable(example_compile "source/main/_example.c")

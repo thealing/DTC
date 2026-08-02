@@ -2,28 +2,17 @@
 
 // DEBUG //
 
- std::string C_PARSER_TEST_CASES = R"c(
+std::string load_file_to_string(const std::string& path) {
+	std::ifstream file(path);
+	std::stringstream buffer;
+	buffer << file.rdbuf();
+	return buffer.str();
+}
 
+// Usage in your parser test:
+std::string C_PARSER_TEST_CASES = load_file_to_string(R"(C:\Users\user\source\repos\DTC\source\main\_example.c)");
 
-struct _A$Type$$Type2$Type3
-{
-	int a;
-	char b;
-};
-
-typedef struct _B$Type
-{
-	int a;
-	struct {
-		Type e;
-	} f;
-	union {
-		Type g;
-	} h;
-} B;
-
-)c";
-int testparse()
+ int testparse()
 {
 	Compiler c;
 

@@ -10,7 +10,9 @@
 
 #include <sstream>
 
-#include "core/char.hpp"
+#include <fstream>
+
+#include "core/string.hpp"
 
 #include "core/parser.hpp"
 
