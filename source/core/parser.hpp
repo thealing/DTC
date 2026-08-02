@@ -7,135 +7,260 @@ struct Block
 	std::string_view content;
 };
 
-class Parser
+template<typename It>
+bool parser_continues_with_struct(It it, It end)
 {
-private:
+	bool result = false;
 
-	using It = std::string_view::iterator;
+	result |= string_continues_with(it, end, "struct");
 
-	std::string_view _source;
+	result |= string_continues_with(it, end, "union");
 
-	size_t _end_index;
+	return result;
+}
 
-	Block _block;
+template<typename It>
+bool parser_continues_with_struct_or_enum(It it, It end)
+{
+	bool result = false;
 
-public:
+	result |= parser_continues_with_struct(it, end);
 
-	Parser(std::string_view source)
+	result |= string_continues_with(it, end, "enum");
+
+	return result;
+}
+
+template<typename It>
+It parser_parse_struct(It start, It end, Block& block)
+{
+	It it = start;
+
+	bool is_struct = parser_continues_with_struct(it, end);
+
+	if (is_struct == false)
 	{
-		_source = source;
-
-		_end_index = 0;
+		return start;
 	}
 
-	void parse()
+	auto block_start = it;
+
+	string_skip_word(it, end);
+
+	string_skip_space(it, end);
+
+	auto name_start = it;
+
+	string_skip_word(it, end);
+
+	auto name_end = it;
+
+	bool is_named_struct = name_start != name_end;
+
+	if (is_named_struct == false)
 	{
-		if (_source.starts_with("struct"))
-		{
-			parse_struct();
-		}
+		return start;
 	}
 
-	size_t get_end_index() const
+	string_skip_space(it, end);
+
+	bool is_struct_definition = string_continues_with(it, end, "{");
+
+	if (is_struct_definition == false)
 	{
-		return _end_index;
+		return start;
 	}
 
-	Block get_block() const
+	string_skip_block(it, end);
+
+	string_skip_space(it, end);
+
+	bool is_type_expression = string_continues_with(it, end, ";");
+
+	if (is_type_expression == false)
 	{
-		return _block;
+		return start;
 	}
 
-private:
+	it++;
 
-	void parse_struct()
+	auto block_end = it;
+
+	block.name = { name_start, name_end };
+
+	block.content = { block_start, block_end };
+
+	return it;
+}
+
+template<typename It>
+It parser_parse_typedef(It start, It end, Block& block)
+{
+	auto it = start;
+
+	auto rend = std::reverse_iterator(start);
+
+	bool is_typedef = string_continues_with(it, end, "typedef");
+
+	if (is_typedef == false)
 	{
-		It it = _source.begin();
-
-		It block_start = it;
-
-		skip_symbol(it);
-
-		skip_space(it);
-
-		It name_start = it;
-
-		skip_symbol(it);
-
-		It name_end = it;
-
-		skip_block(it);
-
-		skip_statement(it);
-
-		It block_end = it;
-
-		if (it != _source.end())
-		{
-			_end_index = it - _source.begin();
-
-			_block.name = { name_start, name_end };
-
-			_block.content = { block_start, block_end };
-		}
+		return start;
 	}
 
-	void skip_symbol(It& it) const
+	auto block_start = it;
+
+	string_skip_word(it, end);
+
+	string_skip_space(it, end);
+
+	bool is_struct_typedef = parser_continues_with_struct_or_enum(it, end);
+
+	if (is_struct_typedef)
 	{
-		while (it != _source.end() && char_is_symbol(*it))
+		string_skip_word(it, end);
+
+		string_skip_space(it, end);
+
+		string_skip_word(it, end);
+
+		string_skip_space(it, end);
+
+		string_skip_block(it, end);
+	}
+
+	string_skip_space(it, end);
+
+	auto block_end = it;
+
+	string_skip_expression(block_end, end);
+
+	bool has_first_par_list = string_find(it, block_end, '(');
+
+	auto par_it = it;
+
+	string_skip_par_list(par_it, block_end);
+
+	bool has_second_par_list = string_find(par_it, block_end, '(');
+
+	if (has_second_par_list)
+	{
+		while (it < block_end && (string_is_space(*it) || *it == '(' || *it == '*'))
 		{
 			it++;
 		}
+
+		auto name_start = it;
+
+		string_skip_word(it, block_end);
+
+		auto name_end = it;
+
+		bool found_name = name_start != name_end;
+
+		if (found_name == false)
+		{
+			return start;
+		}
+
+		block.name = { name_start, name_end };
+
+		block.content = { block_start, block_end };
+
+		return it;
 	}
 
-	void skip_space(It& it) const
+	if (has_first_par_list)
 	{
-		while (it != _source.end() && char_is_space(*it))
+		auto rit = std::reverse_iterator(it);
+
+		rit++;
+
+		string_skip_space(rit, rend);
+
+		rit--;
+
+		auto name_end = rit.base();
+
+		string_skip_word(rit, rend);
+
+		auto name_start = rit.base();
+
+		bool found_name = name_start != name_end;
+
+		if (found_name == false)
 		{
-			it++;
+			return start;
 		}
+
+		block.name = { name_start, name_end };
+
+		block.content = { block_start, block_end };
+
+		return it;
 	}
 
-	void skip_block(It& it) const
+	auto rit = std::reverse_iterator(it);
+
+	rit++;
+
+	while (rit != rend)
 	{
-		while (it != _source.end() && *it != '{')
+		string_skip_space(rit, rend);
+
+		if (*rit == ']')
 		{
-			it++;
+			string_skip_array(rit, rend);
+
+			continue;
 		}
 
-		size_t level = 0;
+		auto name_end = rit.base();
 
-		while (it != _source.end())
+		string_skip_word(rit, rend);
+
+		auto name_start = rit.base();
+
+		bool found_name = name_start != name_end;
+
+		if (found_name == false)
 		{
-			if (*it == '{')
-			{
-				level++;
-			}
-
-			if (*it == '}')
-			{
-				level--;
-			}
-
-			it++;
-
-			if (level == 0)
-			{
-				break;
-			}
+			return start;
 		}
+
+		block.name = { name_start, name_end };
+
+		block.content = { block_start, block_end };
+
+		return it;
 	}
 
-	void skip_statement(It& it) const
+	return start;
+}
+
+template<typename It>
+It parser_parse(It start, It end, Block& block)
+{
 	{
-		while (it != _source.end() && *it != ';')
-		{
-			it++;
-		}
+		// DEBUG
 
-		if (it != _source.end())
+		if (std::string_view(start, end).starts_with("//"))
 		{
-			it++;
+			auto end2 = std::string_view(start, end).find('\n');
+			std::cout << std::string_view(start, end).substr(0, end2) << std::endl << std::endl;
 		}
 	}
-};
+
+	auto result = start;
+
+	if (result == start)
+	{
+		result = parser_parse_struct(start, end, block);
+	}
+
+	if (result == start)
+	{
+		result = parser_parse_typedef(start, end, block);
+	}
+
+	return result;
+}

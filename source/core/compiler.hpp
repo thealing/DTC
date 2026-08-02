@@ -20,21 +20,19 @@ public:
 
 		while (index < string.size())
 		{
-			std::string_view block = string.substr(index);
+			Block block;
 
-			Parser parser(block);
+			auto it = parser_parse(string.begin() + index, string.end(), block);
 
-			parser.parse();
+			auto end_index = it - string.begin();
 
-			size_t end_index = parser.get_end_index();
-
-			if (end_index > 0)
+			if (end_index != index)
 			{
-				std::cout << "Parsed block: " << parser.get_block().name << std::endl;
+				std::cout << "Parsed block: " << block.name << std::endl;
 
-				std::cout << "CONTENT:\n " << parser.get_block().content << "\nEND" << std::endl << std::endl;
+				std::cout << "CONTENT:\n " << block.content << "\nEND" << std::endl << std::endl;
 
-				index += end_index;
+				index = end_index;
 			}
 			else
 			{
