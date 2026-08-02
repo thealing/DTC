@@ -75,7 +75,7 @@ void string_skip_space(It& it, It end)
 template<typename It>
 void string_skip_block(It& it, It end, char c1, char c2)
 {
-	if (it == end && *it != c1 && *it != c2)
+	if (it == end || *it != c1 && *it != c2)
 	{
 		return;
 	}
@@ -125,11 +125,6 @@ template<typename It>
 void string_skip_expression(It& it, It end)
 {
 	while (it != end && *it != ';')
-	{
-		it++;
-	}
-
-	if (it != end)
 	{
 		it++;
 	}

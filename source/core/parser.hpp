@@ -82,15 +82,13 @@ It parser_parse_struct(It start, It end, Block& block)
 		return start;
 	}
 
-	it++;
-
 	auto block_end = it;
 
 	block.name = { name_start, name_end };
 
 	block.content = { block_start, block_end };
 
-	return it;
+	return block_end;
 }
 
 template<typename It>
@@ -134,104 +132,65 @@ It parser_parse_typedef(It start, It end, Block& block)
 
 	string_skip_expression(block_end, end);
 
-	bool has_first_par_list = string_find(it, block_end, '(');
+	auto declaration_end = block_end;
 
-	auto par_it = it;
-
-	string_skip_par_list(par_it, block_end);
-
-	bool has_second_par_list = string_find(par_it, block_end, '(');
-
-	if (has_second_par_list)
+	while (it != declaration_end)
 	{
-		while (it < block_end && (string_is_space(*it) || *it == '(' || *it == '*'))
+		string_find(it, declaration_end, '(');
+
+		auto par_it = it;
+
+		string_skip_par_list(par_it, declaration_end);
+
+		bool has_second_par_list = string_find(par_it, declaration_end, '(');
+
+		if (has_second_par_list)
 		{
 			it++;
-		}
 
-		auto name_start = it;
+			auto rit = std::reverse_iterator(par_it);
 
-		string_skip_word(it, block_end);
+			string_find(rit, rend, ')');
 
-		auto name_end = it;
+			rit++;
 
-		bool found_name = name_start != name_end;
-
-		if (found_name == false)
-		{
-			return start;
-		}
-
-		block.name = { name_start, name_end };
-
-		block.content = { block_start, block_end };
-
-		return it;
-	}
-
-	if (has_first_par_list)
-	{
-		auto rit = std::reverse_iterator(it);
-
-		rit++;
-
-		string_skip_space(rit, rend);
-
-		rit--;
-
-		auto name_end = rit.base();
-
-		string_skip_word(rit, rend);
-
-		auto name_start = rit.base();
-
-		bool found_name = name_start != name_end;
-
-		if (found_name == false)
-		{
-			return start;
-		}
-
-		block.name = { name_start, name_end };
-
-		block.content = { block_start, block_end };
-
-		return it;
-	}
-
-	auto rit = std::reverse_iterator(it);
-
-	rit++;
-
-	while (rit != rend)
-	{
-		string_skip_space(rit, rend);
-
-		if (*rit == ']')
-		{
-			string_skip_array(rit, rend);
+			declaration_end = rit.base();
 
 			continue;
 		}
 
-		auto name_end = rit.base();
+		auto rit = std::reverse_iterator(it);
 
-		string_skip_word(rit, rend);
-
-		auto name_start = rit.base();
-
-		bool found_name = name_start != name_end;
-
-		if (found_name == false)
+		while (rit != rend)
 		{
-			return start;
+			string_skip_space(rit, rend);
+
+			if (*rit == ']')
+			{
+				string_skip_array(rit, rend);
+
+				continue;
+			}
+
+			auto name_end = rit.base();
+
+			string_skip_word(rit, rend);
+
+			auto name_start = rit.base();
+
+			bool found_name = name_start != name_end;
+
+			if (found_name == false)
+			{
+				return start;
+			}
+
+			block.name = { name_start, name_end };
+
+			block.content = { block_start, block_end };
+
+			return block_end;
 		}
-
-		block.name = { name_start, name_end };
-
-		block.content = { block_start, block_end };
-
-		return it;
 	}
 
 	return start;
