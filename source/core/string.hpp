@@ -55,6 +55,25 @@ bool string_find(It& it, It end, char c)
 }
 
 template<typename It>
+bool string_find(It& it, It end, const char* s)
+{
+	while (it != end)
+	{
+		for (const char* p = s; *p; p++)
+		{
+			if (*it == *p)
+			{
+				return true;
+			}
+		}
+
+		it++;
+	}
+
+	return it != end;
+}
+
+template<typename It>
 void string_skip_word(It& it, It end)
 {
 	while (it != end && string_is_word(*it))
@@ -122,7 +141,7 @@ void string_skip_array(It& it, It end)
 }
 
 template<typename It>
-void string_skip_expression(It& it, It end)
+void string_skip_statement(It& it, It end)
 {
 	while (it != end && *it != ';')
 	{

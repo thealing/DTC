@@ -92,6 +92,85 @@ It parser_parse_struct(It start, It end, Block& block)
 }
 
 template<typename It>
+It parser_parse_declarator(It it, It end, It block_start, It block_end, Block& block)
+{
+	auto rend = std::reverse_iterator(block_start);
+
+	while (it != end)
+	{
+		bool has_first_par_list = string_find(it, end, '(');
+
+		auto par_it = it;
+
+		string_skip_par_list(par_it, end);
+
+		auto par_end = par_it;
+
+		bool has_second_par_list = string_find(par_it, end, '(');
+
+		if (has_second_par_list)
+		{
+			it++;
+
+			end = prev(par_end);
+
+			continue;
+		}
+
+		if (has_first_par_list)
+		{
+			auto rit = std::reverse_iterator(par_it);
+
+			string_skip_space(rit, rend);
+
+			if (*rit == ']')
+			{
+				it++;
+
+				end = prev(par_end);
+
+				continue;
+			}
+		}
+
+		auto rit = std::reverse_iterator(it);
+
+		while (rit != rend)
+		{
+			string_skip_space(rit, rend);
+
+			if (*rit == ']')
+			{
+				string_skip_array(rit, rend);
+
+				continue;
+			}
+
+			auto name_end = rit.base();
+
+			string_skip_word(rit, rend);
+
+			auto name_start = rit.base();
+
+			bool found_name = name_start != name_end;
+
+			if (found_name == false)
+			{
+				return block_start;
+			}
+
+			block.name = { name_start, name_end };
+
+			block.content = { block_start, block_end };
+
+			return block_end;
+		}
+	}
+
+	return block_start;
+}
+
+template<typename It>
 It parser_parse_typedef(It start, It end, Block& block)
 {
 	auto it = start;
@@ -130,82 +209,53 @@ It parser_parse_typedef(It start, It end, Block& block)
 
 	auto block_end = it;
 
-	string_skip_expression(block_end, end);
+	string_skip_statement(block_end, end);
 
 	auto declaration_end = block_end;
 
-	while (it != declaration_end)
+	return parser_parse_declarator(it, declaration_end, block_start, block_end, block);
+}
+
+template<typename It>
+It parser_parse_function(It start, It end, Block& block)
+{
+	auto it = start;
+
+	auto rend = std::reverse_iterator(start);
+
+	if (it == end)
 	{
-		bool has_first_par_list = string_find(it, declaration_end, '(');
-
-		auto par_it = it;
-
-		string_skip_par_list(par_it, declaration_end);
-
-		auto par_end = par_it;
-
-		bool has_second_par_list = string_find(par_it, declaration_end, '(');
-
-		if (has_second_par_list)
-		{
-			it++;
-
-			declaration_end = prev(par_end);
-
-			continue;
-		}
-
-		if (has_first_par_list)
-		{
-			auto rit = std::reverse_iterator(par_it);
-
-			string_skip_space(rit, rend);
-
-			if (*rit == ']')
-			{
-				it++;
-
-				declaration_end = prev(par_end);
-
-				continue;
-			}
-		}
-
-		auto rit = std::reverse_iterator(it);
-
-		while (rit != rend)
-		{
-			string_skip_space(rit, rend);
-
-			if (*rit == ']')
-			{
-				string_skip_array(rit, rend);
-
-				continue;
-			}
-
-			auto name_end = rit.base();
-
-			string_skip_word(rit, rend);
-
-			auto name_start = rit.base();
-
-			bool found_name = name_start != name_end;
-
-			if (found_name == false)
-			{
-				return start;
-			}
-
-			block.name = { name_start, name_end };
-
-			block.content = { block_start, block_end };
-
-			return block_end;
-		}
+		return start;
 	}
 
-	return start;
+	bool is_word = string_is_word(*it);
+
+	if (is_word == false)
+	{
+		return start;
+	}
+
+	auto block_start = it;
+
+	auto declaration_end = it;
+
+	auto found_one = string_find(declaration_end, end, "{;=");
+
+	if (found_one == false)
+	{
+		return start;
+	}
+
+	if (*declaration_end != '{')
+	{
+		return start;
+	}
+
+	auto block_end = declaration_end;
+
+	string_skip_block(block_end, end);
+
+	return parser_parse_declarator(it, declaration_end, block_start, block_end, block);
 }
 
 template<typename It>
@@ -231,6 +281,11 @@ It parser_parse(It start, It end, Block& block)
 	if (result == start)
 	{
 		result = parser_parse_typedef(start, end, block);
+	}
+
+	if (result == start)
+	{
+		result = parser_parse_function(start, end, block);
 	}
 
 	return result;
