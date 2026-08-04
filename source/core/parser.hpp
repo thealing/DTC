@@ -82,6 +82,8 @@ It parser_parse_struct(It start, It end, Block& block)
 		return start;
 	}
 
+	it++;
+
 	auto block_end = it;
 
 	block.name = { name_start, name_end };
@@ -211,7 +213,14 @@ It parser_parse_typedef(It start, It end, Block& block)
 
 	string_skip_statement(block_end, end);
 
+	if (block_end == end)
+	{
+		return start;
+	}
+
 	auto declaration_end = block_end;
+
+	block_end++;
 
 	return parser_parse_declarator(it, declaration_end, block_start, block_end, block);
 }
@@ -251,9 +260,23 @@ It parser_parse_function(It start, It end, Block& block)
 		return start;
 	}
 
+	auto opening_count = std::count(it, declaration_end, '(');
+
+	auto closing_count = std::count(it, declaration_end, ')');
+
+	if (opening_count == 0 || opening_count != closing_count)
+	{
+		return start;
+	}
+
 	auto block_end = declaration_end;
 
 	string_skip_block(block_end, end);
+
+	if (block_end == end)
+	{
+		return start;
+	}
 
 	return parser_parse_declarator(it, declaration_end, block_start, block_end, block);
 }
@@ -261,16 +284,6 @@ It parser_parse_function(It start, It end, Block& block)
 template<typename It>
 It parser_parse(It start, It end, Block& block)
 {
-	{
-		// DEBUG
-
-		if (std::string_view(start, end).starts_with("//"))
-		{
-			auto end2 = std::string_view(start, end).find('\n');
-			std::cout << std::string_view(start, end).substr(0, end2) << std::endl << std::endl;
-		}
-	}
-
 	auto result = start;
 
 	if (result == start)
