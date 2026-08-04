@@ -10,11 +10,6 @@ bool string_is_word(char c)
 	return c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '_' || c == '$';
 }
 
-bool string_is_template(std::string_view s)
-{
-	return s.find('$') != std::string_view::npos;
-}
-
 template<typename It>
 bool string_continues_with(It it, It end, It pattern_it, It pattern_end)
 {
@@ -71,6 +66,15 @@ bool string_find(It& it, It end, const char* s)
 	}
 
 	return it != end;
+}
+
+template<typename It>
+void string_skip(It& it, It end, char c)
+{
+	while (it != end && *it == c)
+	{
+		it++;
+	}
 }
 
 template<typename It>

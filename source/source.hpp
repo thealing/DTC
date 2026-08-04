@@ -12,6 +12,8 @@
 
 #include <fstream>
 
+#include <unordered_map>
+
 #include "core/string.hpp"
 
 #include "core/parser.hpp"
