@@ -50,8 +50,6 @@ public:
 			{
 				std::cout << "Parsed block: " << block.name << std::endl;
 
-				std::cout << "CONTENT:\n " << block.content << "\nEND" << std::endl << std::endl;
-
 				auto template_start = block.name.find('$');
 
 				if (template_start != std::string_view::npos)
@@ -80,7 +78,7 @@ public:
 
 				std::vector<std::string_view> parts;
 
-				int template_level = 0;
+				ptrdiff_t template_level = 0;
 
 				auto part_start = it;
 
@@ -90,11 +88,6 @@ public:
 
 					if (template_level == 0)
 					{
-						if (part_start != it && *part_start == '$')
-						{
-							part_start++;
-						}
-
 						std::string_view part(part_start, it);
 
 						parts.push_back(part);
