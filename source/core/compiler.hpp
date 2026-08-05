@@ -50,15 +50,17 @@ public:
 			{
 				std::cout << "Parsed block: " << block.name << std::endl;
 
+				std::cout << "CONTENT:\n " << block.content << "\nEND" << std::endl << std::endl;
+
 				auto template_start = block.name.find('$');
 
 				if (template_start != std::string_view::npos)
 				{
 					auto template_arg_count = std::count(block.name.begin(), block.name.end(), '$');
 
-					auto prefix = block.name.substr(0, template_start);
+					auto base = block.name.substr(0, template_start);
 
-					auto key = std::string(prefix) + '$' + std::to_string(template_arg_count);
+					auto key = std::string(base) + '$' + std::to_string(template_arg_count);
 
 					Template temp(block);
 
@@ -72,48 +74,76 @@ public:
 
 			if (string_is_word(*it))
 			{
+				auto word_start = it;
+
 				auto word_end = it;
 
 				string_skip_word(word_end, end);
 
-				std::vector<std::string_view> parts;
+				auto template_start = std::find(it, word_end, '$');
 
-				ptrdiff_t template_level = 0;
-
-				auto part_start = it;
-
-				while (it != word_end)
+				if (template_start != word_end)
 				{
-					string_find(it, word_end, '$');
+					std::vector<std::string_view> parts;
 
-					if (template_level == 0)
+					ptrdiff_t template_level = 0;
+
+					auto part_start = it;
+
+					while (it != word_end)
 					{
-						std::string_view part(part_start, it);
+						string_find(it, word_end, '$');
 
-						parts.push_back(part);
+						if (template_level == 0)
+						{
+							std::string_view part(part_start, it);
 
-						part_start = it;
+							parts.push_back(part);
 
-						template_level++;
+							part_start = it;
+
+							template_level++;
+						}
+
+						auto dollar_start = it;
+
+						string_skip(it, word_end, '$');
+
+						auto dollar_count = it - dollar_start;
+
+						template_level += dollar_count - 2;
 					}
 
-					auto dollar_start = it;
+					if (template_level != -1)
+					{
+						std::cout << "Error: unterminated template" << std::endl;
 
-					string_skip(it, word_end, '$');
+						exit(1);
+					}
 
-					auto dollar_count = it - dollar_start;
+					for (auto a : parts)std::cout << "PART: " << a << std::endl;
 
-					template_level += dollar_count - 2;
+					std::string_view base(word_start, template_start);
+
+					int template_arg_count = parts.size() - 1;
+
+					auto key = std::string(base) + '$' + std::to_string(template_arg_count);
+
+					auto template_pair = _templates.find(key);
+
+					if (template_pair != _templates.end())
+					{
+						std::string_view instance(word_start, word_end);
+
+
+
+						std::cout << " INSTANTIATING: " << instance<< std::endl;
+					}
 				}
-
-				if (template_level != -1)
+				else
 				{
-					std::cout << "Error: unterminated template" << std::endl;
-
-					exit(1);
+					it = word_end;
 				}
-
-				for (auto a : parts)std::cout << "PART: " << a << std::endl;
 
 				continue;
 			}

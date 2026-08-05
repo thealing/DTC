@@ -54,7 +54,7 @@ bool string_find(It& it, It end, const char* s)
 {
 	while (it != end)
 	{
-		for (const char* p = s; *p; p++)
+		for (auto p = s; *p; p++)
 		{
 			if (*it == *p)
 			{
