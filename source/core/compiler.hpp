@@ -24,6 +24,8 @@ private:
 
 	std::unordered_map<std::string, Template> _templates;
 
+	std::unordered_set<std::string> _template_instances;
+
 	std::string _result;
 
 public:
@@ -65,13 +67,38 @@ public:
 					Template temp(block);
 
 					_templates[key] = temp;
-
-					it = block_end;
-
-					continue;
 				}
+				else
+				{
+					emit_block(block.content);
+				}
+
+				it = block_end;
+
+				continue;
 			}
 
+			_result += *it;
+			
+			it++;
+		}
+	}
+
+	std::string_view get_result() const
+	{
+		return _result;
+	}
+
+private:
+
+	void emit_block(std::string_view block)
+	{
+		auto it = block.begin();
+
+		auto end = block.end();
+
+		while (it != end)
+		{
 			if (string_is_word(*it))
 			{
 				auto word_start = it;
@@ -86,46 +113,18 @@ public:
 				{
 					std::vector<std::string_view> parts;
 
-					ptrdiff_t template_level = 0;
+					bool valid_template = parser_parse_template(word_start, word_end, parts);
 
-					auto part_start = it;
-
-					while (it != word_end)
+					if (valid_template == false)
 					{
-						string_find(it, word_end, '$');
-
-						if (template_level == 0)
-						{
-							std::string_view part(part_start, it);
-
-							parts.push_back(part);
-
-							part_start = it;
-
-							template_level++;
-						}
-
-						auto dollar_start = it;
-
-						string_skip(it, word_end, '$');
-
-						auto dollar_count = it - dollar_start;
-
-						template_level += dollar_count - 2;
-					}
-
-					if (template_level != -1)
-					{
-						std::cout << "Error: unterminated template" << std::endl;
+						std::cout << "invalid template" << std::endl;
 
 						exit(1);
 					}
 
-					for (auto a : parts)std::cout << "PART: " << a << std::endl;
-
 					std::string_view base(word_start, template_start);
 
-					int template_arg_count = parts.size() - 1;
+					auto template_arg_count = parts.size() - 1;
 
 					auto key = std::string(base) + '$' + std::to_string(template_arg_count);
 
@@ -133,29 +132,46 @@ public:
 
 					if (template_pair != _templates.end())
 					{
-						std::string_view instance(word_start, word_end);
+						std::string instance(word_start, word_end);
 
+						auto result = _template_instances.insert(instance);
 
+						if (result.second)
+						{
+							auto content = template_pair->second.content;
 
-						std::cout << " INSTANTIATING: " << instance<< std::endl;
+							const auto& temp_name = template_pair->second.name;
+
+							auto par_it = std::find(temp_name.begin(), temp_name.end(), '$');
+
+							for (size_t part_index = 1; part_index < parts.size(); part_index++)
+							{
+								auto par_end = std::find(std::next(par_it), temp_name.end(), '$');
+
+								std::string_view par(par_it, par_end);
+
+								std::string_view arg = parts[part_index];
+
+								content = string_replace(content, par, arg);
+
+								par_it = par_end;
+							}
+
+							emit_block(content);
+
+							_result += "\n\n";
+						}
 					}
 				}
-				else
-				{
-					it = word_end;
-				}
+				
+				it = word_end;
 
 				continue;
 			}
-			
+
 			it++;
 		}
-	}
 
-private:
-
-	void emit_block()
-	{
-
+		_result += block;
 	}
 };

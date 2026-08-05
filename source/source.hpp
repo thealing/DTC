@@ -14,6 +14,8 @@
 
 #include <unordered_map>
 
+#include <unordered_set>
+
 #include "core/string.hpp"
 
 #include "core/parser.hpp"

@@ -282,6 +282,48 @@ It parser_parse_function(It start, It end, Block& block)
 }
 
 template<typename It>
+It parser_parse_block(It start, It end, Block& block)
+{
+	It it = start;
+
+	if (it == end)
+	{
+		return start;
+	}
+
+	bool is_word = string_is_word(*it);
+
+	if (is_word == false)
+	{
+		return start;
+	}
+
+	while (true)
+	{
+		auto found_one = string_find(it, end, "{;");
+
+		if (found_one == false)
+		{
+			return start;
+		}
+
+		if (*it == ';')
+		{
+			it++;
+
+			block.content = { start, it };
+
+			return it;
+		}
+
+		if (*it == '{')
+		{
+			string_skip_block(it, end);
+		}
+	}
+}
+
+template<typename It>
 It parser_parse(It start, It end, Block& block)
 {
 	auto result = start;
@@ -301,5 +343,49 @@ It parser_parse(It start, It end, Block& block)
 		result = parser_parse_function(start, end, block);
 	}
 
+	if (result == start)
+	{
+		result = parser_parse_block(start, end, block);
+	}
+
 	return result;
+}
+
+template<typename It>
+bool parser_parse_template(It start, It end, std::vector<std::string_view>& parts)
+{
+	ptrdiff_t template_level = 0;
+
+	auto it = start;
+
+	while (it != end)
+	{
+		string_find(it, end, '$');
+
+		if (template_level == 0)
+		{
+			std::string_view part(start, it);
+
+			parts.push_back(part);
+
+			start = it;
+
+			template_level++;
+		}
+
+		auto dollar_start = it;
+
+		string_skip(it, end, '$');
+
+		auto dollar_count = it - dollar_start;
+
+		template_level += dollar_count - 2;
+	}
+
+	if (template_level != -1)
+	{
+		return false;
+	}
+
+	return true;
 }
