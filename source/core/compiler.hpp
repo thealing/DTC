@@ -177,11 +177,11 @@ private:
 			it = par_end;
 		}
 
-		bool add_padding = ends_with_double_newline();
-
 		emit_block(content);
 
 		_result += '\n';
+
+		bool add_padding = ends_with_double_newline();
 
 		if (add_padding)
 		{

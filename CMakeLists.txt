@@ -48,7 +48,7 @@ set(TARGET_DEMO_BUILD_COMMAND ${PROJECT_NAME} ${TARGET_DEMO_PROJECT})
 
 set_property(DIRECTORY PROPERTY ADDITIONAL_CLEAN_FILES "${CMAKE_CURRENT_SOURCE_DIR}/demo/generated")
 
-add_executable("${PROJECT_NAME}" "Source.cpp" )
+add_executable("${PROJECT_NAME}" "Source.cpp")
 
 set_target_properties("${PROJECT_NAME}" PROPERTIES OUTPUT_NAME "${PROJECT_NAME}" PDB_NAME "${PROJECT_NAME}.exe" PREFIX "")
 
