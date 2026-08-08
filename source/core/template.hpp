@@ -96,17 +96,24 @@ bool template_split_instance(It start, It end, Inserter inserter)
 
 	auto it = start;
 
+	auto arg_start = it;
+
 	while (it != end)
 	{
 		string_find(it, end, '$');
 
 		if (level == 0)
 		{
-			std::string_view arg(start, it);
+			if (it == arg_start)
+			{
+				return false;
+			}
 
-			start = it;
+			std::string_view arg(arg_start, it);
 
 			*inserter = arg;
+
+			arg_start = it;
 
 			level++;
 		}
@@ -174,40 +181,71 @@ void template_get_instances(std::string_view string, Inserter inserter)
 }
 
 template<typename It>
-void template_get_key(It base_start, It base_end, size_t arg_count, std::ostream& key)
+bool template_split_special(It start, It end, std::string& base, std::string& key)
 {
-	std::string_view base(base_start, base_end);
+	ptrdiff_t level = 0;
 
-	key << base;
+	auto it = start;
 
-	key << '$';
+	auto part_start = it;
 
-	key << arg_count;
-}
+	while (it != end)
+	{
+		string_find(it, end, '$');
 
-void template_get_key(std::string_view string, size_t arg_count, std::ostream& key)
-{
-	return template_get_key(string.begin(), string.end(), arg_count, key);
-}
+		if (level == 0)
+		{
+			if (it == part_start)
+			{
+				return false;
+			}
 
-template<typename It>
-bool template_get_key(It start, It end, std::ostream& key)
-{
-	auto template_start = template_get_start(start, end);
+			std::string_view part(part_start, it);
 
-	if (template_start == end)
+			if (part_start == start)
+			{
+				base += part;
+			}
+			else
+			{
+				if (part[1] == '$')
+				{
+					key += part.substr(1);
+				}
+				else
+				{
+					key += '*';
+				}
+			}
+
+			part_start = it;
+
+			level++;
+		}
+
+		auto dollar_start = it;
+
+		string_skip(it, end, '$');
+
+		auto dollar_count = it - dollar_start;
+
+		if (dollar_start == part_start && dollar_count > 1)
+		{
+			dollar_count--;
+		}
+
+		level += dollar_count - 2;
+	}
+
+	if (level != -1)
 	{
 		return false;
 	}
 
-	auto arg_count = std::count(template_start, end, '$');
-
-	template_get_key(start, template_start, arg_count, key);
-
 	return true;
 }
 
-bool template_get_key(std::string_view string, std::ostream& key)
+bool template_split_special(std::string_view string, std::string& base, std::string& key)
 {
-	return template_get_key(string.begin(), string.end(), key);
+	return template_split_special(string.begin(), string.end(), base, key);
 }

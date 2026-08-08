@@ -339,7 +339,7 @@ int main()
 	printf("Triple of 2: %i\n", triple$2);
 	printf("Triple of 4: %i\n", triple$4);
 	printf("Triple of 8: %i\n", triple$8);
-	printf("Triple of 99: %i\n", triple$99);
+	printf("Triple of 99: %i\n", triple$$99);
 
 	return 0;
 }

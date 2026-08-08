@@ -1,12 +1,5 @@
 #pragma once
 
-struct Block
-{
-	std::string_view name;
-
-	std::string_view content;
-};
-
 template<typename It>
 bool parser_continues_with_struct(It it, It end)
 {

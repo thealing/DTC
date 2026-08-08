@@ -22,10 +22,16 @@
 
 #include "core/string.hpp"
 
-#include "core/template.hpp"
+#include "core/block.hpp"
 
 #include "core/parser.hpp"
 
-#include "core/compiler.hpp"
+#include "core/template.hpp"
+
+#include "engine/string_block.hpp"
+
+#include "engine/template_registry.hpp"
+
+#include "engine/compiler.hpp"
 
 #include "main/cli.hpp"

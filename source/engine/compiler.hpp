@@ -1,39 +1,10 @@
 #pragma once
 
-struct String_Block
-{
-	std::string name;
-
-	std::string content;
-
-	String_Block()
-	{
-	}
-
-	String_Block(Block block)
-	{
-		name = block.name;
-
-		content = block.content;
-	}
-
-	operator Block() const
-	{
-		Block block;
-
-		block.name = name;
-
-		block.content = content;
-
-		return block;
-	}
-};
-
 class Compiler
 {
 private:
 
-	std::unordered_map<std::string, String_Block> _templates;
+	std::unordered_map<std::string, Template_Registry> _templates;
 
 	std::unordered_set<std::string> _template_instances;
 
@@ -59,43 +30,53 @@ public:
 
 			auto block_end = parser_parse(it, end, block);
 
-			if (block_end != it)
+			if (block_end == it)
 			{
-				std::ostringstream template_key;
+				_result += *it;
 
-				if (template_get_key(block.name, template_key))
-				{
-					auto key = std::move(template_key).str();
+				it++;
 
-					auto result = _templates.emplace(key, block);
+				continue;
+			}
 
-					if (result.second == false)
-					{
-						std::cout << "DTC: template already defined: " << block.name << std::endl;
-					}
+			std::string base;
 
-					bool remove_padding = ends_with_double_newline();
+			std::string key;
 
-					if (remove_padding)
-					{
-						_result.pop_back();
+			bool valid_template = template_split_special(block.name, base, key);
 
-						_result.pop_back();
-					}
-				}
-				else
-				{
-					emit_block(block.content);
-				}
+			if (valid_template == false)
+			{
+				std::cout << "DTC: invalid template: " << block.name << std::endl;
 
 				it = block_end;
 
 				continue;
 			}
 
-			_result += *it;
-			
-			it++;
+			if (key.empty())
+			{
+				emit_block(block.content);
+
+				it = block_end;
+
+				continue;
+			}
+
+			auto& template_registry = _templates[base];
+
+			template_registry.add_template_special(key, block);
+
+			bool remove_padding = ends_with_double_newline();
+
+			if (remove_padding)
+			{
+				_result.pop_back();
+
+				_result.pop_back();
+			}
+
+			it = block_end;
 		}
 
 		std::string_view result_view(_result);
@@ -123,20 +104,14 @@ private:
 
 			if (valid_template == false)
 			{
-				std::cout << "DTC: invalid template: " << instance << std::endl;
+				std::cout << "DTC: invalid template usage: " << instance << std::endl;
 
 				continue;
 			}
 
-			auto arg_count = args.size() - 1;
+			std::string base(args[0]);
 
-			std::ostringstream template_key;
-
-			template_get_key(args[0], arg_count, template_key);
-
-			auto key = std::move(template_key).str();
-
-			auto template_pair = _templates.find(key);
+			auto template_pair = _templates.find(base);
 
 			if (template_pair == _templates.end())
 			{
@@ -145,11 +120,23 @@ private:
 				continue;
 			}
 
+			std::cout << "!!!!!!!!!: " << instance  << std::endl;
+			std::cout << "!!!!!!!!! 2222: " << block << std::endl;
+
 			auto result = _template_instances.emplace(instance);
 
 			if (result.second)
 			{
-				Block template_block = template_pair->second;
+				Block template_block;
+
+				const auto& template_registry = template_pair->second;
+
+				if (template_registry.find_special(args.begin() + 1, args.end(), template_block) == false)
+				{
+					std::cout << "DTC: template not found: " << instance << std::endl;
+
+					continue;
+				}
 
 				emit_template(template_block, args);
 			}
@@ -177,11 +164,11 @@ private:
 			it = par_end;
 		}
 
+		bool add_padding = ends_with_double_newline();
+
 		emit_block(content);
 
 		_result += '\n';
-
-		bool add_padding = ends_with_double_newline();
 
 		if (add_padding)
 		{
