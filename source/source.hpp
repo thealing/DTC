@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <iomanip>
+
 #include <vector>
 
 #include <string>
@@ -12,14 +14,18 @@
 
 #include <fstream>
 
+#include <filesystem>
+
 #include <unordered_map>
 
 #include <unordered_set>
 
 #include "core/string.hpp"
 
+#include "core/template.hpp"
+
 #include "core/parser.hpp"
 
 #include "core/compiler.hpp"
 
-#include "main/client.hpp"
+#include "main/cli.hpp"

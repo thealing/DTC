@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.2)
+﻿cmake_minimum_required(VERSION 3.20)
 
 project("dtc")
 
@@ -34,10 +34,26 @@ add_compile_definitions(UNICODE _UNICODE)
 
 add_compile_definitions(NOMINMAX)
 
-add_executable("${PROJECT_NAME}" "Source.cpp")
+set(TARGET_DEMO "demo")
+
+set(TARGET_DEMO_PROJECT "${CMAKE_CURRENT_SOURCE_DIR}/demo/demo.txt")
+
+file(GLOB_RECURSE DEMO_DTL_SOURCE CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/demo/source/*.dtl")
+
+set(TARGET_DEMO_SOURCE ${TARGET_DEMO_PROJECT} ${DEMO_DTL_SOURCE})
+
+set(TARGET_DEMO_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/demo/generated/build.c")
+
+set(TARGET_DEMO_BUILD_COMMAND ${PROJECT_NAME} ${TARGET_DEMO_PROJECT})
+
+set_property(DIRECTORY PROPERTY ADDITIONAL_CLEAN_FILES "${CMAKE_CURRENT_SOURCE_DIR}/demo/generated")
+
+add_executable("${PROJECT_NAME}" "Source.cpp" )
 
 set_target_properties("${PROJECT_NAME}" PROPERTIES OUTPUT_NAME "${PROJECT_NAME}" PDB_NAME "${PROJECT_NAME}.exe" PREFIX "")
 
-# DEBUG
+add_custom_command(OUTPUT "${TARGET_DEMO_OUTPUT}" COMMAND ${TARGET_DEMO_BUILD_COMMAND} DEPENDS "${PROJECT_NAME}" ${TARGET_DEMO_SOURCE})
 
-add_executable(example_compile "source/main/_example.c")
+set_source_files_properties("${TARGET_DEMO_OUTPUT}" PROPERTIES GENERATED TRUE)
+
+add_executable("${TARGET_DEMO}" "${TARGET_DEMO_OUTPUT}")

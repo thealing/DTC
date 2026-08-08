@@ -1,22 +1,5 @@
-
-#define Type void*
-
-//// BEFORE COMPILE
-
-#define TYPE_$object 0
-
-#define $object BANANA
-
-typedef struct _A$Type$$Type2$Type3 _A$int$$Type2$float;
-
-typedef struct BANANA BANANA;
-
-typedef struct _Container Container;
-
-BANANA container_get_$$$Pair$$Array$Int$$$Pair$$Ref$Char$$Ref$Float(Container* container, int index);
-BANANA container_get_$BANANA(Container* container, int index);
-
-//// BEFORE COMPILE END
+#include<stdio.h>
+#include<stdlib.h>
 
 // STRUCT PARSING
 
@@ -50,6 +33,10 @@ typedef struct Y {
 struct Z {
 	int i;
 } a;
+
+struct {
+	$Temp field;
+} Z$Temp;
 
 struct {
 	int i3;
@@ -163,7 +150,7 @@ typedef   int F1(int);
 typedef   int const(F2);
 
 
-typedef Type* Ref$Type;
+typedef $Type* Ref$Type;
 
 // FUNCTIONS
 
@@ -214,12 +201,44 @@ void (*fn_bad8)(int) = (void (*)(int))0;
 // Const struct initialized with nested compound literal inside parens
 struct Vector { int data[2]; } fn_bad9 = { { 1, 2 } };
 
+/* GLOBAL VALUE TEMPLATES
+*/
+void stringstopper_fn() {}
+
+static const int       my_var$T          =  42;
+struct Point           point$T           =  {1, 2};
+int                   (*func_ptr$T)()    =  NULL;
+int                   (*arr_ptr$T)[100]  =  {0};
+int                   arr_ptr2$T[100]    =  {0};
+
+int                   arr_def$T[100];
+int                   (*arr_def2$T)[100];
+int                   **arr_def3$T;
+
+$T                   func_decl$T() { return 0; }
+
+void * gp01 = &my_var$int;
+void * gp02 = &my_var$float;
+void * gp03 = &point$int;
+void * gp04 = &point$float;
+void * gp05 = &func_ptr$int;
+void * gp06 = &func_ptr$float;
+void * gp07 = &arr_ptr$int;
+void * gp08 = &arr_ptr$float;
+void * gp09 = &arr_ptr2$int;
+void * gp10 = &arr_ptr2$float;
+
+void * gp11 = &arr_def$int;
+void * gp12 = &arr_def2$int;
+void * gp13 = &arr_def3$int;
+void * gp14 = &func_decl$int;
+
 // ETC
 
 typedef void (*(*ComplexFunc)())();
 typedef char(* const (*(*name)(char))[10])(char);
 
-struct _A$Type$$Type2$Type3
+struct _A$Type$Type2$Type3
 {
 	int a;
 	char b;
@@ -227,20 +246,29 @@ struct _A$Type$$Type2$Type3
 
 typedef struct _B$Type
 {
+
 	int a;
 	struct {
-		Type e;
+		$Type e;
 	} f;
 	union {
-		Type g;
+		$Type g;
 	} h;
 } _B$Type;
 
+typedef struct { int reserved; } Pair$A$B;
+
+typedef struct { int reserved; } Array$A;
+
+typedef unsigned long long gfugfuzgfgfgus;
+
 _B$gfugfuzgfgfgus globalB;
 
-int main() {}
 
 // SOA <-> AOS
+void stringstopper_fn_2() {}
+
+int TYPE_$BANANA = TYPE_BANANA_reserved;
 
 enum
 {
@@ -248,7 +276,7 @@ enum
 
 	TYPE_ORANGE,
 
-	TYPE_BANANA,
+	TYPE_BANANA_reserved,
 
 	TYPE_COUNT
 };
@@ -262,6 +290,8 @@ struct APPLE { int i; };
 struct ORANGE { int i; };
 struct BANANA { int i; };
 
+typedef  struct BANANA BANANA;
+
 typedef struct _Container Container;
 
 $object* container_get_$object(Container* container, int index)
@@ -273,31 +303,43 @@ void boo()
 {
 	container_get_$$$Pair$$Array$Int$$$Pair$$Ref$Char$$Ref$Float(0, 0);
 
-	BANANA b = container_get_$BANANA(0, 0);
+	Container c = { 0 };
 
-	b.i++;
+	BANANA* b = container_get_$BANANA(&c, 0);
 
-	_A$int$$Type2$float am;
+	b->i++;
+
+	struct _A$int$Type2$float am;
+
+	Z$int.field = 1;
+
+	Z$$Ref$char.field = "BoOoOoOoOoO!4!4!";
 }
 
-// $Int
+// Specialization
+void stringstopper_fn_3(){}
 
-/*
+int triple$x = $x * 3;
 
-Zr$$Array$Int
+int triple$$99 = 1919191919;
 
-Zr$$$Pair$Float$Double
+// Specialization for method name ending
+void stringstopper_fn_4(){}
 
-Zr$$$Pair$$Array$Int$$$Pair$$Ref$Char$$Ref$Float
-
-Pair< Array<Int> , Pair< Ref<Char> , Ref<Float> > >
-
-
-
-*/
+void Array$Element$$Create()
+{
+}
 
 
 
-//// AFTER COMPILE
-BANANA container_get_$BANANA(Container* container, int index) {}
-BANANA container_get_$$$Pair$$Array$Int$$$Pair$$Ref$Char$$Ref$Float(Container* container, int index) {}
+
+int main()
+{
+	printf("Triple of 1: %i\n", triple$1);
+	printf("Triple of 2: %i\n", triple$2);
+	printf("Triple of 4: %i\n", triple$4);
+	printf("Triple of 8: %i\n", triple$8);
+	printf("Triple of 99: %i\n", triple$99);
+
+	return 0;
+}

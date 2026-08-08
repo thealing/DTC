@@ -20,18 +20,6 @@ bool parser_continues_with_struct(It it, It end)
 }
 
 template<typename It>
-bool parser_continues_with_struct_or_enum(It it, It end)
-{
-	bool result = false;
-
-	result |= parser_continues_with_struct(it, end);
-
-	result |= string_continues_with(it, end, "enum");
-
-	return result;
-}
-
-template<typename It>
 It parser_parse_struct(It start, It end, Block& block)
 {
 	It it = start;
@@ -192,7 +180,7 @@ It parser_parse_typedef(It start, It end, Block& block)
 
 	string_skip_space(it, end);
 
-	bool is_struct_typedef = parser_continues_with_struct_or_enum(it, end);
+	bool is_struct_typedef = parser_continues_with_struct(it, end);
 
 	if (is_struct_typedef)
 	{
@@ -300,25 +288,41 @@ It parser_parse_block(It start, It end, Block& block)
 
 	while (true)
 	{
-		auto found_one = string_find(it, end, "{;");
+		auto start_it = it;
+
+		auto found_one = string_find(it, end, "{;=");
 
 		if (found_one == false)
 		{
 			return start;
 		}
 
-		if (*it == ';')
-		{
-			it++;
-
-			block.content = { start, it };
-
-			return it;
-		}
-
 		if (*it == '{')
 		{
 			string_skip_block(it, end);
+
+			continue;
+		}
+
+		if (*it == ';')
+		{
+			auto block_end = it;
+
+			block_end++;
+
+			return parser_parse_declarator(start, it, start, block_end, block);
+		}
+
+		if (*it == '=')
+		{
+			auto block_end = it;
+
+			if (string_find(block_end, end, ';'))
+			{
+				block_end++;
+			}
+
+			return parser_parse_declarator(start, it, start, block_end, block);
 		}
 	}
 }
@@ -349,43 +353,4 @@ It parser_parse(It start, It end, Block& block)
 	}
 
 	return result;
-}
-
-template<typename It>
-bool parser_parse_template(It start, It end, std::vector<std::string_view>& parts)
-{
-	ptrdiff_t template_level = 0;
-
-	auto it = start;
-
-	while (it != end)
-	{
-		string_find(it, end, '$');
-
-		if (template_level == 0)
-		{
-			std::string_view part(start, it);
-
-			parts.push_back(part);
-
-			start = it;
-
-			template_level++;
-		}
-
-		auto dollar_start = it;
-
-		string_skip(it, end, '$');
-
-		auto dollar_count = it - dollar_start;
-
-		template_level += dollar_count - 2;
-	}
-
-	if (template_level != -1)
-	{
-		return false;
-	}
-
-	return true;
 }

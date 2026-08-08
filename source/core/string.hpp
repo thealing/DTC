@@ -2,7 +2,7 @@
 
 bool string_is_space(char c)
 {
-	return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+	return c == ' ' || c == '\t' || c == '\n';
 }
 
 bool string_is_word(char c)
@@ -151,49 +151,4 @@ void string_skip_statement(It& it, It end)
 	{
 		it++;
 	}
-}
-
-template<typename It>
-std::string string_replace(It source_start, It source_end, It pattern_start, It pattern_end, It rep_start, It rep_end)
-{
-	std::string result;
-
-	It it = source_start;
-
-	while (it != source_end)
-	{
-		It source_it = it;
-
-		It pattern_it = pattern_start;
-
-		while (pattern_it != pattern_end && source_it != source_end && *source_it == *pattern_it)
-		{
-			source_it++;
-
-			pattern_it++;
-		}
-
-		if (pattern_it == pattern_end)
-		{
-			for (It rep_it = rep_start; rep_it != rep_end; rep_it++)
-			{
-				result += *rep_it;
-			}
-
-			it = source_it;
-		}
-		else
-		{
-			result += *it;
-
-			it++;
-		}
-	}
-
-	return result;
-}
-
-std::string string_replace(std::string_view source, std::string_view pattern, std::string_view rep)
-{
-	return string_replace(source.begin(), source.end(), pattern.begin(), pattern.end(), rep.begin(), rep.end());
 }
