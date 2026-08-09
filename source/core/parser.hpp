@@ -136,7 +136,7 @@ It parser_parse_enum(It start, It end, Block& block)
 
 	it++;
 
-	auto found_end = string_find(it, end, "{},;");
+	auto found_end = string_find<true>(it, end, "{},;");
 
 	if (found_end == false)
 	{
@@ -346,7 +346,7 @@ It parser_parse_function(It start, It end, Block& block)
 
 	auto block_end = declaration_end;
 
-	string_skip_block(block_end, end);
+	string_skip_block<true>(block_end, end);
 
 	if (block_end == end)
 	{
@@ -411,7 +411,7 @@ It parser_parse_global(It start, It end, Block& block)
 
 			while (true)
 			{
-				auto found_end = string_find(it, end, "{};");
+				auto found_end = string_find<true>(it, end, "{};");
 
 				if (found_end == false)
 				{
@@ -420,7 +420,7 @@ It parser_parse_global(It start, It end, Block& block)
 
 				if (*it == '{')
 				{
-					string_skip_block(it, end);
+					string_skip_block<true>(it, end);
 
 					continue;
 				}

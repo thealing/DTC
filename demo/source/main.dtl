@@ -256,9 +256,13 @@ typedef struct _B$Type
 	} h;
 } _B$Type;
 
-typedef struct { int reserved; } Pair$A$B;
+typedef struct { $A f0; $B f1; } Pair$A$B;
 
-typedef struct { int reserved; } Array$A;
+typedef struct { $A* ptr; } Array$A;
+
+typedef int Int;
+typedef float Float;
+typedef char Char;
 
 typedef unsigned long long gfugfuzgfgfgus;
 
@@ -276,10 +280,14 @@ enum
 
 	TYPE_BANANA_Id,
 
-	TYPE_Pair$$Array$Int$$$Pair$$Ref$Char$$Ref$Float_Id,
-
 	TYPE_COUNT
 };
+
+int TYPE_Pair$X$Y = ("$X  $Y", 1);
+
+int TYPE_Pair$$$Array$Int$$$$Pair$$Ref$Char$$Ref$Float_Id = ("special", 1);
+
+typedef int Float_Id;
 
 enum E2 {
 	E2_v
@@ -321,6 +329,8 @@ void boo()
 {
 	container_get_$$$Pair$$Array$Int$$$Pair$$Ref$Char$$Ref$Float(0, 0);
 
+	container_get_$$$Pair$$Array$Int$$$Pair$$Ref$int$$Ref$Float(0, 0);
+
 	Container c = { 0 };
 
 	struct BANANA* b = container_get_$BANANA(&c, 0);
@@ -336,6 +346,22 @@ void boo()
 	Z$int.field = 1;
 
 	Z$$Ref$char.field = "BoOoOoOoOoO!4!4!";
+}
+
+void strings_();
+
+enum { char$Value = '};ab' * 2 + $Value };
+
+void string$Fn() { "} $Fn $Fn"; }
+
+char* Str$$1 = "gbsdffdjfddjfshd  ;;;;";
+
+void stringUser() {
+	int x = char$1 + char$2 + char$3;
+	string$A();
+	string$B();
+
+	char* c = Str$1;
 }
 
 // enums

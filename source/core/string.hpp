@@ -39,6 +39,55 @@ bool string_continues_with(std::string_view::const_reverse_iterator it, std::str
 }
 
 template<typename It>
+bool string_skip_string(It& it, It end)
+{
+	if (it == end)
+	{
+		return false;
+	}
+
+	if (*it != '\"' && *it != '\'')
+	{
+		return false;
+	}
+
+	auto quote = *it;
+
+	bool escaped = false;
+
+	while (true)
+	{
+		it++;
+
+		if (it == end)
+		{
+			return true;
+		}
+
+		if (escaped)
+		{
+			escaped = false;
+
+			continue;
+		}
+		
+		if (*it == '\\')
+		{
+			escaped = true;
+
+			continue;
+		}
+		
+		if (*it == quote)
+		{
+			it++;
+
+			return true;
+		}
+	}
+}
+
+template<typename It>
 bool string_find(It& it, It end, char c)
 {
 	while (it != end && *it != c)
@@ -49,7 +98,7 @@ bool string_find(It& it, It end, char c)
 	return it != end;
 }
 
-template<typename It>
+template<bool Skip_Strings = false, typename It>
 bool string_find(It& it, It end, const char* s)
 {
 	while (it != end)
@@ -59,6 +108,14 @@ bool string_find(It& it, It end, const char* s)
 			if (*it == *p)
 			{
 				return true;
+			}
+		}
+
+		if constexpr (Skip_Strings)
+		{
+			if (string_skip_string(it, end))
+			{
+				continue;
 			}
 		}
 
@@ -95,7 +152,7 @@ void string_skip_space(It& it, It end)
 	}
 }
 
-template<typename It>
+template<bool Skip_Strings = false, typename It>
 void string_skip_block(It& it, It end, char c1, char c2)
 {
 	if (it == end || *it != c1 && *it != c2)
@@ -117,6 +174,14 @@ void string_skip_block(It& it, It end, char c1, char c2)
 			level--;
 		}
 
+		if constexpr (Skip_Strings)
+		{
+			if (string_skip_string(it, end))
+			{
+				continue;
+			}
+		}
+
 		it++;
 
 		if (level == 0)
@@ -126,10 +191,10 @@ void string_skip_block(It& it, It end, char c1, char c2)
 	}
 }
 
-template<typename It>
+template<bool Skip_Strings = false, typename It>
 void string_skip_block(It& it, It end)
 {
-	string_skip_block(it, end, '{', '}');
+	string_skip_block<Skip_Strings>(it, end, '{', '}');
 }
 
 template<typename It>
