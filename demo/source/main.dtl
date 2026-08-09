@@ -281,6 +281,18 @@ enum
 	TYPE_COUNT
 };
 
+enum E2 {
+	E2_v
+} e2_i;
+
+typedef enum  {
+	$r$TYPE
+} e3$r$$_t;
+
+e3$en_int1$_t e3_i;
+e3$en_int2$_t e3_i2;
+e3$en_int4$_t e3_i3;
+
 struct _Container
 {
 	void** arrays[TYPE_COUNT];
@@ -316,12 +328,42 @@ void boo()
 	Z$$Ref$char.field = "BoOoOoOoOoO!4!4!";
 }
 
+// enums
+void stringstopper_fn_322() {}
+
+typedef enum _tagE1$T
+{
+	Enum1_A$T = ENUM_TRIPLE_$C,
+	Enum1_B$T = ENUM_TRIPLE_$$INCREASE_$C,
+	Enum1_C$T = ENUM_TRIPLE_$$INCREASE_$$INCREASE_$C
+
+} Enum1$T$C ;
+
+enum
+{INCREASE_$X=$X+1};
+
+enum
+{
+	INCREASE_$X = $X + 1
+};
+
+enum
+{
+	ENUM_TRIPLE_$X = $X * 3
+} ;
+
+Enum1$int$1 e1int;
+Enum1$float$2 e1float;
+Enum1$char$3 e1char;
+
+
+
 // Specialization
 void stringstopper_fn_3(){}
 
-int triple$x = $x * 3;
+const int triple$x = $x * 3;
 
-int triple$$99 = 1919191919;
+const int triple$$99 = 1919191919;
 
 // Specialization for method name ending
 void stringstopper_fn_4(){}
@@ -340,6 +382,8 @@ int main()
 	printf("Triple of 4: %i\n", triple$4);
 	printf("Triple of 8: %i\n", triple$8);
 	printf("Triple of 99: %i\n", triple$99);
+
+	char arry[ENUM_TRIPLE_$100];
 
 	return 0;
 }

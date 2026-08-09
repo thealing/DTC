@@ -49,7 +49,7 @@ public:
 
 			if (valid_template == false)
 			{
-				std::cout << "DTC: invalid template: " << block.name << std::endl;
+				std::cout << "DTC: invalid declaration: " << block.name << std::endl;
 
 				it = block_end;
 
@@ -134,7 +134,7 @@ private:
 
 				if (template_registry.find_special(args.begin() + 1, args.end(), template_block) == false)
 				{
-					std::cout << "DTC: template not found: " << instance << std::endl;
+					std::cout << "DTC: overload not found: " << instance << std::endl;
 
 					continue;
 				}

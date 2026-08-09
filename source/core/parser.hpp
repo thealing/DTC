@@ -13,6 +13,22 @@ bool parser_continues_with_struct(It it, It end)
 }
 
 template<typename It>
+bool parser_continues_with_enum(It it, It end)
+{
+	return string_continues_with(it, end, "enum");
+}
+
+template<typename It>
+bool parser_continues_with_struct_or_enum(It it, It end)
+{
+	bool result = parser_continues_with_struct(it, end);
+
+	result |= parser_continues_with_enum(it, end);
+
+	return result;
+}
+
+template<typename It>
 It parser_parse_struct(It start, It end, Block& block)
 {
 	It it = start;
@@ -53,6 +69,86 @@ It parser_parse_struct(It start, It end, Block& block)
 	}
 
 	string_skip_block(it, end);
+
+	string_skip_space(it, end);
+
+	bool is_type_expression = string_continues_with(it, end, ";");
+
+	if (is_type_expression == false)
+	{
+		return start;
+	}
+
+	it++;
+
+	auto block_end = it;
+
+	block.name = { name_start, name_end };
+
+	block.content = { block_start, block_end };
+
+	return block_end;
+}
+
+template<typename It>
+It parser_parse_enum(It start, It end, Block& block)
+{
+	It it = start;
+
+	bool is_enum = parser_continues_with_enum(it, end);
+
+	if (is_enum == false)
+	{
+		return start;
+	}
+
+	auto block_start = it;
+
+	string_skip_word(it, end);
+
+	string_skip_space(it, end);
+
+	bool is_unnamed_enum = string_continues_with(it, end, "{");
+
+	if (is_unnamed_enum == false)
+	{
+		return start;
+	}
+
+	it++;
+
+	string_skip_space(it, end);
+
+	auto name_start = it;
+
+	string_skip_word(it, end);
+
+	auto name_end = it;
+
+	string_skip_space(it, end);
+
+	bool is_constant = string_continues_with(it, end, "=");
+
+	if (is_constant == false)
+	{
+		return start;
+	}
+
+	it++;
+
+	auto found_end = string_find(it, end, "{},;");
+
+	if (found_end == false)
+	{
+		return start;
+	}
+
+	if (*it != '}')
+	{
+		return start;
+	}
+
+	it++;
 
 	string_skip_space(it, end);
 
@@ -173,7 +269,7 @@ It parser_parse_typedef(It start, It end, Block& block)
 
 	string_skip_space(it, end);
 
-	bool is_struct_typedef = parser_continues_with_struct(it, end);
+	bool is_struct_typedef = parser_continues_with_struct_or_enum(it, end);
 
 	if (is_struct_typedef)
 	{
@@ -263,7 +359,7 @@ It parser_parse_function(It start, It end, Block& block)
 }
 
 template<typename It>
-It parser_parse_block(It start, It end, Block& block)
+It parser_parse_global(It start, It end, Block& block)
 {
 	It it = start;
 
@@ -283,7 +379,7 @@ It parser_parse_block(It start, It end, Block& block)
 	{
 		auto start_it = it;
 
-		auto found_one = string_find(it, end, "{;=");
+		auto found_one = string_find(it, end, "{};=");
 
 		if (found_one == false)
 		{
@@ -297,6 +393,11 @@ It parser_parse_block(It start, It end, Block& block)
 			continue;
 		}
 
+		if (*it == '}')
+		{
+			return start;
+		}
+
 		if (*it == ';')
 		{
 			auto block_end = it;
@@ -308,14 +409,38 @@ It parser_parse_block(It start, It end, Block& block)
 
 		if (*it == '=')
 		{
-			auto block_end = it;
+			auto declarator_end = it;
 
-			if (string_find(block_end, end, ';'))
+			while (true)
 			{
-				block_end++;
-			}
+				auto found_end = string_find(it, end, "{};");
 
-			return parser_parse_declarator(start, it, start, block_end, block);
+				if (found_end == false)
+				{
+					return start;
+				}
+
+				if (*it == '{')
+				{
+					string_skip_block(it, end);
+
+					continue;
+				}
+
+				if (*it == '}')
+				{
+					return start;
+				}
+
+				if (*it == ';')
+				{
+					it++;
+
+					auto block_end = it;
+
+					return parser_parse_declarator(start, declarator_end, start, block_end, block);
+				}
+			}
 		}
 	}
 }
@@ -332,6 +457,11 @@ It parser_parse(It start, It end, Block& block)
 
 	if (result == start)
 	{
+		result = parser_parse_enum(start, end, block);
+	}
+
+	if (result == start)
+	{
 		result = parser_parse_typedef(start, end, block);
 	}
 
@@ -342,7 +472,7 @@ It parser_parse(It start, It end, Block& block)
 
 	if (result == start)
 	{
-		result = parser_parse_block(start, end, block);
+		result = parser_parse_global(start, end, block);
 	}
 
 	return result;

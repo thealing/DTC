@@ -27,10 +27,10 @@ struct Template_Block
 
 	std::string instantiate(std::string_view instance) const
 	{
-		std::string ic = content;
+		std::string renamed_context = content;
 
-		ic.replace(name_index, name_size, instance);
+		renamed_context.replace(name_index, name_size, instance);
 
-		return ic;
+		return renamed_context;
 	}
 };
