@@ -13,9 +13,19 @@ public:
 	}
 
 	template<typename Key, typename Block>
-	void add_template_special(Key&& key, Block&& block)
+	bool add_template_special(Key&& key, Block&& block)
 	{
+		for (const auto& [k, b] : _specials)
+		{
+			if (k == key)
+			{
+				return false;
+			}
+		}
+
 		_specials.emplace_back(std::forward<Key>(key), std::forward<Block>(block));
+
+		return true;
 	}
 
 	template<typename It>
@@ -52,6 +62,11 @@ public:
 				match_found = false;
 
 				break;
+			}
+
+			if (key_it != key_end)
+			{
+				match_found = false;
 			}
 
 			if (match_found)

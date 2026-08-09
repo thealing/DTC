@@ -49,7 +49,7 @@ public:
 
 			if (valid_template == false)
 			{
-				std::cout << "DTC: invalid declaration: " << block.name << std::endl;
+				std::cout << "DTC: invalid template: " << block.name << std::endl;
 
 				it = block_end;
 
@@ -69,7 +69,12 @@ public:
 
 			auto& template_registry = _templates[base];
 
-			template_registry.add_template_special(std::move(key), std::move(template_block));
+			bool added_template = template_registry.add_template_special(std::move(key), std::move(template_block));
+
+			if (added_template == false)
+			{
+				std::cout << "DTC: duplicate template: " << block.name << std::endl;
+			}
 
 			bool remove_padding = ends_with_double_newline();
 
