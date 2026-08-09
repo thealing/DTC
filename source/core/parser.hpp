@@ -191,7 +191,7 @@ It parser_parse_declarator(It it, It end, It block_start, It block_end, Block& b
 		{
 			it++;
 
-			end = std::prev(par_end);
+			end = par_end - 1;
 
 			continue;
 		}
@@ -206,7 +206,7 @@ It parser_parse_declarator(It it, It end, It block_start, It block_end, Block& b
 			{
 				it++;
 
-				end = std::prev(par_end);
+				end = par_end - 1;
 
 				continue;
 			}

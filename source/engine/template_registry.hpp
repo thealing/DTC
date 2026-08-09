@@ -1,5 +1,6 @@
 #pragma once
 
+// TODO: Efficient implementation
 class Template_Registry
 {
 private:

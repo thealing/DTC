@@ -24,7 +24,7 @@ public:
 
 		auto end = string.end();
 
-		while (it < end)
+		while (it != end)
 		{
 			Block block;
 
@@ -133,11 +133,15 @@ private:
 
 			if (result.second)
 			{
+				auto arg_start = args.begin() + 1;
+
+				auto arg_end = args.end();
+
 				const Template_Block* template_block = nullptr;
 
 				const auto& template_registry = template_pair->second;
 
-				if (template_registry.find_special(args.begin() + 1, args.end(), template_block) == false)
+				if (template_registry.find_special(arg_start, arg_end, template_block) == false)
 				{
 					std::cout << "DTC: overload not found: " << instance << std::endl;
 
@@ -146,20 +150,21 @@ private:
 
 				std::string content = template_block->instantiate(instance);
 
-				emit_template(std::move(content), template_block->pattern, args);
+				emit_template(std::move(content), template_block->pattern, arg_start, arg_end);
 			}
 		}
 
 		_result += block;
 	}
 
-	void emit_template(std::string content, std::string_view pattern, const std::vector<std::string_view>& args)
+	template<typename It>
+	void emit_template(std::string content, std::string_view pattern, It arg_start, It arg_end)
 	{
 		auto it = pattern.begin();
 
 		auto end = pattern.end();
 
-		for (size_t arg_index = 1; arg_index < args.size() && it != end; arg_index++)
+		for (It arg_it = arg_start; arg_it != arg_end && it != end; arg_it++)
 		{
 			auto par_end = template_get_start(it + 1, end);
 
@@ -167,7 +172,7 @@ private:
 
 			if (par[1] != '*')
 			{
-				content = template_replace(content, par, args[arg_index]);
+				content = template_replace(content, par, *arg_it);
 			}
 
 			it = par_end;
