@@ -1,30 +1,36 @@
 #pragma once
 
-struct String_Block
+struct Template_Block
 {
-	std::string name;
+	std::string pattern;
 
 	std::string content;
 
-	String_Block()
+	size_t name_index;
+
+	size_t name_size;
+
+	Template_Block()
 	{
 	}
 
-	String_Block(Block block)
+	Template_Block(std::string_view p, Block block)
 	{
-		name = block.name;
+		pattern = p;
 
 		content = block.content;
+
+		name_index = block.name.data() - block.content.data();
+
+		name_size = block.name.size();
 	}
 
-	operator Block() const
+	std::string instantiate(std::string_view instance) const
 	{
-		Block block;
+		std::string ic = content;
 
-		block.name = name;
+		ic.replace(name_index, name_size, instance);
 
-		block.content = content;
-
-		return block;
+		return ic;
 	}
 };

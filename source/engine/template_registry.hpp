@@ -4,7 +4,7 @@ class Template_Registry
 {
 private:
 
-	std::vector<std::pair<std::string, String_Block>> _specials;
+	std::vector<std::pair<std::string, Template_Block>> _specials;
 
 public:
 
@@ -12,17 +12,18 @@ public:
 	{
 	}
 
-	void add_template_special(std::string_view key, Block block)
+	template<typename Key, typename Block>
+	void add_template_special(Key&& key, Block&& block)
 	{
-		_specials.emplace_back(key, block);
+		_specials.emplace_back(std::forward<Key>(key), std::forward<Block>(block));
 	}
 
 	template<typename It>
-	bool find_special(It arg_start, It arg_end, Block& block) const
+	bool find_special(It arg_start, It arg_end, const Template_Block*& block_ptr) const
 	{
 		for (auto special_it = _specials.rbegin(); special_it != _specials.rend(); special_it++)
 		{
-			const auto& key = special_it->first;
+			const auto& [key, block] = *special_it;
 
 			auto key_it = key.begin();
 
@@ -55,7 +56,7 @@ public:
 
 			if (match_found)
 			{
-				block = special_it->second;
+				block_ptr = &block;
 
 				return true;
 			}

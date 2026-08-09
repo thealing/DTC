@@ -104,11 +104,6 @@ bool template_split_instance(It start, It end, Inserter inserter)
 
 		if (level == 0)
 		{
-			if (it == arg_start)
-			{
-				return false;
-			}
-
 			std::string_view arg(arg_start, it);
 
 			*inserter = arg;
@@ -128,6 +123,11 @@ bool template_split_instance(It start, It end, Inserter inserter)
 	}
 
 	if (level != -1)
+	{
+		return false;
+	}
+
+	if (arg_start != end)
 	{
 		return false;
 	}
@@ -181,7 +181,7 @@ void template_get_instances(std::string_view string, Inserter inserter)
 }
 
 template<typename It>
-bool template_split_special(It start, It end, std::string& base, std::string& key)
+bool template_split_special(It start, It end, std::string& base, std::string& key, std::string& pattern)
 {
 	ptrdiff_t level = 0;
 
@@ -195,11 +195,6 @@ bool template_split_special(It start, It end, std::string& base, std::string& ke
 
 		if (level == 0)
 		{
-			if (it == part_start)
-			{
-				return false;
-			}
-
 			std::string_view part(part_start, it);
 
 			if (part_start == start)
@@ -211,10 +206,14 @@ bool template_split_special(It start, It end, std::string& base, std::string& ke
 				if (part[1] == '$')
 				{
 					key += part.substr(1);
+
+					pattern += "$*";
 				}
 				else
 				{
 					key += '*';
+
+					pattern += part;
 				}
 			}
 
@@ -242,10 +241,15 @@ bool template_split_special(It start, It end, std::string& base, std::string& ke
 		return false;
 	}
 
+	if (part_start != end)
+	{
+		return false;
+	}
+
 	return true;
 }
 
-bool template_split_special(std::string_view string, std::string& base, std::string& key)
+bool template_split_special(std::string_view string, std::string& base, std::string& key, std::string& pattern)
 {
-	return template_split_special(string.begin(), string.end(), base, key);
+	return template_split_special(string.begin(), string.end(), base, key, pattern);
 }

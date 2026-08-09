@@ -43,7 +43,9 @@ public:
 
 			std::string key;
 
-			bool valid_template = template_split_special(block.name, base, key);
+			std::string pattern;
+
+			bool valid_template = template_split_special(block.name, base, key, pattern);
 
 			if (valid_template == false)
 			{
@@ -63,9 +65,11 @@ public:
 				continue;
 			}
 
+			Template_Block template_block(pattern, block);
+
 			auto& template_registry = _templates[base];
 
-			template_registry.add_template_special(key, block);
+			template_registry.add_template_special(std::move(key), std::move(template_block));
 
 			bool remove_padding = ends_with_double_newline();
 
@@ -120,14 +124,11 @@ private:
 				continue;
 			}
 
-			std::cout << "!!!!!!!!!: " << instance  << std::endl;
-			std::cout << "!!!!!!!!! 2222: " << block << std::endl;
-
 			auto result = _template_instances.emplace(instance);
 
 			if (result.second)
 			{
-				Block template_block;
+				const Template_Block* template_block = nullptr;
 
 				const auto& template_registry = template_pair->second;
 
@@ -138,20 +139,20 @@ private:
 					continue;
 				}
 
-				emit_template(template_block, args);
+				std::string content = template_block->instantiate(instance);
+
+				emit_template(std::move(content), template_block->pattern, args);
 			}
 		}
 
 		_result += block;
 	}
 
-	void emit_template(Block template_block, const std::vector<std::string_view>& args)
+	void emit_template(std::string content, std::string_view pattern, const std::vector<std::string_view>& args)
 	{
-		std::string content(template_block.content);
+		auto it = pattern.begin();
 
-		auto it = template_get_start(template_block.name);
-
-		auto end = template_block.name.end();
+		auto end = pattern.end();
 
 		for (size_t arg_index = 1; arg_index < args.size() && it != end; arg_index++)
 		{
@@ -159,7 +160,10 @@ private:
 
 			std::string_view par(it, par_end);
 
-			content = template_replace(content, par, args[arg_index]);
+			if (par[1] != '*')
+			{
+				content = template_replace(content, par, args[arg_index]);
+			}
 
 			it = par_end;
 		}
