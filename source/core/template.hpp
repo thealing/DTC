@@ -12,7 +12,7 @@ std::string_view::const_iterator template_get_start(std::string_view string)
 }
 
 template<typename It>
-std::string template_replace(It source_start, It source_end, It pattern_start, It pattern_end, It rep_start, It rep_end)
+std::string template_replace(It source_start, It source_end, It par_start, It par_end, It arg_start, It arg_end)
 {
 	std::string result;
 
@@ -22,15 +22,15 @@ std::string template_replace(It source_start, It source_end, It pattern_start, I
 	{
 		It source_it = it;
 
-		It pattern_it = pattern_start;
+		It par_it = par_start;
 
 		bool match_found = false;
 
-		while (*source_it == *pattern_it)
+		while (*source_it == *par_it)
 		{
 			source_it++;
 
-			pattern_it++;
+			par_it++;
 
 			if (source_it == source_end)
 			{
@@ -39,7 +39,7 @@ std::string template_replace(It source_start, It source_end, It pattern_start, I
 				break;
 			}
 
-			if (pattern_it == pattern_end)
+			if (par_it == par_end)
 			{
 				if (string_is_word(*source_it) == false)
 				{
@@ -57,18 +57,53 @@ std::string template_replace(It source_start, It source_end, It pattern_start, I
 
 		if (match_found)
 		{
-			It rep_it = rep_start;
+			bool trim_start = false;
 
-			if (result.empty() || string_is_word(result.back()) == false)
+			bool concat_word = false;
+
+			if (result.empty())
 			{
-				string_skip(rep_it, rep_end, '$');
+				trim_start = true;
+			}
+			else
+			{
+				auto front = result.back();
+
+				if (string_is_word(front) == false)
+				{
+					trim_start = true;
+				}
+
+				if (front == '$')
+				{
+					trim_start = true;
+
+					concat_word = true;
+				}
 			}
 
-			while (rep_it != rep_end)
-			{
-				result += *rep_it;
+			It arg_it = arg_start;
 
-				rep_it++;
+			if (trim_start)
+			{
+				string_skip(arg_it, arg_end, '$');
+			}
+
+			if (concat_word)
+			{
+				result.pop_back();
+
+				if (source_it != source_end && *source_it == '$')
+				{
+					source_it++;
+				}
+			}
+
+			while (arg_it != arg_end)
+			{
+				result += *arg_it;
+
+				arg_it++;
 			}
 
 			it = source_it;
@@ -84,9 +119,31 @@ std::string template_replace(It source_start, It source_end, It pattern_start, I
 	return result;
 }
 
-std::string template_replace(std::string_view source, std::string_view pattern, std::string_view rep)
+std::string template_replace(std::string_view source, std::string_view par, std::string_view arg)
 {
-	return template_replace(source.begin(), source.end(), pattern.begin(), pattern.end(), rep.begin(), rep.end());
+	return template_replace(source.begin(), source.end(), par.begin(), par.end(), arg.begin(), arg.end());
+}
+
+template<typename It>
+void template_replace(std::string& content, std::string_view pattern, It arg_start, It arg_end)
+{
+	auto it = pattern.begin();
+
+	auto end = pattern.end();
+
+	for (It arg_it = arg_start; arg_it != arg_end && it != end; arg_it++)
+	{
+		auto par_end = template_get_start(it + 1, end);
+
+		std::string_view par(it, par_end);
+		
+		if (par[1] != '*')
+		{
+			content = template_replace(content, par, *arg_it);
+		}
+
+		it = par_end;
+	}
 }
 
 template<typename It, typename Inserter>

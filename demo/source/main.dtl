@@ -268,15 +268,15 @@ _B$gfugfuzgfgfgus globalB;
 // SOA <-> AOS
 void stringstopper_fn_2() {}
 
-int TYPE_$BANANA = TYPE_BANANA_reserved;
-
 enum
 {
-	TYPE_APPLE,
+	TYPE_APPLE_Id,
 
-	TYPE_ORANGE,
+	TYPE_ORANGE_Id,
 
-	TYPE_BANANA_reserved,
+	TYPE_BANANA_Id,
+
+	TYPE_Pair$$Array$Int$$$Pair$$Ref$Char$$Ref$Float_Id,
 
 	TYPE_COUNT
 };
@@ -285,13 +285,19 @@ enum E2 {
 	E2_v
 } e2_i;
 
+struct templateEnumen_int1$e { int unused; };
+struct templateEnumen_int2$e { int unused; };
+struct templateEnumen_int3$e { int unused; };
+
 typedef enum  {
-	$r$TYPE
+	templateEnum$$r$TYPE,
+
+	templateEnum$$r$$suffix
 } e3$r$$_t;
 
 e3$en_int1$_t e3_i;
 e3$en_int2$_t e3_i2;
-e3$en_int4$_t e3_i3;
+e3$en_int3$_t e3_i3;
 
 struct _Container
 {
@@ -302,13 +308,13 @@ struct APPLE { int i; };
 struct ORANGE { int i; };
 struct BANANA { int i; };
 
-typedef  struct BANANA BANANA;
+typedef  struct $$object TYPE_STRUCTURE$object;
 
 typedef struct _Container Container;
 
-$object* container_get_$object(Container* container, int index)
+TYPE_STRUCTURE$object* container_get_$object(Container* container, int index)
 {
-	return container->arrays[TYPE_$object][index];
+	return container->arrays[TYPE_$$object$_Id][index];
 }
 
 void boo()
@@ -317,7 +323,11 @@ void boo()
 
 	Container c = { 0 };
 
-	BANANA* b = container_get_$BANANA(&c, 0);
+	struct BANANA* b = container_get_$BANANA(&c, 0);
+
+	container_get_$APPLE(&c, 0);
+
+	container_get_$ORANGE(&c, 0);
 
 	b->i++;
 
@@ -331,21 +341,16 @@ void boo()
 // enums
 void stringstopper_fn_322() {}
 
-typedef enum _tagE1$T
+typedef enum _tagE1$$T
 {
-	Enum1_A$T = ENUM_TRIPLE_$C,
-	Enum1_B$T = ENUM_TRIPLE_$$INCREASE_$C,
-	Enum1_C$T = ENUM_TRIPLE_$$INCREASE_$$INCREASE_$C
+	Enum1_A$$T = ENUM_TRIPLE_$C,
+	Enum1_B$$T = ENUM_TRIPLE_$$INCREASE_$C,
+	Enum1_C$$T = ENUM_TRIPLE_$$INCREASE_$$INCREASE_$C
 
 } Enum1$T$C ;
 
 enum
 {INCREASE_$X=$X+1};
-
-enum
-{
-	INCREASE_$X = $X + 1
-};
 
 enum
 {

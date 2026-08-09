@@ -160,23 +160,7 @@ private:
 	template<typename It>
 	void emit_template(std::string content, std::string_view pattern, It arg_start, It arg_end)
 	{
-		auto it = pattern.begin();
-
-		auto end = pattern.end();
-
-		for (It arg_it = arg_start; arg_it != arg_end && it != end; arg_it++)
-		{
-			auto par_end = template_get_start(it + 1, end);
-
-			std::string_view par(it, par_end);
-
-			if (par[1] != '*')
-			{
-				content = template_replace(content, par, *arg_it);
-			}
-
-			it = par_end;
-		}
+		template_replace(content, pattern, arg_start, arg_end);
 
 		bool add_padding = ends_with_double_newline();
 
