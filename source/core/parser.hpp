@@ -173,10 +173,10 @@ It parser_parse_enum(It start, It end, Block& block)
 template<typename It>
 It parser_parse_declarator(It it, It end, It block_start, It block_end, Block& block)
 {
-	auto rend = std::reverse_iterator(block_start);
-
 	while (it != end)
 	{
+		auto rend = std::reverse_iterator(it);
+
 		bool has_first_par_list = string_find(it, end, '(');
 
 		auto par_it = it;
@@ -244,6 +244,8 @@ It parser_parse_declarator(It it, It end, It block_start, It block_end, Block& b
 
 			return block_end;
 		}
+
+		return block_start;
 	}
 
 	return block_start;
@@ -253,8 +255,6 @@ template<typename It>
 It parser_parse_typedef(It start, It end, Block& block)
 {
 	auto it = start;
-
-	auto rend = std::reverse_iterator(start);
 
 	bool is_typedef = string_continues_with(it, end, "typedef");
 
@@ -306,8 +306,6 @@ template<typename It>
 It parser_parse_function(It start, It end, Block& block)
 {
 	auto it = start;
-
-	auto rend = std::reverse_iterator(start);
 
 	if (it == end)
 	{
