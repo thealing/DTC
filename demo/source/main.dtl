@@ -387,17 +387,67 @@ Enum1$int$1 e1int;
 Enum1$float$2 e1float;
 Enum1$char$3 e1char;
 
+// VARIADIC TYPES ;
+
+// Base case ;
+struct _Tuple$Arg
+{
+	$Arg e0;
+};
+
+typedef struct _Tuple$Arg Tuple$Arg;
+
+// Gen;
+
+// ...
+
+// DEPENDANT FUNCTIONS PAR. AND RETURN TYPE "SPECIFICATION" ;
+
+struct Complex$A$B$C$D
+{
+	$A a;
+	$B b;
+	$C c;
+	$D d;
+};
+
+typedef struct Complex$A$B$C$D Complex$A$B$C$D$$_increment_result;
+
+Complex$A$B$C$D$_increment_result Complex$A$B$C$D$$_increment(struct Complex$A$B$C$D complex)
+{
+	complex.a++;
+	complex.b++;
+	complex.c++;
+	complex.d++;
+	return complex;
+}
+
+typedef struct Complex$A$B$C$D Complex$A$B$C$D$$_decrement_result;
+
+Complex$A$B$C$D$_decrement_result Complex$A$B$C$D$$_decrement(struct Complex$A$B$C$D complex)
+{
+	complex.a--;
+	complex.b--;
+	complex.c--;
+	complex.d--;
+	return complex;
+}
+
+typedef struct Complex$Int$B$Float$Char Simple$B;
+
+Complex$Int$B$Float$Char$$$_action$_result Simple$B$_action(Simple$B simple)
+{
+	return Complex$Int$B$Float$Char$_action(simple);
+}
 
 
-// Specialization
-void stringstopper_fn_3(){}
+// GLOBAL VAR SPECIALIZATION ;
 
 const int triple$x = $x * 3;
 
 const int triple$$99 = 1919191919;
 
-// Specialization for method name ending
-void stringstopper_fn_4(){}
+// Specialization for method name ending ;
 
 void Array$Element$$Create()
 {
@@ -415,6 +465,14 @@ int main()
 	printf("Triple of 99: %i\n", triple$99);
 
 	char arry[ENUM_TRIPLE_$100];
+
+	Tuple$int t;
+
+	Simple$long simple1 = { 0 };
+
+	simple1 = Simple$long$_increment(simple1);
+
+	simple1 = Simple$long$_decrement(simple1);
 
 	return 0;
 }
