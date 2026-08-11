@@ -28,7 +28,7 @@
 
 #include "core/template.hpp"
 
-#include "engine/template_block.hpp"
+#include "core/template_block.hpp"
 
 #include "engine/template_registry.hpp"
 
