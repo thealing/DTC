@@ -34,6 +34,36 @@ add_compile_definitions(UNICODE _UNICODE)
 
 add_compile_definitions(NOMINMAX)
 
+add_executable("${PROJECT_NAME}" "Source.cpp")
+
+set_target_properties("${PROJECT_NAME}" PROPERTIES OUTPUT_NAME "${PROJECT_NAME}" PDB_NAME "${PROJECT_NAME}.exe" PREFIX "")
+
+# TEST
+
+enable_testing()
+
+set(TARGET_TESTER "tester")
+
+set(TARGET_TESTER_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/test_generated.c")
+
+set(TARGET_VALIDATOR "validator")
+
+add_executable("${TARGET_TESTER}" "Test.cpp")
+
+add_library("${TARGET_VALIDATOR}" STATIC "${TARGET_TESTER_OUTPUT}")
+
+add_test(NAME "${TARGET_TESTER}" COMMAND "${TARGET_TESTER}" "${TARGET_TESTER_OUTPUT}")
+
+add_test(NAME "${TARGET_VALIDATOR}" COMMAND ${CMAKE_COMMAND} --build . --target "${TARGET_VALIDATOR}")
+
+if(MSVC)
+
+	target_compile_options("${TARGET_VALIDATOR}" PRIVATE /w)
+
+endif()
+
+# DEMO
+
 set(TARGET_DEMO "demo")
 
 set(TARGET_DEMO_PROJECT "${CMAKE_CURRENT_SOURCE_DIR}/demo/demo.txt")
@@ -48,12 +78,8 @@ set(TARGET_DEMO_BUILD_COMMAND ${PROJECT_NAME} ${TARGET_DEMO_PROJECT})
 
 set_property(DIRECTORY PROPERTY ADDITIONAL_CLEAN_FILES "${CMAKE_CURRENT_SOURCE_DIR}/demo/generated")
 
-add_executable("${PROJECT_NAME}" "Source.cpp")
-
-set_target_properties("${PROJECT_NAME}" PROPERTIES OUTPUT_NAME "${PROJECT_NAME}" PDB_NAME "${PROJECT_NAME}.exe" PREFIX "")
-
 add_custom_command(OUTPUT "${TARGET_DEMO_OUTPUT}" COMMAND ${TARGET_DEMO_BUILD_COMMAND} DEPENDS "${PROJECT_NAME}" ${TARGET_DEMO_SOURCE})
 
 set_source_files_properties("${TARGET_DEMO_OUTPUT}" PROPERTIES GENERATED TRUE)
 
-add_executable("${TARGET_DEMO}" "${TARGET_DEMO_OUTPUT}")
+add_executable("${TARGET_DEMO}" EXCLUDE_FROM_ALL "${TARGET_DEMO_OUTPUT}")

@@ -20,6 +20,8 @@
 
 #include <unordered_set>
 
+#include <random>
+
 #include "core/string.hpp"
 
 #include "core/block.hpp"
@@ -34,4 +36,8 @@
 
 #include "engine/compiler.hpp"
 
+#include "testing/code_generator.hpp"
+
 #include "main/cli.hpp"
+
+#include "main/tester.hpp"

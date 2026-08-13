@@ -16,10 +16,8 @@ public:
 	{
 	}
 
-	std::string_view compile(std::string_view string)
+	std::string compile(std::string_view string)
 	{
-		auto result_start_size = _result.size();
-
 		auto it = string.begin();
 
 		auto end = string.end();
@@ -88,9 +86,7 @@ public:
 			it = block_end;
 		}
 
-		std::string_view result_view(_result);
-
-		return result_view.substr(result_start_size);
+		return std::move(_result);
 	}
 
 private:
