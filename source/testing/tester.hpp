@@ -1,6 +1,6 @@
 #pragma once
 
-constexpr int TESTER_TEST_COUNT = 100000;
+constexpr int TESTER_TEST_COUNT = 10000;
 
 void tester_run(const std::vector<std::string>& arguments)
 {

@@ -36,8 +36,8 @@
 
 #include "engine/compiler.hpp"
 
-#include "testing/code_generator.hpp"
-
 #include "main/cli.hpp"
 
-#include "main/tester.hpp"
+#include "testing/code_generator.hpp"
+
+#include "testing/tester.hpp"

@@ -47,11 +47,11 @@ public:
 
 		source_stream << '\n';
 
-		auto val_name = get_random_string("val");
-
 		val_stream << declarator_parameter.name;
 		
 		val_stream << ' ';
+
+		auto val_name = get_random_string("val");
 
 		val_stream << val_name;
 
@@ -60,13 +60,161 @@ public:
 		val_stream << '\n';
 	}
 
-	void generate_source(std::ostream& source_stream, std::ostream& val_stream, int block_count)
+	void generate_struct(std::ostream& source_stream, std::ostream& val_stream)
 	{
-		// TODO: others
+		auto type = get_random_struct_type();
 
-		for (int block_index = 0; block_index < block_count; block_index++)
+		source_stream << type;
+
+		source_stream << ';';
+
+		source_stream << '\n';
+
+		auto name_length = type.find(" {");
+
+		std::string_view name(type.data(), name_length);
+
+		val_stream << name;
+
+		val_stream << ' ';
+
+		auto val_name = get_random_string("val");
+
+		val_stream << val_name;
+
+		val_stream << ';';
+
+		val_stream << '\n';
+	}
+
+	void generate_global(std::ostream& source_stream, std::ostream& val_stream)
+	{
+		auto value_choice = get_random_int(6);
+
+		auto struct_type = get_random_bool();
+
+		if (struct_type && value_choice >= 3)
+		{
+			auto struct_type = get_random_struct_type();
+
+			source_stream << struct_type;
+		}
+		else
+		{
+			auto base_type = get_random_base_type();
+
+			source_stream << base_type;
+		}
+
+		source_stream << ' ';
+
+		auto name = get_random_string("global");
+
+		Declarator_Parameter declarator_parameter;
+
+		declarator_parameter.name = name;
+
+		declarator_parameter.direct_type = true;
+
+		if (value_choice == 1)
+		{
+			auto array = get_random_array();
+
+			declarator_parameter.name += array;
+		}
+
+		if (value_choice == 2)
+		{
+			declarator_parameter.name = '*' + declarator_parameter.name;
+		}
+
+		if (value_choice == 0)
+		{
+			source_stream << declarator_parameter.name;
+
+			source_stream << " = ";
+
+			auto value = get_random_int(10, 99);
+
+			source_stream << value;
+		}
+		else
+		{
+			auto declarator = get_random_declarator(declarator_parameter);
+
+			source_stream << declarator;
+		}
+
+		if (value_choice == 1)
+		{
+			source_stream << " = { ";
+
+			auto value = get_random_int(10, 99);
+
+			source_stream << value;
+
+			source_stream << " }";
+		}
+
+		if (value_choice == 2)
+		{
+			source_stream << " = 0";
+		}
+
+		source_stream << ';';
+
+		source_stream << '\n';
+
+		val_stream << "char ";
+
+		auto val_name = get_random_string("val");
+
+		val_stream << val_name;
+
+		val_stream << "[sizeof(";
+
+		val_stream << name;
+
+		val_stream << ")]";
+
+		val_stream << ';';
+
+		val_stream << '\n';
+	}
+
+	void generate_block(std::ostream& source_stream, std::ostream& val_stream)
+	{
+		auto choice = get_random_real();
+
+		if (choice < 0.2)
 		{
 			generate_typedef(source_stream, val_stream);
+
+			return;
+		}
+
+		if (choice < 0.4)
+		{
+			generate_struct(source_stream, val_stream);
+
+			return;
+		}
+
+		if (choice < 1.0)
+		{
+			generate_global(source_stream, val_stream);
+
+			return;
+		}
+
+		
+	}
+
+	void generate_source(std::ostream& source_stream, std::ostream& val_stream, int block_count)
+	{
+		for (int block_index = 0; block_index < block_count; block_index++)
+		{
+			generate_block(source_stream, val_stream);
 
 			source_stream << '\n';
 		}
@@ -87,10 +235,19 @@ private:
 
 		auto shell_count = get_random_int(0, 8);
 
-		bool added_block = false;
+		bool is_pointer = false;
+
+		bool is_array = false;
+
+		bool is_function = false;
 
 		for (int shell_index = 0; shell_index < shell_count; shell_index++)
 		{
+			if (result.starts_with('*'))
+			{
+				is_pointer = true;
+			}
+
 			auto choice = get_random_real();
 
 			if (choice < 0.2)
@@ -116,21 +273,30 @@ private:
 
 			if (choice < 0.8)
 			{
-				auto array = get_random_array();
-
-				if (added_block && result.starts_with('*') == false)
+				if (is_function)
 				{
-					result = '*' + result;
+					is_pointer = true;
 				}
 
-				if (result.starts_with('*'))
+				if (is_pointer)
 				{
+					if (result.starts_with('*') == false)
+					{
+						result = '*' + result;
+					}
+
 					result = '(' + result + ')';
 				}
 
+				auto array = get_random_array();
+
 				result += array;
 
-				added_block = true;
+				is_pointer = false;
+
+				is_array = true;
+
+				is_function = false;
 
 				continue;
 			}
@@ -141,22 +307,31 @@ private:
 
 				if (parameter.direct_type)
 				{
-					added_block = true;
+					is_pointer = true;
 				}
 
-				if (added_block && result.starts_with('*') == false)
+				if (is_array || is_function)
 				{
-					result = '*' + result;
+					is_pointer = true;
 				}
 
-				if (result.starts_with('*'))
+				if (is_pointer)
 				{
+					if (result.starts_with('*') == false)
+					{
+						result = '*' + result;
+					}
+
 					result = '(' + result + ')';
 				}
 
 				result += function;
 
-				added_block = true;
+				is_pointer = false;
+
+				is_array = false;
+
+				is_function = true;
 
 				continue;
 			}
@@ -171,7 +346,7 @@ private:
 
 		result += '[';
 
-		auto size = get_random_int(1, 99);
+		auto size = get_random_int(1, 9);
 
 		result += std::to_string(size);
 
@@ -282,7 +457,7 @@ private:
 
 		result += ' ';
 
-		auto name = get_random_string("struct");
+		auto name = get_random_string(base);
 
 		result += name;
 
@@ -314,7 +489,7 @@ private:
 
 					result += ' ';
 
-					auto value = get_random_int(1, 99);
+					auto value = get_random_int(10, 99);
 
 					result += std::to_string(value);
 				}
@@ -358,8 +533,6 @@ private:
 		}
 
 		result += '}';
-
-		result += ' ';
 
 		return result;
 	}
