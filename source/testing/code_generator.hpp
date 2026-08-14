@@ -87,6 +87,80 @@ public:
 		val_stream << '\n';
 	}
 
+	void generate_function(std::ostream& source_stream, std::ostream& val_stream)
+	{
+		auto base_type = get_random_base_type();
+
+		source_stream << base_type;
+
+		source_stream << ' ';
+
+		auto name = get_random_string("function");
+
+		source_stream << name;
+
+		auto par_count = get_random_int(5);
+
+		auto function = get_random_function(par_count, true);
+
+		source_stream << function;
+
+		source_stream << '\n';
+
+		source_stream << '{';
+
+		source_stream << '\n';
+
+		int line_count = get_random_int(2, 4);
+
+		for (int line_index = 0; line_index < line_count; line_index++)
+		{
+			source_stream << '\t';
+
+			auto type = get_random_base_type();
+
+			source_stream << type;
+
+			source_stream << ' ';
+
+			auto local = get_random_string("local");
+
+			source_stream << local;
+
+			source_stream << ';';
+
+			source_stream << '\n';
+		}
+
+		source_stream << '\t';
+
+		source_stream << "return 0;";
+
+		source_stream << '\n';
+
+		source_stream << '}';
+
+		source_stream << '\n';
+
+		val_stream << "void *";
+
+		auto val_name = get_random_string("val");
+
+		val_stream << val_name;
+
+		val_stream << ' ';
+
+		val_stream << '=';
+
+		val_stream << ' ';
+
+		val_stream << name;
+
+		val_stream << ';';
+
+		val_stream << '\n';
+	}
+
 	void generate_global(std::ostream& source_stream, std::ostream& val_stream)
 	{
 		auto value_choice = get_random_int(6);
@@ -200,6 +274,13 @@ public:
 			return;
 		}
 
+		if (choice < 0.6)
+		{
+			generate_function(source_stream, val_stream);
+
+			return;
+		}
+
 		if (choice < 1.0)
 		{
 			generate_global(source_stream, val_stream);
@@ -303,7 +384,9 @@ private:
 
 			if (choice < 1.0)
 			{
-				auto function = get_random_function();
+				auto par_count = get_random_int(5);
+
+				auto function = get_random_function(par_count, false);
 
 				if (parameter.direct_type)
 				{
@@ -355,19 +438,26 @@ private:
 		return result;
 	}
 
-	std::string get_random_function()
+	std::string get_random_function(int par_count, bool definition)
 	{
 		std::string result;
 
 		result += '(';
-
-		auto par_count = get_random_int(5);
 
 		for (int par_index = 0; par_index < par_count; par_index++)
 		{
 			auto type = get_random_base_type();
 
 			result += type;
+
+			if (definition)
+			{
+				result += ' ';
+
+				auto par_name = get_random_string("par");
+
+				result += par_name;
+			}
 
 			if (par_index + 1 != par_count)
 			{
