@@ -10,6 +10,8 @@ private:
 
 	std::map<std::pair<std::string_view, size_t>, size_t> _trie_map;
 
+	mutable std::vector<std::pair<size_t, ptrdiff_t>> _backtrack_buffer;
+
 public:
 
 	Template_Registry()
@@ -92,6 +94,10 @@ public:
 		auto trie_index = trie_map_it->second;
 
 		auto arg_it = arg_start;
+
+		_backtrack_buffer.clear();
+
+		auto& branches = _backtrack_buffer;
 		
 		while (true)
 		{
@@ -105,17 +111,36 @@ public:
 
 			if (trie_it == trie_end)
 			{
-				if (arg == "*")
-				{
-					return nullptr;
-				}
-
 				trie_it = trie_node.find("*");
 
 				if (trie_it == trie_end)
 				{
-					return nullptr;
+					if (branches.empty())
+					{
+						return nullptr;
+					}
+
+					auto [backtrack_index, arg_index] = branches.back();
+
+					branches.pop_back();
+
+					const auto& backtrack_node = _trie[backtrack_index];
+
+					trie_it = backtrack_node.find("*");
+
+					if (trie_it == trie_end)
+					{
+						return nullptr;
+					}
+
+					arg_it = std::next(arg_start, arg_index);
 				}
+			}
+			else
+			{
+				auto arg_index = std::distance(arg_start, arg_it);
+
+				branches.emplace_back(trie_index, arg_index);
 			}
 
 			arg_it++;

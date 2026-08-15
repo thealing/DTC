@@ -31,7 +31,7 @@ struct Template_Block
 
 		auto part_size = block_part.size();
 
-		if (part_index < 0 || part_index >= block.name.size())
+		if (part_index < 0 || part_index >= (ptrdiff_t)block.name.size())
 		{
 			return block_part;
 		}

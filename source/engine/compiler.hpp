@@ -10,7 +10,7 @@ private:
 
 	std::string _result;
 
-	std::vector<std::string_view> _split_scratch;
+	std::vector<std::string_view> _split_buffer;
 
 public:
 
@@ -39,9 +39,9 @@ public:
 				continue;
 			}
 
-			_split_scratch.clear();
+			_split_buffer.clear();
 
-			auto& parts = _split_scratch;
+			auto& parts = _split_buffer;
 
 			std::string pattern;
 
@@ -112,9 +112,9 @@ private:
 
 		for (auto instance : instances)
 		{
-			_split_scratch.clear();
+			_split_buffer.clear();
 
-			auto& args = _split_scratch;
+			auto& args = _split_buffer;
 
 			bool valid_template = template_split_instance(instance, std::back_inserter(args));
 
