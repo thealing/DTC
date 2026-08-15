@@ -45,16 +45,7 @@ public:
 
 			bool valid_template = template_split_special(block.name, base, key, pattern);
 
-			if (valid_template == false)
-			{
-				std::cout << "DTC: invalid template: " << block.name << std::endl;
-
-				it = block_end;
-
-				continue;
-			}
-
-			if (key.empty())
+			if (valid_template && key.empty())
 			{
 				emit_block(block.content);
 
@@ -63,15 +54,22 @@ public:
 				continue;
 			}
 
-			Template_Block template_block(pattern, block);
-
-			auto& template_registry = _templates[base];
-
-			bool added_template = template_registry.add_template_special(std::move(key), std::move(template_block));
-
-			if (added_template == false)
+			if (valid_template)
 			{
-				std::cout << "DTC: duplicate template: " << block.name << std::endl;
+				Template_Block template_block(pattern, block);
+
+				auto& template_registry = _templates[base];
+
+				bool added_template = template_registry.add_template_special(std::move(key), std::move(template_block));
+
+				if (added_template == false)
+				{
+					std::cout << "DTC: duplicate template: " << block.name << std::endl;
+				}
+			}
+			else
+			{
+				std::cout << "DTC: invalid template: " << block.name << std::endl;
 			}
 
 			bool remove_padding = ends_with_double_newline();

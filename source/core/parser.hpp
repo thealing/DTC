@@ -33,7 +33,7 @@ It parser_parse_struct(It start, It end, Block& block)
 {
 	It it = start;
 
-	bool is_struct = parser_continues_with_struct(it, end);
+	bool is_struct = parser_continues_with_struct_or_enum(it, end);
 
 	if (is_struct == false)
 	{
