@@ -1,3 +1,4 @@
 generated/build.c
 
+source/types.dtl generated/source/types.dtl.c
 source/main.dtl generated/source/main.dtl.c

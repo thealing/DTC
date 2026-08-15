@@ -387,20 +387,6 @@ Enum1$int$1 e1int;
 Enum1$float$2 e1float;
 Enum1$char$3 e1char;
 
-// VARIADIC TYPES ;
-
-// Base case ;
-struct _Tuple$Arg
-{
-	$Arg e0;
-};
-
-typedef struct _Tuple$Arg Tuple$Arg;
-
-// Gen;
-
-// ...
-
 // DEPENDANT FUNCTIONS PAR. AND RETURN TYPE "SPECIFICATION" ;
 
 struct Complex$A$B$C$D
@@ -440,12 +426,21 @@ Complex$Int$B$Float$Char$$$_action$_result Simple$B$_action(Simple$B simple)
 	return Complex$Int$B$Float$Char$_action(simple);
 }
 
+// REPLACEMEBNT LEVEL;
+
+void replacer$first$type()
+{
+	$$$first$pe value;
+}
+
 
 // GLOBAL VAR SPECIALIZATION ;
 
 const int triple$x = $x * 3;
 
 const int triple$$99 = 1919191919;
+
+const int triple$$$200$10 = 111;
 
 // Specialization for method name ending ;
 
@@ -463,16 +458,17 @@ int main()
 	printf("Triple of 4: %i\n", triple$4);
 	printf("Triple of 8: %i\n", triple$8);
 	printf("Triple of 99: %i\n", triple$99);
+	printf("Triple: %i\n", triple$$200$10);
 
 	char arry[ENUM_TRIPLE_$100];
-
-	Tuple$int t;
 
 	Simple$long simple1 = { 0 };
 
 	simple1 = Simple$long$_increment(simple1);
 
 	simple1 = Simple$long$_decrement(simple1);
+
+	replacer$ty$int();
 
 	return 0;
 }

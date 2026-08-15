@@ -37,7 +37,34 @@ public:
 
 		Declarator_Parameter declarator_parameter;
 
-		declarator_parameter.name = get_random_string("type");
+		auto name = get_random_string("type");
+
+		auto val_name = get_random_string("val");
+
+		// same base
+		name = "base";
+
+		// dynamic base
+		name += std::to_string(_name_id);
+
+		auto ins_name = name;
+
+		for (int i = 0; i < 10; i++)
+		{
+			name += "$$T";
+
+			name += std::to_string(_name_id);
+
+			name += std::to_string(i);
+
+			ins_name += "$T";
+
+			ins_name += std::to_string(_name_id);
+
+			ins_name += std::to_string(i);
+		}
+
+		declarator_parameter.name = name;
 
 		auto declarator = get_random_declarator(declarator_parameter);
 
@@ -47,11 +74,23 @@ public:
 
 		source_stream << '\n';
 
-		val_stream << declarator_parameter.name;
+		source_stream << '\n';
+
+		source_stream << "extern ";
+
+		source_stream << ins_name;
+
+		source_stream << ' ';
+
+		source_stream << val_name;
+
+		source_stream << ';';
+
+		source_stream << '\n';
+
+		val_stream << ins_name;
 		
 		val_stream << ' ';
-
-		auto val_name = get_random_string("val");
 
 		val_stream << val_name;
 
@@ -483,6 +522,19 @@ private:
 		_name_id++;
 
 		result += std::to_string(id);
+
+#if 0
+		
+		auto id_string = std::to_string(id);
+
+		for (auto c : id_string)
+		{
+			result += "$$";
+
+			result += c;
+		}
+
+#endif
 
 		return result;
 	}

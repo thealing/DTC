@@ -1,0 +1,24 @@
+#include <stdio.h>;
+
+typedef const $Type Const$Type;
+
+typedef $Type* Ref$Type;
+
+typedef $Element Array$Element$Count[$Count];
+
+void demo_types()
+{
+	int i = 0;
+
+	Const$$Ref$int const_intPointer = &i;
+
+	Ref$$Const$int pointer_to_constInt = &i;
+
+	*const_intPointer = 1;
+
+	pointer_to_constInt = NULL;
+
+	Array$int$100 array_of_100_ints = { 1, 2, 3 };
+
+	Array$float$200 array_of_200_floats = { 4.5f, 6.7f, 8.9f };
+}
