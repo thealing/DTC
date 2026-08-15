@@ -8,9 +8,11 @@ private:
 
 	int _name_id;
 
+	int _counter;
+
 public:
 
-	Code_Generator() : _gen(1), _name_id(1)
+	Code_Generator() : _gen(1), _name_id(1), _counter(0)
 	{
 	}
 
@@ -45,23 +47,26 @@ public:
 		name = "base";
 
 		// dynamic base
-		name += std::to_string(_name_id);
+		//name += std::to_string(_counter);
+		//name += std::to_string(_counter / 100000);
+
+		_counter++;
 
 		auto ins_name = name;
 
-		for (int i = 0; i < 10; i++)
+		auto ns = std::to_string(_name_id);
+
+		for (auto nc = ns.begin(); nc != ns.end(); nc++)
 		{
+			std::string_view ss(nc, ns.end());
+
 			name += "$$T";
 
-			name += std::to_string(_name_id);
-
-			name += std::to_string(i);
+			name += ss;
 
 			ins_name += "$T";
 
-			ins_name += std::to_string(_name_id);
-
-			ins_name += std::to_string(i);
+			ins_name += ss;
 		}
 
 		declarator_parameter.name = name;
@@ -299,7 +304,8 @@ public:
 	{
 		auto choice = get_random_real();
 
-		if (choice < 0.2)
+		// DEBUG
+		//if (choice < 0.2)
 		{
 			generate_typedef(source_stream, val_stream);
 

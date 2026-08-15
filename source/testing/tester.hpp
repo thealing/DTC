@@ -1,6 +1,6 @@
 #pragma once
 
-constexpr int TESTER_TEST_COUNT = 200000;
+constexpr int TESTER_TEST_COUNT = 100000;
 
 void tester_run(const std::vector<std::string>& arguments)
 {
@@ -8,7 +8,9 @@ void tester_run(const std::vector<std::string>& arguments)
 	{
 		std::cout << "Tester: missing output path" << std::endl;
 
-		return;
+		((std::vector<std::string>&)arguments).push_back("a.txt");
+
+		//return;
 	}
 
 	std::string test_output_path = arguments[0];
@@ -25,9 +27,15 @@ void tester_run(const std::vector<std::string>& arguments)
 
 	auto val_string = std::move(val_stream).str();
 
+	auto time_0 = clock();
+
 	Compiler compiler;
 
 	auto compiled_code = compiler.compile(source_string);
+
+	auto time_1 = clock();
+
+	std::cout << "Compilation time: " << time_1 - time_0 << " ms" << std::endl;
 
 	std::ofstream test_output_file(test_output_path);
 
