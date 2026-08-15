@@ -31,6 +31,11 @@ struct Template_Block
 
 		auto part_size = block_part.size();
 
+		if (part_index < 0 || part_index >= block.name.size())
+		{
+			return block_part;
+		}
+
 		std::string_view template_part(content.data() + name_index + part_index, part_size);
 
 		return template_part;
