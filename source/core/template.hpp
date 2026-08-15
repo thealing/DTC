@@ -34,7 +34,10 @@ std::string template_replace(It source_start, It source_end, It par_start, It pa
 
 			if (source_it == source_end)
 			{
-				match_found = true;
+				if (par_it == par_end)
+				{
+					match_found = true;
+				}
 
 				break;
 			}
@@ -268,6 +271,11 @@ bool template_split_special(It start, It end, std::string& base, std::string& ke
 				}
 				else
 				{
+					if (string_is_digit(part[1]))
+					{
+						return false;
+					}
+
 					key += '*';
 
 					pattern += part;

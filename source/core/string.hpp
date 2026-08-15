@@ -10,6 +10,11 @@ bool string_is_word(char c)
 	return c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '_' || c == '$';
 }
 
+bool string_is_digit(char c)
+{
+	return c >= '0' && c <= '9';
+}
+
 template<typename It>
 bool string_continues_with(It it, It end, It pattern_it, It pattern_end)
 {
