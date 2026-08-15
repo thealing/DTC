@@ -10,6 +10,8 @@ private:
 
 	std::string _result;
 
+	std::vector<std::string_view> _split_scratch;
+
 public:
 
 	Compiler()
@@ -37,7 +39,9 @@ public:
 				continue;
 			}
 
-			std::vector<std::string_view> parts;
+			_split_scratch.clear();
+
+			auto& parts = _split_scratch;
 
 			std::string pattern;
 
@@ -55,6 +59,11 @@ public:
 				}
 
 				Template_Block template_block(pattern, block);
+
+				for (auto& part : parts)
+				{
+					part = template_block.translate(block, part);
+				}
 
 				auto base = parts[0];
 
@@ -103,7 +112,9 @@ private:
 
 		for (auto instance : instances)
 		{
-			std::vector<std::string_view> args;
+			_split_scratch.clear();
+
+			auto& args = _split_scratch;
 
 			bool valid_template = template_split_instance(instance, std::back_inserter(args));
 

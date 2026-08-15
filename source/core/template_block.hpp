@@ -25,6 +25,17 @@ struct Template_Block
 		name_size = block.name.size();
 	}
 
+	std::string_view translate(Block block, std::string_view block_part) const
+	{
+		auto part_index = block_part.data() - block.name.data();
+
+		auto part_size = block_part.size();
+
+		std::string_view template_part(content.data() + name_index + part_index, part_size);
+
+		return template_part;
+	}
+
 	std::string instantiate(std::string_view instance) const
 	{
 		std::string renamed_context = content;
