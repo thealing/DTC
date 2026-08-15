@@ -34,8 +34,6 @@
 
 #include "core/template_block.hpp"
 
-#include "engine/string_map.hpp"
-
 #include "engine/template_registry.hpp"
 
 #include "engine/compiler.hpp"
