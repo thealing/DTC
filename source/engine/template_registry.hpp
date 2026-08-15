@@ -1,11 +1,14 @@
 #pragma once
 
-// TODO: Efficient implementation
 class Template_Registry
 {
 private:
 
-	std::vector<std::pair<std::string, Template_Block>> _specials;
+	std::deque<Template_Block> _template_blocks;
+
+	std::deque<String_Map<size_t>> _trie;
+
+	String_Pair_Map<size_t, size_t> _trie_map;
 
 public:
 
@@ -13,71 +16,118 @@ public:
 	{
 	}
 
-	template<typename Key, typename Block>
-	bool add_template_special(Key&& key, Block&& block)
+	template<typename It, typename Block>
+	bool add_template_special(std::string_view base, It par_start, It par_end, Block&& block)
 	{
-		for (const auto& [k, b] : _specials)
+		auto par_count = std::distance(par_start, par_end);
+
+		auto trie_key = std::make_pair(base, par_count);
+
+		auto trie_index = _trie.size();
+
+		auto trie_map_result = _trie_map.emplace(trie_key, trie_index);
+
+		if (trie_map_result.second)
 		{
-			if (k == key)
-			{
-				return false;
-			}
+			_trie.emplace_back();
+		}
+		else
+		{
+			trie_index = trie_map_result.first->second;
 		}
 
-		_specials.emplace_back(std::forward<Key>(key), std::forward<Block>(block));
+		auto par_it = par_start;
 
-		return true;
+		while (true)
+		{
+			auto& trie_node = _trie[trie_index];
+
+			auto par = *par_it;
+
+			par_it++;
+
+			if (par_it == par_end)
+			{
+				auto template_index = _template_blocks.size();
+
+				auto trie_result = trie_node.emplace(par, template_index);
+
+				if (trie_result.second)
+				{
+					_template_blocks.emplace_back(std::forward<Block>(block));
+				}
+				
+				return trie_result.second;
+			}
+
+			trie_index = _trie.size();
+
+			auto trie_result = trie_node.emplace(par, trie_index);
+
+			if (trie_result.second)
+			{
+				_trie.emplace_back();
+			}
+			else
+			{
+				trie_index = trie_result.first->second;
+			}
+		}
 	}
 
 	template<typename It>
-	bool find_special(It arg_start, It arg_end, const Template_Block*& block_ptr) const
+	const Template_Block* find_special(std::string_view base, It arg_start, It arg_end) const
 	{
-		for (auto special_it = _specials.rbegin(); special_it != _specials.rend(); special_it++)
+		auto arg_count = std::distance(arg_start, arg_end);
+
+		auto trie_key = std::make_pair(base, arg_count);
+
+		auto trie_map_it = _trie_map.find(trie_key);
+
+		if (trie_map_it == _trie_map.end())
 		{
-			const auto& [key, block] = *special_it;
-
-			auto key_it = key.begin();
-
-			auto key_end = key.end();
-
-			bool match_found = true;
-
-			for (auto arg_it = arg_start; arg_it != arg_end; arg_it++)
-			{
-				std::string_view key_slice(key_it, key_end);
-
-				if (key_slice.starts_with(*arg_it))
-				{
-					key_it += arg_it->size();
-
-					continue;
-				}
-
-				if (key_it != key_end && *key_it == '*')
-				{
-					key_it++;
-
-					continue;
-				}
-
-				match_found = false;
-
-				break;
-			}
-
-			if (key_it != key_end)
-			{
-				match_found = false;
-			}
-
-			if (match_found)
-			{
-				block_ptr = &block;
-
-				return true;
-			}
+			return nullptr;
 		}
 
-		return false;
+		auto trie_index = trie_map_it->second;
+
+		auto arg_it = arg_start;
+		
+		while (true)
+		{
+			const auto& trie_node = _trie[trie_index];
+
+			auto arg = *arg_it;
+
+			auto trie_it = trie_node.find(arg);
+
+			auto trie_end = trie_node.end();
+
+			if (trie_it == trie_end)
+			{
+				if (arg == "*")
+				{
+					return nullptr;
+				}
+
+				trie_it = trie_node.find("*");
+
+				if (trie_it == trie_end)
+				{
+					return nullptr;
+				}
+			}
+
+			arg_it++;
+
+			if (arg_it == arg_end)
+			{
+				auto template_index = trie_it->second;
+
+				return &_template_blocks[template_index];
+			}
+
+			trie_index = trie_it->second;
+		}
 	}
 };

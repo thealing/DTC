@@ -4,8 +4,6 @@
 
 #include <iomanip>
 
-#include <vector>
-
 #include <string>
 
 #include <string_view>
@@ -16,9 +14,13 @@
 
 #include <filesystem>
 
-#include <unordered_map>
+#include <vector>
 
-#include <unordered_set>
+#include <deque>
+
+#include <map>
+
+#include <set>
 
 #include <random>
 
@@ -31,6 +33,8 @@
 #include "core/template.hpp"
 
 #include "core/template_block.hpp"
+
+#include "engine/string_map.hpp"
 
 #include "engine/template_registry.hpp"
 

@@ -4,9 +4,9 @@ class Compiler
 {
 private:
 
-	std::unordered_map<std::string, Template_Registry> _templates;
+	Template_Registry _template_registry;
 
-	std::unordered_set<std::string> _template_instances;
+	std::set<std::string> _template_instances;
 
 	std::string _result;
 
@@ -37,30 +37,32 @@ public:
 				continue;
 			}
 
-			std::string base;
-
-			std::string key;
+			std::vector<std::string_view> parts;
 
 			std::string pattern;
 
-			bool valid_template = template_split_special(block.name, base, key, pattern);
-
-			if (valid_template && key.empty())
-			{
-				emit_block(block.content);
-
-				it = block_end;
-
-				continue;
-			}
+			bool valid_template = template_split_special(block.name, pattern, std::back_inserter(parts));
 
 			if (valid_template)
 			{
+				if (parts.size() == 1)
+				{
+					emit_block(block.content);
+
+					it = block_end;
+
+					continue;
+				}
+
 				Template_Block template_block(pattern, block);
 
-				auto& template_registry = _templates[base];
+				auto base = parts[0];
 
-				bool added_template = template_registry.add_template_special(std::move(key), std::move(template_block));
+				auto par_start = parts.begin() + 1;
+
+				auto par_end = parts.end();
+
+				bool added_template = _template_registry.add_template_special(base, par_start, par_end, std::move(template_block));
 
 				if (added_template == false)
 				{
@@ -112,30 +114,19 @@ private:
 				continue;
 			}
 
-			std::string base(args[0]);
-
-			auto template_pair = _templates.find(base);
-
-			if (template_pair == _templates.end())
-			{
-				std::cout << "DTC: undeclared template: " << instance << std::endl;
-
-				continue;
-			}
-
 			auto result = _template_instances.emplace(instance);
 
 			if (result.second)
 			{
+				auto base = args[0];
+
 				auto arg_start = args.begin() + 1;
 
 				auto arg_end = args.end();
 
-				const Template_Block* template_block = nullptr;
+				const Template_Block* template_block = _template_registry.find_special(base, arg_start, arg_end);
 
-				const auto& template_registry = template_pair->second;
-
-				if (template_registry.find_special(arg_start, arg_end, template_block) == false)
+				if (template_block == nullptr)
 				{
 					std::cout << "DTC: overload not found: " << instance << std::endl;
 
