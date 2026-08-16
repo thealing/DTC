@@ -12,17 +12,40 @@ private:
 
 	std::vector<std::string_view> _split_buffer;
 
+	std::vector<std::string> _file_names;
+
+	std::vector<std::pair<std::string_view, size_t>> _template_locations;
+
+	std::vector<std::tuple<size_t, size_t, std::string_view>> _origin_stack;
+
+	Error_Reporter* _error_reporter = nullptr;
+
+	size_t _source_location = 0;
+
 public:
 
 	Compiler()
 	{
 	}
 
-	std::string compile(std::string_view string)
+	void set_error_reporter(Error_Reporter* error_reporter)
 	{
-		auto it = string.begin();
+		_error_reporter = error_reporter;
+	}
 
-		auto end = string.end();
+	std::string compile(std::string_view path, std::string_view content)
+	{
+		auto start = content.begin();
+
+		auto end = content.end();
+
+		auto it = start;
+
+		std::string_view file_name = _file_names.emplace_back(path);
+
+		size_t line_number = 1;
+
+		size_t line_offset = 0;
 
 		while (it != end)
 		{
@@ -39,6 +62,18 @@ public:
 				continue;
 			}
 
+			size_t name_offset = block.name.data() - content.data();
+
+			while (line_offset != name_offset)
+			{
+				if (content[line_offset] == '\n')
+				{
+					line_number++;
+				}
+
+				line_offset++;
+			}
+
 			_split_buffer.clear();
 
 			auto& parts = _split_buffer;
@@ -51,14 +86,20 @@ public:
 			{
 				if (parts.size() == 1)
 				{
+					_origin_stack.emplace_back(SIZE_MAX, line_number, block.name);
+
 					emit_block(block.content);
+
+					_origin_stack.pop_back();
 
 					it = block_end;
 
 					continue;
 				}
 
-				Template_Block template_block(pattern, block);
+				size_t template_id = _template_locations.size();
+
+				Template_Block template_block(template_id, pattern, block);
 
 				for (auto& part : parts)
 				{
@@ -71,16 +112,32 @@ public:
 
 				auto par_end = parts.end();
 
-				bool added_template = _template_registry.add_template_special(base, par_start, par_end, std::move(template_block));
+				auto previous_template = _template_registry.add_template_special(base, par_start, par_end, std::move(template_block));
 
-				if (added_template == false)
+				if (previous_template != nullptr)
 				{
-					std::cout << "DTC: duplicate template: " << block.name << std::endl;
+					std::cerr << file_name << "(" << line_number << "): ";
+
+					std::cerr << "error: template already defined: " << block.name << std::endl;
+
+					auto previous_template_id = previous_template->get_id();
+
+					auto previous_template_location = _template_locations[previous_template_id];
+
+					std::cerr << "  " << previous_template_location.first << "(" << previous_template_location.second << "): ";
+
+					std::cerr << "note: previous definition: " << previous_template->get_name() << std::endl;
+				}
+				else
+				{
+					_template_locations.emplace_back(file_name, line_number);
 				}
 			}
 			else
 			{
-				std::cout << "DTC: invalid template: " << block.name << std::endl;
+				std::cerr << file_name << "(" << line_number << "): ";
+
+				std::cerr << "error: invalid template definition: " << block.name << std::endl;
 			}
 
 			bool remove_padding = ends_with_double_newline();
@@ -100,6 +157,26 @@ public:
 
 private:
 
+	void report_error(std::span<std::string_view> message_parts)
+	{
+		if (_error_reporter != nullptr)
+		{
+			std::string message;
+
+			for (auto part : message_parts)
+			{
+				message += part;
+			}
+
+			_error_reporter->report_error(_source_location, message);
+		}
+
+		if (compiler_arguments.stop_on_error)
+		{
+			throw 1;
+		}
+	};
+
 	void emit_block(std::string_view block)
 	{
 		auto start = block.begin();
@@ -110,8 +187,82 @@ private:
 
 		template_get_instances(start, end, std::back_inserter(instances));
 
+		size_t line_distance = 0;
+
+		size_t line_offset = 0;
+
 		for (auto instance : instances)
 		{
+			auto advance_line = [&]()
+			{
+				size_t offset = instance.data() - block.data();
+
+				while (line_offset != offset)
+				{
+					if (block[line_offset] == '\n')
+					{
+						line_distance++;
+					}
+
+					line_offset++;
+				}
+			};
+
+			auto report_error = [&](std::string_view label)
+			{
+				auto last_line_count = line_distance;
+
+				auto last_origin_name = instance;
+
+				size_t stack_top_index = _origin_stack.size() - 1;
+
+				for (size_t stack_index = stack_top_index; stack_index <= stack_top_index; stack_index--)
+				{
+					std::pair<std::string_view, size_t> location;
+
+					auto [location_index, line_count, origin_name] = _origin_stack[stack_index];
+
+					if (location_index == SIZE_MAX)
+					{
+						location.first = _file_names.back();
+
+						location.second = line_count;
+					}
+					else
+					{
+						location = _template_locations[location_index];
+					}
+
+					location.second += last_line_count;
+
+					if (stack_index == stack_top_index)
+					{
+						std::cerr << location.first << "(" << location.second << "): ";
+
+						std::cerr << "error: " << label << ": " << instance << std::endl;
+					}
+					else
+					{
+						std::cerr << "  " << location.first << "(" << location.second << "): ";
+
+						std::cerr << "note: within template: " << last_origin_name << std::endl;
+					}
+
+					location.second -= last_line_count;
+
+					if (location_index == SIZE_MAX)
+					{
+						std::cerr << "  " << location.first << "(" << location.second << "): ";
+
+						std::cerr << "note: instantiated in " << origin_name << std::endl;
+					}
+
+					last_line_count = line_count;
+
+					last_origin_name = origin_name;
+				}
+			};
+
 			_split_buffer.clear();
 
 			auto& args = _split_buffer;
@@ -120,7 +271,9 @@ private:
 
 			if (valid_template == false)
 			{
-				std::cout << "DTC: invalid template usage: " << instance << std::endl;
+				advance_line();
+
+				report_error("invalid template instantiation");
 
 				continue;
 			}
@@ -129,24 +282,41 @@ private:
 
 			if (result.second)
 			{
+				advance_line();
+
 				auto base = args[0];
 
 				auto arg_start = args.begin() + 1;
 
 				auto arg_end = args.end();
 
-				const Template_Block* template_block = _template_registry.find_special(base, arg_start, arg_end);
+				auto template_exists = false;
+
+				auto template_block = _template_registry.find_special(base, arg_start, arg_end, template_exists);
 
 				if (template_block == nullptr)
 				{
-					std::cout << "DTC: overload not found: " << instance << std::endl;
+					if (template_exists)
+					{
+						report_error("specialization not found");
+					}
+					else
+					{
+						report_error("template not found");
+					}
 
 					continue;
 				}
 
 				std::string content = template_block->instantiate(instance);
 
+				auto template_id = template_block->get_id();
+
+				_origin_stack.emplace_back(template_id, line_distance, instance);
+
 				emit_template(std::move(content), template_block->get_pattern(), arg_start, arg_end);
+
+				_origin_stack.pop_back();
 			}
 		}
 

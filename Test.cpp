@@ -4,7 +4,14 @@ int main(int argc, char** argv)
 {
 	std::vector<std::string> arguments(argv + 1, argv + argc);
 
-	tester_run(arguments);
+	try
+	{
+		tester_run(arguments);
 
-	return 0;
+		return 0;
+	}
+	catch (int exit_code)
+	{
+		return exit_code;
+	}
 }

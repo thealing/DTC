@@ -150,7 +150,18 @@ typedef   int F1(int);
 typedef   int const(F2);
 
 
-typedef $Type* Ref$Type;
+typedef $T* 
+
+
+Ref$T;
+
+typedef $T* 
+
+
+Ref$$$T$A;
+typedef $T* 
+
+Ref$$$T$$A;
 
 // FUNCTIONS
 
@@ -431,6 +442,8 @@ Complex$Int$B$Float$Char$$$_action$_result Simple$B$_action(Simple$B simple)
 void replacer$first$type()
 {
 	$$$first$pe value;
+
+	nonexistant1$first();
 }
 
 
@@ -450,8 +463,42 @@ void Array$Element$$Create()
 {
 }
 
+void nonexit$$B()
+{
+
+}
+
+void temp$A()
+{
+	nonexit$A();
+}
+
+void temp2$A()
+{
+	temp$A();
+}
+
+void temp3$A()
+{
+	temp2$A();
+}
+
+void temp4$A()
+{
+	temp3$A();
+}
 
 
+void foo2() {
+
+	replacer$ty$int();
+
+	replacer$ty$int$t();
+
+	temp4$int();
+
+}
+void foo1() { foo2(); }
 
 int main()
 {
@@ -470,7 +517,7 @@ int main()
 
 	simple1 = Simple$long$_decrement(simple1);
 
-	replacer$ty$int();
+	foo1();
 
 	return 0;
 }

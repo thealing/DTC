@@ -28,7 +28,7 @@ public:
 	}
 
 	template<typename It, typename Block>
-	bool add_template_special(std::string_view base, It par_start, It par_end, Block&& block)
+	const Template_Block* add_template_special(std::string_view base, It par_start, It par_end, Block&& block)
 	{
 		auto par_count = std::distance(par_start, par_end);
 
@@ -85,20 +85,22 @@ public:
 
 		auto& trie_node = _trie[trie_index];
 		
-		if (trie_node.end_index == 0)
+		if (trie_node.end_index != 0)
 		{
-			trie_node.end_index = _template_blocks.size();
-			
-			_template_blocks.emplace_back(std::forward<Block>(block));
-			
-			return true;
+			auto template_index = trie_node.end_index;
+
+			return &_template_blocks[template_index];
 		}
 		
-		return false;
+		trie_node.end_index = _template_blocks.size();
+
+		_template_blocks.emplace_back(std::forward<Block>(block));
+
+		return nullptr;
 	}
 
 	template<typename It>
-	const Template_Block* find_special(std::string_view base, It arg_start, It arg_end) const
+	const Template_Block* find_special(std::string_view base, It arg_start, It arg_end, bool& template_exists) const
 	{
 		auto arg_count = std::distance(arg_start, arg_end);
 
@@ -110,6 +112,8 @@ public:
 		{
 			return nullptr;
 		}
+
+		template_exists = true;
 
 		auto trie_index = trie_map_it->second;
 

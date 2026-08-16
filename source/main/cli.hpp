@@ -22,6 +22,27 @@ void cli_run(const std::vector<std::string>& arguments)
 
 	for (std::string_view argument : arguments)
 	{
+		if (argument == "-e")
+		{
+			compiler_arguments.stop_on_error = true;
+
+			continue;
+		}
+
+		if (argument == "-l")
+		{
+			compiler_arguments.add_line_directives = true;
+
+			continue;
+		}
+
+		if (argument.starts_with('-'))
+		{
+			std::cerr << "invalid argument: " << argument << std::endl;
+
+			continue;
+		}
+
 		if (output_path_view.empty())
 		{
 			output_path_view = argument;
@@ -34,14 +55,14 @@ void cli_run(const std::vector<std::string>& arguments)
 
 	if (output_path_view.empty())
 	{
-		std::cout << "DTC: missing output file" << std::endl;
+		std::cerr << "missing output file" << std::endl;
 
 		return;
 	}
 
 	if (source_path_views.empty())
 	{
-		std::cout << "DTC: missing source files" << std::endl;
+		std::cerr << "missing source files" << std::endl;
 
 		return;
 	}
@@ -56,10 +77,12 @@ void cli_run(const std::vector<std::string>& arguments)
 
 	if (output_file.is_open() == false)
 	{
-		std::cout << "DTC: invalid output file: " << cli_path_to_string(output_path) << std::endl;
+		std::cerr << "invalid output file: " << cli_path_to_string(output_path) << std::endl;
 
 		return;
 	}
+
+	std::cout << "output file: " << cli_path_to_string(output_path) << std::endl;
 
 	Compiler compiler;
 
@@ -71,12 +94,12 @@ void cli_run(const std::vector<std::string>& arguments)
 
 		if (source_file.is_open() == false)
 		{
-			std::cout << "DTC: invalid source file: " << cli_path_to_string(source_path) << std::endl;
+			std::cerr << "invalid source file: " << cli_path_to_string(source_path) << std::endl;
 
 			return;
 		}
 
-		std::cout << "DTC: compiling dtl: " << cli_path_to_string(source_path) << std::endl;
+		std::cout << "compiling dtl: " << cli_path_to_string(source_path) << std::endl;
 
 		std::ostringstream source_stream;
 
@@ -84,7 +107,13 @@ void cli_run(const std::vector<std::string>& arguments)
 
 		std::string source = std::move(source_stream).str();
 
-		auto output = compiler.compile(source);
+		File_Error_Reporter reporter(source_path.generic_string(), source);
+
+		compiler.set_error_reporter(&reporter);
+
+		auto file_name = source_path.generic_string();
+
+		auto output = compiler.compile(file_name, source);
 
 		output_file << output;
 
