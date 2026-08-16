@@ -13,9 +13,9 @@ private:
 		std::map<std::string_view, size_t> map;
 	};
 
-	std::deque<Template_Block> _template_blocks;
+	std::vector<Template_Block> _template_blocks;
 
-	std::deque<Trie_Node> _trie;
+	std::vector<Trie_Node> _trie;
 
 	std::map<std::pair<std::string_view, size_t>, size_t> _trie_map;
 
