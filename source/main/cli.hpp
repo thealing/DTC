@@ -107,10 +107,6 @@ void cli_run(const std::vector<std::string>& arguments)
 
 		std::string source = std::move(source_stream).str();
 
-		File_Error_Reporter reporter(source_path.generic_string(), source);
-
-		compiler.set_error_reporter(&reporter);
-
 		auto file_name = source_path.generic_string();
 
 		auto output = compiler.compile(file_name, source);

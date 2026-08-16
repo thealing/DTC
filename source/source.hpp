@@ -40,15 +40,9 @@
 
 #include "engine/template_registry.hpp"
 
-#include "engine/error_reporter.hpp"
-
-#include "engine/file_iterator.hpp"
-
 #include "engine/compiler_arguments.hpp"
 
 #include "engine/compiler.hpp"
-
-#include "main/file_error_reporter.hpp"
 
 #include "main/cli.hpp"
 

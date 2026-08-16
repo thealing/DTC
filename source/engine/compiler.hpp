@@ -18,19 +18,10 @@ private:
 
 	std::vector<std::tuple<size_t, size_t, std::string_view>> _origin_stack;
 
-	Error_Reporter* _error_reporter = nullptr;
-
-	size_t _source_location = 0;
-
 public:
 
 	Compiler()
 	{
-	}
-
-	void set_error_reporter(Error_Reporter* error_reporter)
-	{
-		_error_reporter = error_reporter;
 	}
 
 	std::string compile(std::string_view path, std::string_view content)
@@ -156,26 +147,6 @@ public:
 	}
 
 private:
-
-	void report_error(std::span<std::string_view> message_parts)
-	{
-		if (_error_reporter != nullptr)
-		{
-			std::string message;
-
-			for (auto part : message_parts)
-			{
-				message += part;
-			}
-
-			_error_reporter->report_error(_source_location, message);
-		}
-
-		if (compiler_arguments.stop_on_error)
-		{
-			throw 1;
-		}
-	};
 
 	void emit_block(std::string_view block)
 	{
