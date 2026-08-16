@@ -163,7 +163,9 @@ public:
 
 				trie_index = backtrack_index;
 
-				arg_it = std::next(arg_start, arg_index);
+				arg_it = arg_start;
+				
+				std::advance(arg_it, arg_index);
 
 				break;
 			}

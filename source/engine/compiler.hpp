@@ -3,21 +3,22 @@
 class String_View_Streambuf : public std::streambuf
 {
 public:
+
 	String_View_Streambuf(std::string_view view)
 	{
-		auto* data = const_cast<char*>(view.data());
+		auto* data = (char*)view.data();
 
 		setg(data, data, data + view.size());
 	}
 };
 
-class String_View_Istream : public std::istream
+class String_View_Stream : public std::istream
 {
 	String_View_Streambuf buffer;
 
 public:
-	String_View_Istream(std::string_view view)
-		: std::istream(&buffer), buffer(view)
+
+	String_View_Stream(std::string_view view) : std::istream(&buffer), buffer(view)
 	{
 	}
 };
@@ -91,19 +92,21 @@ public:
 				{
 					directive.remove_prefix(4);
 
-					String_View_Istream directive_stream(directive);
+					String_View_Stream directive_stream(directive);
 
-					directive_stream >> line_number;
+					if (directive_stream >> line_number)
+					{
+						line_number--;
 
-					line_number--;
-
-					line_offset = std::distance(start, it);
+						line_offset = std::distance(start, it);
+					}
 
 					auto& file_name_string = _file_names.back();
 
-					directive_stream >> std::quoted(file_name_string);
-
-					file_name = file_name_string;
+					if (directive_stream >> std::quoted(file_name_string))
+					{
+						file_name = file_name_string;
+					}
 				}
 
 				continue;
