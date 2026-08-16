@@ -65,6 +65,8 @@ public:
 		{
 			if (*it == '#')
 			{
+				auto statement_start = it;
+
 				it++;
 
 				string_skip_inline_space(it, end);
@@ -90,9 +92,9 @@ public:
 
 				if (directive.starts_with("line"))
 				{
-					String_View_Stream directive_stream(directive);
+					directive.remove_prefix(4);
 
-					directive_stream.ignore(4);
+					String_View_Stream directive_stream(directive);
 
 					if (directive_stream >> line_number)
 					{
@@ -109,9 +111,9 @@ public:
 					}
 				}
 
-				_result += '#';
+				std::string_view statement(statement_start, it);
 
-				_result += directive;
+				_result += statement;
 
 				continue;
 			}
