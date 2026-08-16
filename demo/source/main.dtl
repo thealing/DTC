@@ -11,6 +11,7 @@ struct		  B		{	int
 
 ;  
 
+
 struct C {
 	struct C_A {
 		int i;
@@ -153,15 +154,14 @@ typedef   int const(F2);
 typedef $T* 
 
 
-Ref$T;
+Ptr$T;
 
 typedef $T* 
 
 
 Ref$$$T$A;
-typedef $T* 
 
-Ref$$$T$$A;
+
 
 // FUNCTIONS
 
@@ -296,7 +296,7 @@ enum
 
 int TYPE_Pair$X$Y = ("$X  $Y", 1);
 
-int TYPE_Pair$$$Array$Int$$$$Pair$$Ref$Char$$Ref$Float_Id = ("special", 1);
+int TYPE_Pair$$$Array$Int$$$$Pair$$Ptr$Char$$Ptr$Float_Id = ("special", 1);
 
 typedef int Float_Id;
 
@@ -338,9 +338,9 @@ TYPE_STRUCTURE$object* container_get_$object(Container* container, int index)
 
 void boo()
 {
-	container_get_$$$Pair$$Array$Int$$$Pair$$Ref$Char$$Ref$Float(0, 0);
+	container_get_$$$Pair$$Array$Int$$$Pair$$Ptr$Char$$Ptr$Float(0, 0);
 
-	container_get_$$$Pair$$Array$Int$$$Pair$$Ref$int$$Ref$Float(0, 0);
+	container_get_$$$Pair$$Array$Int$$$Pair$$Ptr$int$$Ptr$Float(0, 0);
 
 	Container c = { 0 };
 
@@ -356,7 +356,7 @@ void boo()
 
 	Z$int.field = 1;
 
-	Z$$Ref$char.field = "BoOoOoOoOoO!4!4!";
+	Z$$Ptr$char.field = "BoOoOoOoOoO!4!4!";
 }
 
 void strings_();
@@ -443,7 +443,8 @@ void replacer$first$type()
 {
 	$$$first$pe value;
 
-	nonexistant1$first();
+	//nonexistant1$first();
+
 }
 
 
@@ -470,7 +471,7 @@ void nonexit$$B()
 
 void temp$A()
 {
-	nonexit$A();
+	//nonexit$A();
 }
 
 void temp2$A()
@@ -493,7 +494,7 @@ void foo2() {
 
 	replacer$ty$int();
 
-	replacer$ty$int$t();
+	//replacer$ty$int$t();
 
 	temp4$int();
 

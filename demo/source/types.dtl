@@ -1,4 +1,3 @@
-#include <stdio.h>;
 
 typedef const $Type Const$Type;
 
@@ -16,7 +15,7 @@ void demo_types()
 
 	*const_intPointer = 1;
 
-	pointer_to_constInt = NULL;
+	pointer_to_constInt = 0;
 
 	Array$int$100 array_of_100_ints = { 1, 2, 3 };
 
