@@ -59,7 +59,7 @@ public:
 
 		size_t line_number = 1;
 
-		size_t line_offset = 0;
+		auto line_it = it;
 
 		while (it != end)
 		{
@@ -90,15 +90,15 @@ public:
 
 				if (directive.starts_with("line"))
 				{
-					directive.remove_prefix(4);
-
 					String_View_Stream directive_stream(directive);
+
+					directive_stream.ignore(4);
 
 					if (directive_stream >> line_number)
 					{
 						line_number--;
 
-						line_offset = std::distance(start, it);
+						line_it = it;
 					}
 
 					auto& file_name_string = _file_names.back();
@@ -108,6 +108,10 @@ public:
 						file_name = file_name_string;
 					}
 				}
+
+				_result += '#';
+
+				_result += directive;
 
 				continue;
 			}
@@ -125,16 +129,24 @@ public:
 				continue;
 			}
 
-			size_t name_offset = block.name.data() - content.data();
-
-			while (line_offset != name_offset)
+			while (string_find(line_it, it, '\n'))
 			{
-				if (content[line_offset] == '\n')
-				{
-					line_number++;
-				}
+				line_number++;
 
-				line_offset++;
+				line_it++;
+			}
+
+			auto block_line_number = line_number;
+
+			auto block_name_offset = block.name.data() - content.data();
+
+			auto block_name_it = content.begin() + block_name_offset;
+
+			while (string_find(line_it, block_name_it, '\n'))
+			{
+				line_number++;
+
+				line_it++;
 			}
 
 			_split_buffer.clear();
@@ -195,7 +207,7 @@ public:
 				}
 				else
 				{
-					_template_locations.emplace_back(file_name, line_number);
+					_template_locations.emplace_back(file_name, block_line_number);
 				}
 			}
 			else
