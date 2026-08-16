@@ -276,7 +276,7 @@ bool template_split_special(It start, It end, Inserter inserter, std::string& pa
 						return false;
 					}
 
-					*inserter = "*";
+					*inserter = "";
 
 					pattern += part;
 				}

@@ -4,9 +4,18 @@ class Template_Registry
 {
 private:
 
+	struct Trie_Node
+	{
+		size_t generic_index = 0;
+
+		size_t end_index = 0;
+
+		std::map<std::string_view, size_t> map;
+	};
+
 	std::deque<Template_Block> _template_blocks;
 
-	std::deque<std::map<std::string_view, size_t>> _trie;
+	std::deque<Trie_Node> _trie;
 
 	std::map<std::pair<std::string_view, size_t>, size_t> _trie_map;
 
@@ -14,7 +23,7 @@ private:
 
 public:
 
-	Template_Registry()
+	Template_Registry() : _template_blocks(1), _trie(1)
 	{
 	}
 
@@ -38,43 +47,54 @@ public:
 			trie_index = trie_map_result.first->second;
 		}
 
-		auto par_it = par_start;
-
-		while (true)
+		for (auto par_it = par_start; par_it != par_end; par_it++)
 		{
 			auto& trie_node = _trie[trie_index];
 
-			auto par = *par_it;
-
-			par_it++;
-
-			if (par_it == par_end)
-			{
-				auto template_index = _template_blocks.size();
-
-				auto trie_result = trie_node.emplace(par, template_index);
-
-				if (trie_result.second)
-				{
-					_template_blocks.emplace_back(std::forward<Block>(block));
-				}
-				
-				return trie_result.second;
-			}
-
 			trie_index = _trie.size();
 
-			auto trie_result = trie_node.emplace(par, trie_index);
+			auto par = *par_it;
 
-			if (trie_result.second)
+			if (par.empty())
 			{
-				_trie.emplace_back();
+				if (trie_node.generic_index == 0)
+				{
+					trie_node.generic_index = trie_index;
+					
+					_trie.emplace_back();
+				}
+				else
+				{
+					trie_index = trie_node.generic_index;
+				}
 			}
 			else
 			{
-				trie_index = trie_result.first->second;
+				auto trie_result = trie_node.map.emplace(par, trie_index);
+
+				if (trie_result.second)
+				{
+					_trie.emplace_back();
+				}
+				else
+				{
+					trie_index = trie_result.first->second;
+				}
 			}
 		}
+
+		auto& trie_node = _trie[trie_index];
+		
+		if (trie_node.end_index == 0)
+		{
+			trie_node.end_index = _template_blocks.size();
+			
+			_template_blocks.emplace_back(std::forward<Block>(block));
+			
+			return true;
+		}
+		
+		return false;
 	}
 
 	template<typename It>
@@ -93,66 +113,67 @@ public:
 
 		auto trie_index = trie_map_it->second;
 
-		auto arg_it = arg_start;
-
 		_backtrack_buffer.clear();
 
 		auto& branches = _backtrack_buffer;
 		
-		while (true)
+		for (auto arg_it = arg_start; arg_it != arg_end; arg_it++)
 		{
 			const auto& trie_node = _trie[trie_index];
 
 			auto arg = *arg_it;
 
-			auto trie_it = trie_node.find(arg);
+			auto trie_it = trie_node.map.find(arg);
 
-			auto trie_end = trie_node.end();
-
-			if (trie_it == trie_end)
+			auto trie_end = trie_node.map.end();
+			
+			if (trie_it != trie_end)
 			{
-				trie_it = trie_node.find("*");
-
-				if (trie_it == trie_end)
+				if (trie_node.generic_index != 0)
 				{
-					if (branches.empty())
-					{
-						return nullptr;
-					}
+					auto arg_index = std::distance(arg_start, arg_it);
 
-					auto [backtrack_index, arg_index] = branches.back();
-
-					branches.pop_back();
-
-					const auto& backtrack_node = _trie[backtrack_index];
-
-					trie_it = backtrack_node.find("*");
-
-					if (trie_it == trie_end)
-					{
-						return nullptr;
-					}
-
-					arg_it = std::next(arg_start, arg_index);
+					branches.emplace_back(trie_node.generic_index, arg_index);
 				}
+
+				trie_index = trie_it->second;
+
+				continue;
 			}
-			else
+
+			if (trie_node.generic_index != 0)
 			{
-				auto arg_index = std::distance(arg_start, arg_it);
+				trie_index = trie_node.generic_index;
 
-				branches.emplace_back(trie_index, arg_index);
+				continue;
 			}
 
-			arg_it++;
-
-			if (arg_it == arg_end)
+			while (true)
 			{
-				auto template_index = trie_it->second;
+				if (branches.empty())
+				{
+					return nullptr;
+				}
 
-				return &_template_blocks[template_index];
+				auto [backtrack_index, arg_index] = branches.back();
+
+				trie_index = backtrack_index;
+
+				arg_it = std::next(arg_start, arg_index);
+
+				break;
 			}
-
-			trie_index = trie_it->second;
 		}
+
+		auto& trie_node = _trie[trie_index];
+
+		if (trie_node.end_index != 0)
+		{
+			auto template_index = trie_node.end_index;
+
+			return &_template_blocks[template_index];
+		}
+
+		return nullptr;
 	}
 };
