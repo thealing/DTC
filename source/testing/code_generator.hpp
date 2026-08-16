@@ -52,32 +52,64 @@ public:
 
 		_counter++;
 
+		std::string name2 = name;
+
 		auto ins_name = name;
 
-		auto ns = std::to_string(_name_id);
+		auto ns = std::to_string(_counter);
 
 		for (auto nc = ns.begin(); nc != ns.end(); nc++)
 		{
-			std::string_view ss(nc, ns.end());
+			std::string_view ss(ns.begin(), std::next(nc));
 
-			name += "$$T";
+			if (std::distance(nc, ns.end()) >= 3)
+			{
+				name += "$$T";
 
-			name += ss;
+				name += ss;
+
+				name2 += "$U";
+
+				name2 += ss;
+			}
+			else
+			{
+				name += "$$K";
+
+				name += ss;
+
+				name2 += "$$T";
+
+				name2 += ss;
+			}
 
 			ins_name += "$T";
 
 			ins_name += ss;
 		}
 
-		declarator_parameter.name = name;
+		{
+			declarator_parameter.name = name2;
 
-		auto declarator = get_random_declarator(declarator_parameter);
+			auto declarator = get_random_declarator(declarator_parameter);
 
-		source_stream << declarator;
+			source_stream << declarator;
 
-		source_stream << ';';
+			source_stream << ';';
 
-		source_stream << '\n';
+			source_stream << '\n';
+		}
+
+		if(0)
+		{
+			source_stream << "int ";
+
+			source_stream << name;
+
+			source_stream << ';';
+
+			source_stream << '\n';
+		}
 
 		source_stream << '\n';
 

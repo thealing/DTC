@@ -438,6 +438,8 @@ void replacer$first$type()
 
 const int triple$x = $x * 3;
 
+const int triple$$98 = 191191919;
+
 const int triple$$99 = 1919191919;
 
 const int triple$$$200$10 = 111;
