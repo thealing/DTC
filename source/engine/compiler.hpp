@@ -146,7 +146,7 @@ private:
 
 				std::string content = template_block->instantiate(instance);
 
-				emit_template(std::move(content), template_block->pattern, arg_start, arg_end);
+				emit_template(std::move(content), template_block->get_pattern(), arg_start, arg_end);
 			}
 		}
 
