@@ -118,6 +118,8 @@ public:
 					std::cerr << "  " << previous_template_location.first << "(" << previous_template_location.second << "): ";
 
 					std::cerr << "note: previous definition: " << previous_template->get_name() << std::endl;
+
+					indicate_error();
 				}
 				else
 				{
@@ -129,6 +131,8 @@ public:
 				std::cerr << file_name << "(" << line_number << "): ";
 
 				std::cerr << "error: invalid template definition: " << block.name << std::endl;
+
+				indicate_error();
 			}
 
 			bool remove_padding = ends_with_double_newline();
@@ -232,6 +236,8 @@ private:
 
 					last_origin_name = origin_name;
 				}
+
+				indicate_error();
 			};
 
 			_split_buffer.clear();
@@ -311,7 +317,7 @@ private:
 		}
 	}
 
-	bool ends_with_double_newline()
+	bool ends_with_double_newline() const
 	{
 		if (_result.size() >= 2)
 		{
@@ -324,5 +330,13 @@ private:
 		}
 
 		return false;
+	}
+
+	void indicate_error() const
+	{
+		if (compiler_arguments.stop_on_error)
+		{
+			throw 1;
+		}
 	}
 };
