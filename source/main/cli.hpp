@@ -16,33 +16,37 @@ std::string cli_path_to_string(const fs::path& path)
 
 void cli_run(const std::vector<std::string>& arguments)
 {
-	if (arguments.size() != 1)
+	std::string_view output_path_view;
+
+	std::vector<std::string_view> source_path_views;
+
+	for (std::string_view argument : arguments)
 	{
-		std::cout << "DTC: invalid command" << std::endl;
+		if (output_path_view.empty())
+		{
+			output_path_view = argument;
+		}
+		else
+		{
+			source_path_views.push_back(argument);
+		}
+	}
+
+	if (output_path_view.empty())
+	{
+		std::cout << "DTC: missing output file" << std::endl;
 
 		return;
 	}
 
-	fs::path project_path = arguments[0];
-
-	std::ifstream project_file(project_path);
-
-	if (project_file.is_open() == false)
+	if (source_path_views.empty())
 	{
-		std::cout << "DTC: invalid project path: " << cli_path_to_string(project_path) << std::endl;
+		std::cout << "DTC: missing source files" << std::endl;
 
 		return;
 	}
-
-	std::cout << "DTC: building project: " << cli_path_to_string(project_path) << std::endl;
-
-	fs::path project_dir = project_path.parent_path();
-
-	fs::path output_path_rel;
-
-	project_file >> output_path_rel;
-
-	fs::path output_path = project_dir / output_path_rel;
+	
+	fs::path output_path = output_path_view;
 
 	fs::path output_dir = output_path.parent_path();
 
@@ -52,53 +56,27 @@ void cli_run(const std::vector<std::string>& arguments)
 
 	if (output_file.is_open() == false)
 	{
-		std::cout << "DTC: invalid output path: " << cli_path_to_string(output_path) << std::endl;
+		std::cout << "DTC: invalid output file: " << cli_path_to_string(output_path) << std::endl;
 
 		return;
 	}
 
 	Compiler compiler;
 
-	while (project_file.good())
+	for (auto source_path_view : source_path_views)
 	{
-		fs::path source_file_path_rel;
+		fs::path source_path = source_path_view;
 
-		fs::path target_file_path_rel;
-
-		project_file >> source_file_path_rel;
-
-		if (source_file_path_rel.empty())
-		{
-			break;
-		}
-
-		project_file >> target_file_path_rel;
-
-		fs::path source_file_path = project_dir / source_file_path_rel;
-
-		fs::path target_file_path = project_dir / target_file_path_rel;
-
-		std::ifstream source_file(source_file_path);
+		std::ifstream source_file(source_path);
 
 		if (source_file.is_open() == false)
 		{
-			std::cout << "DTC: invalid source path: " << cli_path_to_string(source_file_path) << std::endl;
+			std::cout << "DTC: invalid source file: " << cli_path_to_string(source_path) << std::endl;
 
 			return;
 		}
 
-		cli_create_directories(target_file_path.parent_path());
-
-		std::ofstream target_file(target_file_path);
-
-		if (target_file.is_open() == false)
-		{
-			std::cout << "DTC: invalid target path: " << cli_path_to_string(target_file_path) << std::endl;
-
-			return;
-		}
-
-		std::cout << "DTC: compiling dtl: " << cli_path_to_string(source_file_path_rel) << " -> " << cli_path_to_string(target_file_path_rel) << std::endl;
+		std::cout << "DTC: compiling dtl: " << cli_path_to_string(source_path) << std::endl;
 
 		std::ostringstream source_stream;
 
@@ -106,12 +84,10 @@ void cli_run(const std::vector<std::string>& arguments)
 
 		std::string source = std::move(source_stream).str();
 
-		auto target = compiler.compile(source);
+		auto output = compiler.compile(source);
 
-		target_file << target;
+		output_file << output;
 
-		fs::path target_path_from_output = fs::relative(target_file_path, output_dir);
-
-		output_file << "#include " << cli_path_to_string(target_path_from_output) << '\n';
+		output_file << "\n\n";
 	}
 }
