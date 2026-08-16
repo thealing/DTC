@@ -1,5 +1,27 @@
 #pragma once
 
+class String_View_Streambuf : public std::streambuf
+{
+public:
+	String_View_Streambuf(std::string_view view)
+	{
+		auto* data = const_cast<char*>(view.data());
+
+		setg(data, data, data + view.size());
+	}
+};
+
+class String_View_Istream : public std::istream
+{
+	String_View_Streambuf buffer;
+
+public:
+	String_View_Istream(std::string_view view)
+		: std::istream(&buffer), buffer(view)
+	{
+	}
+};
+
 class Compiler
 {
 private:
@@ -40,6 +62,53 @@ public:
 
 		while (it != end)
 		{
+			if (*it == '#')
+			{
+				it++;
+
+				string_skip_inline_space(it, end);
+
+				auto directive_start = it;
+
+				while (true)
+				{
+					if (string_find(it, end, '\n') == false)
+					{
+						break;
+					}
+
+					if (it[-1] != '\\')
+					{
+						break;
+					}
+
+					it++;
+				}
+
+				std::string_view directive(directive_start, it);
+
+				if (directive.starts_with("line"))
+				{
+					directive.remove_prefix(4);
+
+					String_View_Istream directive_stream(directive);
+
+					directive_stream >> line_number;
+
+					line_number--;
+
+					line_offset = std::distance(start, it);
+
+					auto& file_name_string = _file_names.back();
+
+					directive_stream >> std::quoted(file_name_string);
+
+					file_name = file_name_string;
+				}
+
+				continue;
+			}
+
 			Block block;
 
 			auto block_end = parser_parse(it, end, block);

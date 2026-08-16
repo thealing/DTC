@@ -1,5 +1,10 @@
 #pragma once
 
+bool string_is_inline_space(char c)
+{
+	return c == ' ' || c == '\t';
+}
+
 bool string_is_space(char c)
 {
 	return c == ' ' || c == '\t' || c == '\n';
@@ -152,6 +157,15 @@ template<typename It>
 void string_skip_space(It& it, It end)
 {
 	while (it != end && string_is_space(*it))
+	{
+		it++;
+	}
+}
+
+template<typename It>
+void string_skip_inline_space(It& it, It end)
+{
+	while (it != end && string_is_inline_space(*it))
 	{
 		it++;
 	}

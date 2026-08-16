@@ -323,7 +323,7 @@ It parser_parse_function(It start, It end, Block& block)
 
 	auto declaration_end = it;
 
-	auto found_one = string_find(declaration_end, end, "{;=");
+	auto found_one = string_find(declaration_end, end, "{;=#");
 
 	if (found_one == false)
 	{
@@ -377,7 +377,7 @@ It parser_parse_global(It start, It end, Block& block)
 	{
 		auto start_it = it;
 
-		auto found_one = string_find(it, end, "{};=");
+		auto found_one = string_find(it, end, "{};=#");
 
 		if (found_one == false)
 		{
@@ -389,11 +389,6 @@ It parser_parse_global(It start, It end, Block& block)
 			string_skip_block(it, end);
 
 			continue;
-		}
-
-		if (*it == '}')
-		{
-			return start;
 		}
 
 		if (*it == ';')
@@ -440,6 +435,8 @@ It parser_parse_global(It start, It end, Block& block)
 				}
 			}
 		}
+
+		return start;
 	}
 }
 
