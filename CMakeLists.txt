@@ -78,7 +78,7 @@ foreach(SOURCE_FILE ${DEMO_DTL_SOURCE})
 
 	get_filename_component(NAME "${SOURCE_FILE}" NAME)
 
-	set(OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/demo/p/${NAME}")
+	set(OUTPUT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/demo/generated/temp/${NAME}")
 
 	add_custom_command(OUTPUT "${OUTPUT_FILE}" COMMAND "${CMAKE_CXX_COMPILER}" /P /Fi"${OUTPUT_FILE}" "${SOURCE_FILE}" DEPENDS "${SOURCE_FILE}")
 
