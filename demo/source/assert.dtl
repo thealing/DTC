@@ -1,0 +1,12 @@
+
+#define Assert(x) _Assert(x, #x)
+
+void _Assert(bool condition, const char* expression)
+{
+	if (condition == false)
+	{
+		printf("Assertion '%s' failed.\n", expression);
+
+		exit(1);
+	}
+}

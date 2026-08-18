@@ -1,0 +1,172 @@
+
+typedef size_t Index;
+
+typedef size_t Count;
+
+typedef size_t Length;
+
+typedef struct _Array$T Array$T;
+
+typedef struct _List$T List$T;
+
+struct _Array$T
+{
+	$T* elements;
+
+	Index length;
+};
+
+struct _List$T
+{
+	Array$T items;
+
+	Count count;
+};
+
+void Array$T$$Create(Array$T* array, Length length)
+{
+	array->elements = calloc(length, sizeof($T));
+
+	array->length = length;
+}
+
+void Array$T$$Destroy(Array$T* array)
+{
+	free(array->elements);
+}
+
+$T* Array$T$$GetElement(Array$T* array, Index index)
+{
+	return &array->elements[index];
+}
+
+Length Array$T$$GetLength(Array$T* array)
+{
+	return array->length;
+}
+
+void List$T$$Create(List$T* list)
+{
+	enum { DefaultCapacity = 8 };
+
+	Array$T$Create(&list->items, DefaultCapacity);
+
+	list->count = 0;
+}
+
+void List$T$$Destroy(List$T* list)
+{
+	List$T$ClearItems(list);
+
+	Array$T$Destroy(list->items);
+}
+
+void List$T$$Add$Method(List$T* list, $T* item)
+{
+	Count capacity = Array$T$GetLength(&list->items);
+
+	Count count = list->count;
+
+	if (count == capacity)
+	{
+		Count new_capacity = capacity * 2;
+
+		Array$T new_items;
+
+		Array$T$Create(&new_items, new_capacity);
+
+		Array$T old_items = list->items;
+
+		for (Index index = 0; index < count; index++)
+		{
+			$T* new_item = Array$T$GetElement(&new_items, index);
+
+			$T* old_item = Array$T$GetElement(&old_items, index);
+
+			MoveConstruct$T(new_item, old_item);
+		}
+
+		list->items = new_items;
+	}
+
+	$T* list_item = Array$T$GetElement(&list->items, count);
+
+	$Method(list_item, item);
+
+	list->count++;
+}
+
+void List$T$$Insert(List$T* list, $T* item)
+{
+	List$T$$Add$CopyConstruct(list, item);
+}
+
+void List$T$$Emplace(List$T* list, $T* item)
+{
+	List$T$$Add$MoveConstruct(list, item);
+}
+
+void List$T$$ClearItems(List$T* list)
+{
+	for (Index index = 0; index < list->count; index++)
+	{
+		$T* item = Array$T$GetElement(&list->items, index);
+
+		Destruct$T(item);
+	}
+}
+
+void List$T$$Clear(List$T* list)
+{
+	List$T$ClearItems(list);
+
+	list->count = 0;
+}
+
+#pragma region DEMO
+
+typedef struct _Demo_Object Demo_Object;
+
+struct _Demo_Object
+{
+	int state;
+};
+
+void Construct$$Demo_Object(Demo_Object* object)
+{
+	object->state = 1;
+}
+
+void Destruct$$Demo_Object(Demo_Object* object)
+{
+	object->state = 2;
+}
+
+void CopyConstruct$$Demo_Object(Demo_Object* object, Demo_Object* source_object)
+{
+	object->state = 3;
+
+	source_object->state = 4;
+}
+
+void MoveConstruct$$Demo_Object(Demo_Object* object, Demo_Object* source_object)
+{
+	object->state = 5;
+
+	source_object->state = 6;
+}
+
+void demo_containers()
+{
+	Array$Demo_Object array;
+
+	Array$Demo_Object$Create(&array, 1);
+
+	Demo_Object* first_element = Array$Demo_Object$GetElement(&array, 0);
+
+	Assert(first_element->state == 0);
+
+	Array$Demo_Object$Destroy(&array);
+}
+
+#pragma endregion

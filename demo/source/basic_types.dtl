@@ -5,7 +5,9 @@ typedef $Type* Ref$Type;
 
 typedef $Element Array$Element$Count[$Count];
 
-void demo_types()
+#pragma region DEMO
+
+void demo_basic_types()
 {
 	int i = 0;
 
@@ -21,3 +23,5 @@ void demo_types()
 
 	Array$float$200 array_of_200_floats = { 4.5f, 6.7f, 8.9f };
 }
+
+#pragma endregion

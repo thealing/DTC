@@ -1,0 +1,55 @@
+
+void Construct$Object($Object* object)
+{
+}
+
+void Destruct$Object($Object* object)
+{
+}
+
+void CopyConstruct$Object($Object* object, $Object* source_object)
+{
+	*object = source_object;
+}
+
+void Copy$Object($Object* object, $Object* source_object)
+{
+	Destruct$Object(object);
+
+	CopyConstruct$Object(object, source_object);
+}
+
+void MoveConstruct$Object($Object* object, $Object* source_object)
+{
+	*object = source_object;
+}
+
+void Move$Object($Object* object, $Object* source_object)
+{
+	Destruct$Object(object);
+
+	MoveConstruct$Object(object, source_object);
+}
+
+#pragma region DEMO
+
+typedef int Int;
+
+void Construct$$Int(Int* i)
+{
+	*i = 0;
+}
+
+void demo_object_semantics()
+{
+	int uninitialized = 1;
+	Construct$int(&uninitialized);
+
+	Int zero_initialized = 1;
+	Construct$Int(&zero_initialized);
+
+	Assert(uninitialized == 1);
+	Assert(zero_initialized == 0);
+}
+
+#pragma endregion

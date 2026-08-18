@@ -37,6 +37,9 @@ struct Z {
 
 struct {
 	$Temp field;
+
+	//Broken b;
+
 } Z$Temp;
 
 struct {
@@ -294,9 +297,11 @@ enum
 	TYPE_COUNT
 };
 
-int TYPE_Pair$X$Y = ("$X  $Y", 1);
+//int TYPE_Pair$X$Y = ("$X  $Y", 1);
+int TYPE_Pair$X$Y = 1;
 
-int TYPE_Pair$$$Array$Int$$$$Pair$$Ptr$Char$$Ptr$Float_Id = ("special", 1);
+//int TYPE_Pair$$$Array$Int$$$$Pair$$Ptr$Char$$Ptr$Float_Id = ("special", 1);
+int TYPE_Pair$$$Array$Int$$$$Pair$$Ptr$Char$$Ptr$Float_Id = 1;
 
 typedef int Float_Id;
 
@@ -488,6 +493,12 @@ void temp4$A()
 {
 	temp3$A();
 }
+
+#pragma DTC instantiate(templ$int)
+
+#pragma DTC set(he, hh)
+
+#pragma DTC unset(he)
 
 
 void foo2() {

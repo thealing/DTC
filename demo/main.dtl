@@ -1,0 +1,23 @@
+
+#include <stdbool.h>
+
+#include <stdio.h>
+
+#include <stdlib.h>
+
+#include "source/assert.dtl"
+
+#include "source/basic_types.dtl"
+
+#include "source/object_semantics.dtl"
+
+#include "source/containers.dtl"
+
+int main()
+{
+	demo_basic_types();
+
+	demo_object_semantics();
+
+	demo_containers();
+}
