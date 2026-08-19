@@ -65,7 +65,7 @@ public:
 		{
 			if (*it == '#')
 			{
-				auto statement_start = it;
+				auto block_start = it;
 
 				it++;
 
@@ -110,10 +110,12 @@ public:
 						file_name = file_name_string;
 					}
 				}
+				else
+				{
+					std::string_view block_view(block_start, it);
 
-				std::string_view statement(statement_start, it);
-
-				_result += statement;
+					_result += block_view;
+				}
 
 				continue;
 			}
