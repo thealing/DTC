@@ -1,0 +1,104 @@
+
+void Clone$Container($Container* container, $Container* source_container)
+{
+	Construct$Container(container);
+
+	Count element_count = $Container$GetElementCount(source_container);
+
+	for (Index index = 0; index < element_count; index++)
+	{
+		$Container$Element* element = $Container$GetElement(source_container, index);
+
+		$Container$Insert(container, element);
+	}
+}
+
+void Map$Container$Method($Container* container, $Container* source_container)
+{
+	Construct$Container(container);
+
+	Count element_count = $Container$GetElementCount(source_container);
+
+	for (Index index = 0; index < element_count; index++)
+	{
+		$Container$Element* source_element = $Container$GetElement(source_container, index);
+
+		$Container$Element element;
+
+		$Method(&element, source_element);
+
+		$Container$Emplace(container, &element);
+	}
+}
+
+#pragma region DEMO
+
+// TODO: List$T specialization
+void Construct$$$List$int(List$int* list)
+{
+	List$int$Create(list);
+}
+
+void Destruct$$$List$int(List$int* list)
+{
+	List$int$Destroy(list);
+}
+
+typedef $T List$T$$Element;
+
+Count List$T$$GetElementCount(List$T* list)
+{
+	return List$T$GetCount(list);
+}
+
+$T* List$T$$GetElement(List$T* list, Index index)
+{
+	return List$T$GetItem(list, index);
+}
+
+void MultiplyByTwo(int* value, int* source_value)
+{
+	*value = *source_value * 2;
+}
+
+void demo_algorithms()
+{
+	List$int list_1;
+
+	Construct$$List$int(&list_1);
+
+	for (Index index = 0; index < 10; index++)
+	{
+		int item = (int)index;
+
+		List$int$Insert(&list_1, &item);
+	}
+
+	List$int list_2;
+
+	Clone$$List$int(&list_2, &list_1);
+
+	for (Index index = 0; index < 10; index++)
+	{
+		int* item = List$int$GetItem(&list_2, index);
+
+		Assert(*item == index);
+	}
+
+	Destruct$$List$int(&list_2);
+
+	Map$$List$int$MultiplyByTwo(&list_2, &list_1);
+
+	for (Index index = 0; index < 10; index++)
+	{
+		int* item = List$int$GetItem(&list_2, index);
+
+		Assert(*item == index * 2);
+	}
+
+	Destruct$$List$int(&list_2);
+
+	Destruct$$List$int(&list_1);
+}
+
+#pragma endregion

@@ -1,0 +1,27 @@
+
+enum { Add$X$Y = $X + $Y };
+
+enum { Multiply$X$Y = $X * $Y };
+
+enum { Multiply$X$Y$Z = $X * $Y * $Z };
+
+enum { Negate$X = -$X };
+
+enum { Double$X = Multiply$X$2 };
+
+enum { Triple$X = Multiply$X$3 };
+
+enum { Increment$X = Add$X$1 };
+
+enum { Decrement$X = Add$X$$Negate$1 };
+
+#pragma region DEMO
+
+int GlobalConstant600 = Multiply$$Increment$$Double$7$$Decrement$$Triple$2$$$Add$3$5;
+
+void demo_constants()
+{
+	Assert(GlobalConstant600 == 600);
+}
+
+#pragma endregion

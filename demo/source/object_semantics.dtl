@@ -9,7 +9,7 @@ void Destruct$Object($Object* object)
 
 void CopyConstruct$Object($Object* object, $Object* source_object)
 {
-	*object = source_object;
+	*object = *source_object;
 }
 
 void Copy$Object($Object* object, $Object* source_object)
@@ -21,7 +21,7 @@ void Copy$Object($Object* object, $Object* source_object)
 
 void MoveConstruct$Object($Object* object, $Object* source_object)
 {
-	*object = source_object;
+	*object = *source_object;
 }
 
 void Move$Object($Object* object, $Object* source_object)
@@ -33,6 +33,7 @@ void Move$Object($Object* object, $Object* source_object)
 
 #pragma region DEMO
 
+// TODO: Zero_Initialized$T typedef
 typedef int Int;
 
 void Construct$$Int(Int* i)

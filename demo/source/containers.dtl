@@ -25,14 +25,14 @@ struct _List$T
 
 void Array$T$$Create(Array$T* array, Length length)
 {
-	array->elements = calloc(length, sizeof($T));
+	array->elements = Allocate$T(length);
 
 	array->length = length;
 }
 
 void Array$T$$Destroy(Array$T* array)
 {
-	free(array->elements);
+	Free(array->elements);
 }
 
 $T* Array$T$$GetElement(Array$T* array, Index index)
@@ -58,7 +58,7 @@ void List$T$$Destroy(List$T* list)
 {
 	List$T$ClearItems(list);
 
-	Array$T$Destroy(list->items);
+	Array$T$Destroy(&list->items);
 }
 
 void List$T$$Add$Method(List$T* list, $T* item)
@@ -86,24 +86,26 @@ void List$T$$Add$Method(List$T* list, $T* item)
 			MoveConstruct$T(new_item, old_item);
 		}
 
+		Array$T$Destroy(&old_items);
+
 		list->items = new_items;
 	}
 
 	$T* list_item = Array$T$GetElement(&list->items, count);
 
-	$Method(list_item, item);
+	$Method$T(list_item, item);
 
 	list->count++;
 }
 
 void List$T$$Insert(List$T* list, $T* item)
 {
-	List$T$$Add$CopyConstruct(list, item);
+	List$T$Add$CopyConstruct(list, item);
 }
 
 void List$T$$Emplace(List$T* list, $T* item)
 {
-	List$T$$Add$MoveConstruct(list, item);
+	List$T$Add$MoveConstruct(list, item);
 }
 
 void List$T$$ClearItems(List$T* list)
@@ -121,6 +123,21 @@ void List$T$$Clear(List$T* list)
 	List$T$ClearItems(list);
 
 	list->count = 0;
+}
+
+$T* List$T$$GetItem(List$T* list, Index index)
+{
+	return Array$T$GetElement(&list->items, index);
+}
+
+Count List$T$$GetCount(List$T* list)
+{
+	return list->count;
+}
+
+Count List$T$$GetCapacity(List$T* list)
+{
+	return Array$T$GetLength(&list->items);
 }
 
 #pragma region DEMO
@@ -146,12 +163,12 @@ void CopyConstruct$$Demo_Object(Demo_Object* object, Demo_Object* source_object)
 {
 	object->state = 3;
 
-	source_object->state = 4;
+	source_object->state = 5;
 }
 
 void MoveConstruct$$Demo_Object(Demo_Object* object, Demo_Object* source_object)
 {
-	object->state = 5;
+	object->state = 4;
 
 	source_object->state = 6;
 }
@@ -167,6 +184,63 @@ void demo_containers()
 	Assert(first_element->state == 0);
 
 	Array$Demo_Object$Destroy(&array);
+
+	List$Demo_Object list;
+
+	List$Demo_Object$Create(&list);
+
+	Count list_capacity = List$Demo_Object$GetCapacity(&list);
+
+	Assert(list_capacity >= 2);
+
+	for (Index index = 0; index < list_capacity; index++)
+	{
+		Demo_Object item;
+
+		Construct$Demo_Object(&item);
+
+		Assert(item.state == 1);
+
+		List$Demo_Object$Insert(&list, &item);
+
+		Assert(item.state == 5);
+
+		Demo_Object* list_item = List$Demo_Object$GetItem(&list, index);
+
+		Assert(list_item->state == 3);
+	}
+
+	for (Index index = list_capacity; index < list_capacity * 2; index++)
+	{
+		Demo_Object item;
+
+		Construct$Demo_Object(&item);
+
+		Assert(item.state == 1);
+
+		List$Demo_Object$Emplace(&list, &item);
+
+		Assert(item.state == 6);
+
+		Demo_Object* list_item = List$Demo_Object$GetItem(&list, index);
+
+		Assert(list_item->state == 4);
+	}
+
+	Count list_count = List$Demo_Object$GetCount(&list);
+
+	Assert(list_count == list_capacity * 2);
+
+	List$Demo_Object$Clear(&list);
+
+	for (Index index = 0; index < list_capacity * 2; index++)
+	{
+		Demo_Object* list_item = List$Demo_Object$GetItem(&list, index);
+
+		Assert(list_item->state == 2);
+	}
+
+	List$Demo_Object$Destroy(&list);
 }
 
 #pragma endregion

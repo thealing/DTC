@@ -9,15 +9,25 @@
 
 #include "source/basic_types.dtl"
 
+#include "source/constants.dtl"
+
 #include "source/object_semantics.dtl"
 
+#include "source/memory.dtl"
+
 #include "source/containers.dtl"
+
+#include "source/algorithms.dtl"
 
 int main()
 {
 	demo_basic_types();
 
+	demo_constants();
+
 	demo_object_semantics();
 
 	demo_containers();
+
+	demo_algorithms();
 }

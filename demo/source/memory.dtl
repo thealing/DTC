@@ -1,0 +1,10 @@
+
+$T* Allocate$T(Count count)
+{
+	return calloc(count, sizeof($T));
+}
+
+void Free(void* memory)
+{
+	free(memory);
+}
