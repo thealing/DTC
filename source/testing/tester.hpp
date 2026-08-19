@@ -31,7 +31,11 @@ void tester_run(const std::vector<std::string>& arguments)
 
 	Compiler compiler;
 
-	auto compiled_code = compiler.compile(source_string);
+	//AllocTrace::enable();
+
+	auto compiled_code = compiler.compile(test_output_path, source_string);
+
+	//AllocTrace::print();
 
 	auto time_1 = clock();
 

@@ -41,13 +41,13 @@ public:
 
 		auto name = get_random_string("type");
 
-		auto val_name = get_random_string("val");
+		auto val_name = get_random_string("val"); 
 
 		// same base
 		name = "base";
 
 		// dynamic base
-		//name += std::to_string(_counter);
+		name += std::to_string(_counter);
 		//name += std::to_string(_counter / 100000);
 
 		_counter++;
@@ -62,23 +62,40 @@ public:
 		{
 			std::string_view ss(ns.begin(), std::next(nc));
 
-			if (std::distance(nc, ns.end()) >= 3)
+			if (0) // dont template
+				break;
+
+			if (0)//use special
 			{
-				name += "$$T";
+				if (std::distance(nc, ns.end()) >= 3)
+				{
+					name += "$$T";
 
-				name += ss;
+					name += ss;
 
-				name2 += "$U";
+					name2 += "$U";
 
-				name2 += ss;
+					name2 += ss;
+				}
+				else
+				{
+					name += "$$K";
+
+					name += ss;
+
+					name2 += "$$T";
+
+					name2 += ss;
+				}
 			}
 			else
 			{
+
 				name += "$$K";
 
 				name += ss;
 
-				name2 += "$$T";
+				name2 += "$T";
 
 				name2 += ss;
 			}
