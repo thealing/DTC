@@ -17,11 +17,11 @@ enum { Decrement$X = Add$X$$Negate$1 };
 
 #pragma region DEMO
 
-int GlobalConstant600 = Multiply$$Increment$$Double$7$$Decrement$$Triple$2$$$Add$3$5;
+int GlobalValue$A$B$C$D = Multiply$$Increment$$Double$A$$Decrement$$Triple$B$$$Add$C$D;
 
-void demo_constants()
+void demo_constant_expressions()
 {
-	Assert(GlobalConstant600 == 600);
+	Assert(GlobalValue$7$2$3$5 == 600);
 }
 
 #pragma endregion
