@@ -161,6 +161,8 @@ public:
 
 				auto [backtrack_index, arg_index] = branches.back();
 
+				branches.pop_back();
+
 				trie_index = backtrack_index;
 
 				arg_it = arg_start;
