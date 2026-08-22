@@ -66,6 +66,8 @@ private:
 
 	std::set<std::string> _template_instances;
 
+	std::map<std::string, std::vector<std::string>, std::less<>> _definitions;
+
 	std::string _result;
 
 	std::vector<std::pair<std::string_view, ptrdiff_t>> _split_buffer;
@@ -158,21 +160,21 @@ public:
 				{
 					string_skip_space(directive_name_end, it);
 
-					auto pragma_name_end = directive_name_end;
+					auto pragma_it = directive_name_end;
 
-					string_skip_word(pragma_name_end, it);
+					string_skip_word(pragma_it, it);
 
-					std::string_view pragma_name(directive_name_end, pragma_name_end);
+					std::string_view pragma_name(directive_name_end, pragma_it);
 
 					if (pragma_name == "DTC")
 					{
-						std::string_view directive(pragma_name_end, it);
+						string_skip_space(pragma_it, it);
 
-						String_View_Stream directive_stream(directive);
+						auto command_start = pragma_it;
 
-						std::string command;
+						string_skip_word(pragma_it, it);
 
-						directive_stream >> command;
+						std::string_view command(command_start, pragma_it);
 
 						if (command == "disable")
 						{
@@ -188,11 +190,75 @@ public:
 							continue;
 						}
 
+						if (command == "push")
+						{
+							string_skip_space(pragma_it, it);
+
+							auto pattern_start = pragma_it;
+
+							string_skip_word(pragma_it, it);
+
+							std::string_view pattern(pattern_start, pragma_it);
+
+							if (pattern.empty() == false)
+							{
+								string_skip_space(pragma_it, it);
+
+								std::string_view replacement(pragma_it, it);
+
+								auto definition_result = _definitions.emplace(pattern, 0);
+
+								definition_result.first->second.emplace_back(replacement);
+
+								continue;
+							}
+						}
+
+						if (command == "pop")
+						{
+							string_skip_space(pragma_it, it);
+
+							auto pattern_start = pragma_it;
+
+							string_skip_word(pragma_it, it);
+
+							std::string_view pattern(pattern_start, pragma_it);
+							
+							string_skip_space(pragma_it, it);
+
+							if (pattern.empty() == false && pragma_it == it)
+							{
+								auto definition_it = _definitions.find(pattern);
+
+								if (definition_it == _definitions.end())
+								{
+									auto line_number = line_iterator.get_line_number(it);
+
+									std::cerr << _current_file_name << "(" << line_number << "): ";
+
+									std::cerr << "warning: pattern not defined: " << pattern << std::endl;
+
+									continue;
+								}
+
+								definition_it->second.pop_back();
+
+								if (definition_it->second.empty())
+								{
+									_definitions.erase(definition_it);
+								}
+
+								continue;
+							}
+						}
+
+						std::string_view directive(command_start, it);
+
 						auto line_number = line_iterator.get_line_number(it);
 
 						std::cerr << _current_file_name << "(" << line_number << "): ";
 
-						std::cerr << "warning: unknown command: " << command << std::endl;
+						std::cerr << "warning: invalid pragma: " << directive << std::endl;
 
 						continue;
 					}

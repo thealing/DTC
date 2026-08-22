@@ -33,13 +33,14 @@ void Move$Object($Object* object, $Object* source_object)
 
 #pragma region DEMO
 
-// TODO: Zero_Initialized$T typedef
-typedef int Int;
+typedef $T Zero_Initialized$T;
 
-void Construct$$Int(Int* i)
+void Construct$$$Zero_Initialized$T($T* value)
 {
-	*i = 0;
+	*value = 0;
 }
+
+#pragma DTC push Int Zero_Initialized$Int
 
 void demo_object_semantics()
 {
@@ -52,5 +53,7 @@ void demo_object_semantics()
 	Assert(uninitialized == 1);
 	Assert(zero_initialized == 0);
 }
+ 
+#pragma DTC pop Int
 
 #pragma endregion
