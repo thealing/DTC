@@ -1,9 +1,13 @@
 
+#pragma DTC disable
+
 #include <stdbool.h>
 
 #include <stdio.h>
 
 #include <stdlib.h>
+
+#pragma DTC enable
 
 #include "source/assert.dtl"
 
