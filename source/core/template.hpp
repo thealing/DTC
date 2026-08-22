@@ -157,11 +157,13 @@ void template_replace(std::string& content, std::string_view pattern, It arg_sta
 			continue;
 		}
 		
-		auto arg_start = arg_it;
-		
+		auto arg_data = arg_it->first.data();
+
 		arg_it += arg_it->second;
+
+		auto arg_size = arg_it->first.data() - arg_data;
 		
-		std::string_view arg(arg_start->first.data(), arg_it->first.data() - arg_start->first.data());
+		std::string_view arg(arg_data, arg_size);
 		
 		content = template_replace(content, par, arg);
 	}
