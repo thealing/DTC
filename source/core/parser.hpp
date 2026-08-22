@@ -470,5 +470,12 @@ It parser_parse(It start, It end, Block& block)
 		result = parser_parse_global(start, end, block);
 	}
 
+	if (result != start)
+	{
+		string_skip(result, end, '\n');
+
+		block.content = { start, result };
+	}
+
 	return result;
 }

@@ -335,15 +335,6 @@ public:
 
 			_set_line_number = true;
 
-			bool remove_padding = ends_with_double_newline();
-
-			if (remove_padding)
-			{
-				_result.pop_back();
-
-				_result.pop_back();
-			}
-
 			it = block_end;
 		}
 
@@ -523,16 +514,7 @@ private:
 
 		template_replace(content, pattern, arg_start, arg_end);
 
-		bool add_padding = ends_with_double_newline();
-
 		emit_block(content);
-
-		_result += '\n';
-
-		if (add_padding)
-		{
-			_result += '\n';
-		}
 
 		_set_line_number = true;
 	}
@@ -567,21 +549,6 @@ private:
 		_result += file_name;
 
 		_result += "\"\n";
-	}
-
-	bool ends_with_double_newline() const
-	{
-		if (_result.size() >= 2)
-		{
-			auto tail = _result.end();
-
-			if (tail[-1] == '\n' && tail[-2] == '\n')
-			{
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	void indicate_error() const
