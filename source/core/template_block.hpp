@@ -38,6 +38,13 @@ public:
 		return _id;
 	}
 
+	std::string_view get_pattern() const
+	{
+		std::string_view pattern_view(_pattern.begin(), _pattern.end());
+
+		return pattern_view;
+	}
+
 	std::string_view get_name() const
 	{
 		std::string_view name(_content.data() + _name_index, _name_size);
@@ -68,12 +75,5 @@ public:
 		renamed_context.replace(_name_index, _name_size, instance);
 
 		return renamed_context;
-	}
-
-	std::string_view get_pattern() const
-	{
-		std::string_view pattern_view(_pattern.begin(), _pattern.end());
-
-		return pattern_view;
 	}
 };

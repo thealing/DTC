@@ -84,8 +84,6 @@ void cli_run(const std::vector<std::string>& arguments)
 
 	std::cout << "output file: " << cli_path_to_string(output_path) << std::endl;
 
-	Compiler compiler;
-
 	for (auto source_path_view : source_path_views)
 	{
 		fs::path source_path = source_path_view;
@@ -108,6 +106,8 @@ void cli_run(const std::vector<std::string>& arguments)
 		std::string source = std::move(source_stream).str();
 
 		auto file_name = source_path.generic_string();
+
+		Compiler compiler;
 
 		auto output = compiler.compile(file_name, source);
 
