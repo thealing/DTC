@@ -33,7 +33,7 @@ private:
 
 	std::string _result;
 
-	std::vector<std::string_view> _split_buffer;
+	std::vector<std::pair<std::string_view, ptrdiff_t>> _split_buffer;
 
 	std::vector<std::string> _file_names;
 
@@ -155,15 +155,13 @@ public:
 
 			_split_buffer.clear();
 
-			auto& parts = _split_buffer;
+			auto& pars = _split_buffer;
 
-			std::string pattern;
-
-			bool valid_template = template_split_special(block.name, pattern, std::back_inserter(parts));
+			bool valid_template = template_split_special(block.name, pars);
 
 			if (valid_template)
 			{
-				if (parts.size() == 1)
+				if (pars.size() == 1)
 				{
 					_origin_stack.emplace_back(SIZE_MAX, line_number, block.name);
 
@@ -176,22 +174,27 @@ public:
 					continue;
 				}
 
+				auto par_start = pars.begin();
+
+				auto par_end = pars.end();
+
+				std::string pattern;
+
+				for (auto par_it = par_start + 1; par_it != par_end; par_it++)
+				{
+					pattern += par_it->first;
+				}
+
 				size_t template_id = _template_locations.size();
 
 				Template_Block template_block(template_id, pattern, block);
 
-				for (auto& part : parts)
+				for (auto& par : pars)
 				{
-					part = template_block.translate(block, part);
+					par.first = template_block.translate(block, par.first);
 				}
 
-				auto base = parts[0];
-
-				auto par_start = parts.begin() + 1;
-
-				auto par_end = parts.end();
-
-				auto previous_template = _template_registry.add_template_special(base, par_start, par_end, std::move(template_block));
+				auto previous_template = _template_registry.add_template_special(par_start, par_end, std::move(template_block));
 
 				if (previous_template != nullptr)
 				{
@@ -317,7 +320,7 @@ private:
 					{
 						std::cerr << "  " << location.first << "(" << location.second << "): ";
 
-						std::cerr << "note: instantiated in " << origin_name << std::endl;
+						std::cerr << "note: originated from: " << origin_name << std::endl;
 					}
 
 					last_line_count = line_count;
@@ -332,7 +335,7 @@ private:
 
 			auto& args = _split_buffer;
 
-			bool valid_template = template_split_instance(instance, std::back_inserter(args));
+			bool valid_template = template_split_instance(instance, args);
 
 			if (valid_template == false)
 			{
@@ -349,15 +352,17 @@ private:
 			{
 				advance_line();
 
-				auto base = args[0];
+				std::string_view arg_sentinel(instance.data() + instance.size(), 0);
 
-				auto arg_start = args.begin() + 1;
+				args.emplace_back(arg_sentinel, 0);
+
+				auto arg_start = args.begin();
 
 				auto arg_end = args.end();
 
 				auto template_exists = false;
 
-				auto template_block = _template_registry.find_special(base, arg_start, arg_end, template_exists);
+				auto template_block = _template_registry.find_special(arg_start, arg_end - 1, template_exists);
 
 				if (template_block == nullptr)
 				{
@@ -379,7 +384,7 @@ private:
 
 				_origin_stack.emplace_back(template_id, line_distance, instance);
 
-				emit_template(std::move(content), template_block->get_pattern(), arg_start, arg_end);
+				emit_template(std::move(content), template_block->get_pattern(), arg_start + 1, arg_end);
 
 				_origin_stack.pop_back();
 			}

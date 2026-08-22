@@ -134,75 +134,146 @@ std::string template_replace(std::string_view source, std::string_view par, std:
 template<typename It>
 void template_replace(std::string& content, std::string_view pattern, It arg_start, It arg_end)
 {
-	auto it = pattern.begin();
+	auto par_it = pattern.begin();
 
-	auto end = pattern.end();
+	auto par_end = pattern.end();
 
-	for (It arg_it = arg_start; arg_it != arg_end && it != end; arg_it++)
+	auto arg_it = arg_start;
+
+	while (par_it != par_end)
 	{
-		auto par_end = template_get_start(it + 1, end);
+		auto par_start = par_it;
 
-		std::string_view par(it, par_end);
+		string_skip(par_it, par_end, '$');
+
+		string_find(par_it, par_end, '$');
+
+		std::string_view par(par_start, par_it);
 		
-		if (par[1] != '*')
+		if (par[1] == '$')
 		{
-			content = template_replace(content, par, *arg_it);
+			arg_it++;
+			
+			continue;
 		}
-
-		it = par_end;
+		
+		auto arg_start = arg_it;
+		
+		arg_it += arg_it->second;
+		
+		std::string_view arg(arg_start->first.data(), arg_it->first.data() - arg_start->first.data());
+		
+		content = template_replace(content, par, arg);
 	}
 }
 
-template<typename It, typename Inserter>
-bool template_split_instance(It start, It end, Inserter inserter)
+template<typename It, typename Container, bool Special>
+ptrdiff_t template_split_template_part(It& it, It end, Container& container)
 {
-	ptrdiff_t level = 0;
+	if (it == end)
+	{
+		return -1;
+	}
 
+	auto start = it;
+
+	string_skip(it, end, '$');
+
+	auto sub_count = it - start;
+
+	string_find(it, end, '$');
+
+	auto part_index = container.size();
+
+	std::string_view part(start, it);
+
+	container.emplace_back(part, 0);
+
+	if constexpr (Special)
+	{
+		if (sub_count == 1)
+		{
+			return 1;
+		}
+
+		sub_count--;
+
+		container[part_index].first.remove_prefix(1);
+	}
+
+	ptrdiff_t part_count = 1;
+
+	for (ptrdiff_t sub_index = 0; sub_index < sub_count - 1; sub_index++)
+	{
+		auto result = template_split_template_part<It, Container, Special>(it, end, container);
+
+		if (result == -1)
+		{
+			return -1;
+		}
+
+		part_count += result;
+	}
+
+	container[part_index].second = part_count;
+
+	return part_count;
+}
+
+template<typename It, typename Container, bool Special = false>
+bool template_split_template(It start, It end, Container& container)
+{
 	auto it = start;
 
-	auto arg_start = it;
+	string_find(it, end, '$');
+
+	auto base_index = container.size();
+
+	std::string_view base(start, it);
+
+	container.emplace_back(base, 0);
+
+	ptrdiff_t base_count = 0;
 
 	while (it != end)
 	{
-		string_find(it, end, '$');
+		auto result = template_split_template_part<It, Container, Special>(it, end, container);
 
-		if (level == 0)
+		if (result == -1)
 		{
-			std::string_view arg(arg_start, it);
-
-			*inserter = arg;
-
-			arg_start = it;
-
-			level++;
+			return false;
 		}
 
-		auto dollar_start = it;
-
-		string_skip(it, end, '$');
-
-		auto dollar_count = it - dollar_start;
-
-		level += dollar_count - 2;
+		base_count++;
 	}
 
-	if (level != -1)
-	{
-		return false;
-	}
-
-	if (arg_start != end)
-	{
-		return false;
-	}
+	container[base_index].second = base_count;
 
 	return true;
 }
 
-template<typename Inserter>
-bool template_split_instance(std::string_view string, Inserter inserter)
+template<typename It, typename Container>
+bool template_split_instance(It start, It end, Container& container)
 {
-	return template_split_instance(string.begin(), string.end(), inserter);
+	return template_split_template<It, Container, false>(start, end, container);
+}
+
+template<typename Container>
+bool template_split_instance(std::string_view string, Container& container)
+{
+	return template_split_instance(string.begin(), string.end(), container);
+}
+
+template<typename It, typename Container>
+bool template_split_special(It start, It end, Container& container)
+{
+	return template_split_template<It, Container, true>(start, end, container);
+}
+
+template<typename Container>
+bool template_split_special(std::string_view string, Container& container)
+{
+	return template_split_special(string.begin(), string.end(), container);
 }
 
 template<typename It, typename Inserter>
@@ -242,84 +313,4 @@ template<typename Inserter>
 void template_get_instances(std::string_view string, Inserter inserter)
 {
 	template_get_instances(string.begin(), string.end(), inserter);
-}
-
-template<typename It, typename Inserter>
-bool template_split_special(It start, It end, Inserter inserter, std::string& pattern)
-{
-	ptrdiff_t level = 0;
-
-	auto it = start;
-
-	auto part_start = it;
-
-	while (it != end)
-	{
-		string_find(it, end, '$');
-
-		if (level == 0)
-		{
-			std::string_view part(part_start, it);
-
-			if (part_start == start)
-			{
-				*inserter = part;
-			}
-			else
-			{
-				if (part[1] == '$')
-				{
-					*inserter = part.substr(1);
-
-					pattern += "$*";
-				}
-				else
-				{
-					if (string_is_digit(part[1]))
-					{
-						return false;
-					}
-
-					*inserter = "";
-
-					pattern += part;
-				}
-			}
-
-			part_start = it;
-
-			level++;
-		}
-
-		auto dollar_start = it;
-
-		string_skip(it, end, '$');
-
-		auto dollar_count = it - dollar_start;
-
-		if (dollar_start == part_start && dollar_count > 1)
-		{
-			dollar_count--;
-		}
-
-		level += dollar_count - 2;
-	}
-
-	if (level != -1)
-	{
-		return false;
-	}
-
-	if (part_start != end)
-	{
-		return false;
-	}
-
-	return true;
-}
-
-template<typename Inserter>
-bool template_split_special(std::string_view string, std::string& pattern, Inserter inserter)
-{
-	return template_split_special(string.begin(), string.end(), inserter, pattern);
 }

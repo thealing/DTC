@@ -24,6 +24,8 @@
 
 #include <span>
 
+#include <algorithm>
+
 #include <utility>
 
 #include <tuple>

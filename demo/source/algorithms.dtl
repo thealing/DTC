@@ -33,15 +33,14 @@ void Map$Container$Method($Container* container, $Container* source_container)
 
 #pragma region DEMO
 
-// TODO: List$T specialization
-void Construct$$$List$int(List$int* list)
+void Construct$$$List$T(List$T* list)
 {
-	List$int$Create(list);
+	List$T$Create(list);
 }
 
-void Destruct$$$List$int(List$int* list)
+void Destruct$$$List$T(List$T* list)
 {
-	List$int$Destroy(list);
+	List$T$Destroy(list);
 }
 
 typedef $T List$T$$Element;

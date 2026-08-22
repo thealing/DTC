@@ -17,7 +17,7 @@ private:
 
 	std::vector<Trie_Node> _trie;
 
-	std::map<std::pair<std::string_view, size_t>, size_t> _trie_map;
+	std::map<std::pair<std::string_view, ptrdiff_t>, size_t> _trie_map;
 
 	mutable std::vector<std::pair<size_t, ptrdiff_t>> _backtrack_buffer;
 
@@ -28,12 +28,10 @@ public:
 	}
 
 	template<typename It, typename Block>
-	const Template_Block* add_template_special(std::string_view base, It par_start, It par_end, Block&& block)
+	const Template_Block* add_template_special(It par_start, It par_end, Block&& block)
 	{
-		auto par_count = std::distance(par_start, par_end);
-
-		auto trie_key = std::make_pair(base, par_count);
-
+		auto trie_key = *par_start;
+		
 		auto trie_index = _trie.size();
 
 		auto trie_map_result = _trie_map.emplace(trie_key, trie_index);
@@ -46,16 +44,14 @@ public:
 		{
 			trie_index = trie_map_result.first->second;
 		}
-
-		for (auto par_it = par_start; par_it != par_end; par_it++)
+		
+		for (auto par_it = par_start + 1; par_it != par_end; par_it++)
 		{
 			auto& trie_node = _trie[trie_index];
 
 			trie_index = _trie.size();
-
-			auto par = *par_it;
-
-			if (par.empty())
+			
+			if (par_it->second == 0)
 			{
 				if (trie_node.generic_index == 0)
 				{
@@ -70,7 +66,7 @@ public:
 			}
 			else
 			{
-				auto trie_result = trie_node.map.emplace(par, trie_index);
+				auto trie_result = trie_node.map.emplace(par_it->first, trie_index);
 
 				if (trie_result.second)
 				{
@@ -100,11 +96,9 @@ public:
 	}
 
 	template<typename It>
-	const Template_Block* find_special(std::string_view base, It arg_start, It arg_end, bool& template_exists) const
+	const Template_Block* find_special(It arg_start, It arg_end, bool& template_exists) const
 	{
-		auto arg_count = std::distance(arg_start, arg_end);
-
-		auto trie_key = std::make_pair(base, arg_count);
+		auto trie_key = *arg_start;
 
 		auto trie_map_it = _trie_map.find(trie_key);
 
@@ -121,13 +115,13 @@ public:
 
 		auto& branches = _backtrack_buffer;
 		
-		for (auto arg_it = arg_start; arg_it != arg_end; arg_it++)
+		auto arg_it = arg_start + 1;
+		
+		while (arg_it != arg_end)
 		{
 			const auto& trie_node = _trie[trie_index];
 
-			auto arg = *arg_it;
-
-			auto trie_it = trie_node.map.find(arg);
+			auto trie_it = trie_node.map.find(arg_it->first);
 
 			auto trie_end = trie_node.map.end();
 			
@@ -136,11 +130,15 @@ public:
 				if (trie_node.generic_index != 0)
 				{
 					auto arg_index = std::distance(arg_start, arg_it);
+					
+					arg_index += arg_it->second;
 
 					branches.emplace_back(trie_node.generic_index, arg_index);
 				}
 
 				trie_index = trie_it->second;
+				
+				arg_it++;
 
 				continue;
 			}
@@ -148,31 +146,28 @@ public:
 			if (trie_node.generic_index != 0)
 			{
 				trie_index = trie_node.generic_index;
+				
+				arg_it += arg_it->second;
 
 				continue;
 			}
 
-			while (true)
+			if (branches.empty())
 			{
-				if (branches.empty())
-				{
-					return nullptr;
-				}
-
-				auto [backtrack_index, arg_index] = branches.back();
-
-				branches.pop_back();
-
-				trie_index = backtrack_index;
-
-				arg_it = arg_start;
-				
-				std::advance(arg_it, arg_index);
-
-				break;
+				return nullptr;
 			}
-		}
 
+			auto [backtrack_index, arg_index] = branches.back();
+
+			branches.pop_back();
+
+			trie_index = backtrack_index;
+
+			arg_it = arg_start;
+			
+			std::advance(arg_it, arg_index);
+		}
+		
 		auto& trie_node = _trie[trie_index];
 
 		if (trie_node.end_index != 0)
