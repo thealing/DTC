@@ -13,9 +13,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 if(MSVC)
 
 	string(REPLACE "/GR" "/GR-" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-	
+
 	string(REPLACE "/MDd" "/MTd" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-	
+
 	string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
 
 	add_compile_options(/GF /GS- /sdl-)
@@ -87,11 +87,11 @@ if(MSVC)
 	add_custom_command(OUTPUT "${DEMO_TEMP_FILE}" APPEND COMMAND "${CMAKE_C_COMPILER}" /P /Fi"${DEMO_TEMP_FILE}" "${DEMO_SOURCE}")
 
 else()
-	
+
 	add_custom_command(OUTPUT "${DEMO_TEMP_FILE}" APPEND COMMAND "${CMAKE_C_COMPILER}" -E -x c "${DEMO_SOURCE}" -o "${DEMO_TEMP_FILE}.tmp")
-	
+
 	add_custom_command(OUTPUT "${DEMO_TEMP_FILE}" APPEND COMMAND "${CMAKE_COMMAND}" -DINPUT="${DEMO_TEMP_FILE}.tmp" -DOUTPUT="${DEMO_TEMP_FILE}" -P "${CMAKE_SOURCE_DIR}/gcc_reld.cmake")
-	
+
 	add_custom_command(OUTPUT "${DEMO_TEMP_FILE}" APPEND COMMAND "${CMAKE_COMMAND}" -E remove "${DEMO_TEMP_FILE}.tmp")
 
 endif()

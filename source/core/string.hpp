@@ -76,14 +76,14 @@ bool string_skip_string(It& it, It end)
 
 			continue;
 		}
-		
+
 		if (*it == '\\')
 		{
 			escaped = true;
 
 			continue;
 		}
-		
+
 		if (*it == quote)
 		{
 			it++;

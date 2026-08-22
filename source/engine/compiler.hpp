@@ -147,7 +147,7 @@ public:
 						continue;
 					}
 				}
-				
+
 				if (directive_name == "pragma")
 				{
 					string_skip_space(directive_name_end, it);
@@ -200,7 +200,7 @@ public:
 
 					emit_line_directive(file_name, line_number);
 				}
-				
+
 				std::string_view line(line_start, it);
 
 				_result += line;

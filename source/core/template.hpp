@@ -149,22 +149,22 @@ void template_replace(std::string& content, std::string_view pattern, It arg_sta
 		string_find(par_it, par_end, '$');
 
 		std::string_view par(par_start, par_it);
-		
+
 		if (par[1] == '$')
 		{
 			arg_it++;
-			
+
 			continue;
 		}
-		
+
 		auto arg_data = arg_it->first.data();
 
 		arg_it += arg_it->second;
 
 		auto arg_size = arg_it->first.data() - arg_data;
-		
+
 		std::string_view arg(arg_data, arg_size);
-		
+
 		content = template_replace(content, par, arg);
 	}
 }

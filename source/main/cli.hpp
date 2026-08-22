@@ -66,7 +66,7 @@ void cli_run(const std::vector<std::string>& arguments)
 
 		return;
 	}
-	
+
 	fs::path output_path = output_path_view;
 
 	fs::path output_dir = output_path.parent_path();

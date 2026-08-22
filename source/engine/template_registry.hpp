@@ -31,7 +31,7 @@ public:
 	const Template_Block* add_template_special(It par_start, It par_end, Block&& block)
 	{
 		auto trie_key = *par_start;
-		
+
 		auto trie_index = _trie.size();
 
 		auto trie_map_result = _trie_map.emplace(trie_key, trie_index);
@@ -44,19 +44,19 @@ public:
 		{
 			trie_index = trie_map_result.first->second;
 		}
-		
+
 		for (auto par_it = par_start + 1; par_it != par_end; par_it++)
 		{
 			auto& trie_node = _trie[trie_index];
 
 			trie_index = _trie.size();
-			
+
 			if (par_it->second == 0)
 			{
 				if (trie_node.generic_index == 0)
 				{
 					trie_node.generic_index = trie_index;
-					
+
 					_trie.emplace_back();
 				}
 				else
@@ -80,14 +80,14 @@ public:
 		}
 
 		auto& trie_node = _trie[trie_index];
-		
+
 		if (trie_node.end_index != 0)
 		{
 			auto template_index = trie_node.end_index;
 
 			return &_template_blocks[template_index];
 		}
-		
+
 		trie_node.end_index = _template_blocks.size();
 
 		_template_blocks.emplace_back(std::forward<Block>(block));
@@ -114,9 +114,9 @@ public:
 		_backtrack_buffer.clear();
 
 		auto& branches = _backtrack_buffer;
-		
+
 		auto arg_it = arg_start + 1;
-		
+
 		while (arg_it != arg_end)
 		{
 			const auto& trie_node = _trie[trie_index];
@@ -124,20 +124,20 @@ public:
 			auto trie_it = trie_node.map.find(arg_it->first);
 
 			auto trie_end = trie_node.map.end();
-			
+
 			if (trie_it != trie_end)
 			{
 				if (trie_node.generic_index != 0)
 				{
 					auto arg_index = std::distance(arg_start, arg_it);
-					
+
 					arg_index += arg_it->second;
 
 					branches.emplace_back(trie_node.generic_index, arg_index);
 				}
 
 				trie_index = trie_it->second;
-				
+
 				arg_it++;
 
 				continue;
@@ -146,7 +146,7 @@ public:
 			if (trie_node.generic_index != 0)
 			{
 				trie_index = trie_node.generic_index;
-				
+
 				arg_it += arg_it->second;
 
 				continue;
@@ -164,10 +164,10 @@ public:
 			trie_index = backtrack_index;
 
 			arg_it = arg_start;
-			
+
 			std::advance(arg_it, arg_index);
 		}
-		
+
 		auto& trie_node = _trie[trie_index];
 
 		if (trie_node.end_index != 0)
