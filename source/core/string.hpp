@@ -38,14 +38,10 @@ bool string_continues_with(It it, It end, It pattern_it, It pattern_end)
 	return pattern_it == pattern_end;
 }
 
-bool string_continues_with(std::string_view::const_iterator it, std::string_view::const_iterator end, std::string_view pattern)
+template<typename It>
+bool string_continues_with(It it, It end, std::string_view pattern)
 {
 	return string_continues_with(it, end, pattern.begin(), pattern.end());
-}
-
-bool string_continues_with(std::string_view::const_reverse_iterator it, std::string_view::const_reverse_iterator end, std::string_view pattern)
-{
-	return string_continues_with(it, end, pattern.rbegin(), pattern.rend());
 }
 
 template<typename It>
@@ -235,4 +231,51 @@ void string_skip_statement(It& it, It end)
 	{
 		it++;
 	}
+}
+
+template<typename It, typename Inserter>
+void string_copy_block(It start, It end, Inserter inserter)
+{
+	auto it = start;
+
+	while (it != end)
+	{
+		auto start_it = it;
+
+		string_skip_inline_space(it, end);
+
+		bool is_line_directive = false;
+
+		if (it != end && *it == '#')
+		{
+			it++;
+
+			string_skip_inline_space(it, end);
+
+			if (string_continues_with(it, end, "line"))
+			{
+				is_line_directive = true;
+			}
+		}
+
+		bool found_newline = string_find(it, end, '\n');
+
+		if (is_line_directive == false)
+		{
+			std::copy(start_it, it, inserter);
+		}
+
+		if (found_newline)
+		{
+			*inserter = *it;
+
+			it++;
+		}
+	}
+}
+
+template<typename Inserter>
+void string_copy_block(std::string_view string, Inserter inserter)
+{
+	string_copy_block(string.begin(), string.end(), inserter);
 }

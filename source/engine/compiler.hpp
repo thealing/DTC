@@ -109,13 +109,16 @@ public:
 					{
 						file_name = file_name_string;
 					}
-				}
-				else
-				{
-					std::string_view block_view(block_start, it);
 
-					_result += block_view;
+					if (compiler_arguments.add_line_directives == false)
+					{
+						continue;
+					}
 				}
+				
+				std::string_view block_view(block_start, it);
+
+				_result += block_view;
 
 				continue;
 			}
@@ -390,7 +393,14 @@ private:
 			}
 		}
 
-		_result += block;
+		if (compiler_arguments.add_line_directives)
+		{
+			_result += block;
+		}
+		else
+		{
+			string_copy_block(block, std::back_inserter(_result));
+		}
 	}
 
 	template<typename It>
