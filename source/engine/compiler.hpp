@@ -23,6 +23,41 @@ public:
 	}
 };
 
+template<typename It>
+class Line_Iterator
+{
+private:
+
+	It _line_it;
+
+	size_t _line_number;
+
+public:
+
+	Line_Iterator(It it) : _line_it(it), _line_number(1)
+	{
+	}
+
+	void set_line_number(It it, size_t number)
+	{
+		_line_it = it;
+
+		_line_number = number;
+	}
+
+	size_t get_line_number(It it)
+	{
+		while (string_find(_line_it, it, '\n'))
+		{
+			_line_number++;
+
+			_line_it++;
+		}
+
+		return _line_number;
+	}
+};
+
 class Compiler
 {
 private:
@@ -41,6 +76,10 @@ private:
 
 	std::vector<std::tuple<size_t, size_t, std::string_view>> _origin_stack;
 
+	intptr_t _suppression_level = 0;
+
+	bool _set_line_number = false;
+
 public:
 
 	Compiler()
@@ -57,15 +96,13 @@ public:
 
 		std::string_view file_name = _file_names.emplace_back(path);
 
-		size_t line_number = 1;
-
-		auto line_it = it;
+		Line_Iterator line_iterator(it);
 
 		while (it != end)
 		{
 			if (*it == '#')
 			{
-				auto block_start = it;
+				auto line_start = it;
 
 				it++;
 
@@ -73,40 +110,35 @@ public:
 
 				auto directive_start = it;
 
-				while (true)
+				string_find(it, end, '\n');
+
+				auto directive_name_end = directive_start;
+
+				string_skip_word(directive_name_end, it);
+
+				std::string_view directive_name(directive_start, directive_name_end);
+
+				if (directive_name == "line")
 				{
-					if (string_find(it, end, '\n') == false)
-					{
-						break;
-					}
-
-					if (it[-1] != '\\')
-					{
-						break;
-					}
-
-					it++;
-				}
-
-				std::string_view directive(directive_start, it);
-
-				if (directive.starts_with("line"))
-				{
-					directive.remove_prefix(4);
+					std::string_view directive(directive_name_end, it);
 
 					String_View_Stream directive_stream(directive);
+
+					size_t line_number = 0;
 
 					if (directive_stream >> line_number)
 					{
 						line_number--;
 
-						line_it = it;
+						line_iterator.set_line_number(it, line_number);
 					}
 
 					auto& file_name_string = _file_names.back();
 
 					if (directive_stream >> std::quoted(file_name_string))
 					{
+						std::replace(file_name_string.begin(), file_name_string.end(), '\\', '/');
+
 						file_name = file_name_string;
 					}
 
@@ -116,9 +148,71 @@ public:
 					}
 				}
 				
-				std::string_view block_view(block_start, it);
+				if (directive_name == "pragma")
+				{
+					string_skip_space(directive_name_end, it);
 
-				_result += block_view;
+					auto pragma_name_end = directive_name_end;
+
+					string_skip_word(pragma_name_end, it);
+
+					std::string_view pragma_name(directive_name_end, pragma_name_end);
+
+					if (pragma_name == "DTC")
+					{
+						std::string_view directive(pragma_name_end, it);
+
+						String_View_Stream directive_stream(directive);
+
+						std::string command;
+
+						directive_stream >> command;
+
+						if (command == "disable")
+						{
+							_suppression_level++;
+
+							continue;
+						}
+
+						if (command == "enable")
+						{
+							_suppression_level--;
+
+							continue;
+						}
+
+						auto line_number = line_iterator.get_line_number(it);
+
+						std::cerr << file_name << "(" << line_number << "): ";
+
+						std::cerr << "warning: unknown command: " << command << std::endl;
+
+						continue;
+					}
+				}
+
+				if (compiler_arguments.add_line_directives && _set_line_number)
+				{
+					_set_line_number = false;
+
+					auto line_number = line_iterator.get_line_number(it);
+
+					emit_line_directive(file_name, line_number);
+				}
+				
+				std::string_view line(line_start, it);
+
+				_result += line;
+
+				continue;
+			}
+
+			if (_suppression_level > 0)
+			{
+				_result += *it;
+
+				it++;
 
 				continue;
 			}
@@ -129,6 +223,18 @@ public:
 
 			if (block_end == it)
 			{
+				if (compiler_arguments.add_line_directives && _set_line_number)
+				{
+					if (*it != '\n' && _result.back() == '\n')
+					{
+						_set_line_number = false;
+
+						auto line_number = line_iterator.get_line_number(it);
+
+						emit_line_directive(file_name, line_number);
+					}
+				}
+
 				_result += *it;
 
 				it++;
@@ -136,25 +242,11 @@ public:
 				continue;
 			}
 
-			while (string_find(line_it, it, '\n'))
-			{
-				line_number++;
-
-				line_it++;
-			}
-
-			auto block_line_number = line_number;
+			auto block_line_number = line_iterator.get_line_number(it);
 
 			auto block_name_offset = block.name.data() - content.data();
 
 			auto block_name_it = content.begin() + block_name_offset;
-
-			while (string_find(line_it, block_name_it, '\n'))
-			{
-				line_number++;
-
-				line_it++;
-			}
 
 			_split_buffer.clear();
 
@@ -166,6 +258,8 @@ public:
 			{
 				if (pars.size() == 1)
 				{
+					auto line_number = line_iterator.get_line_number(it);
+
 					_origin_stack.emplace_back(SIZE_MAX, line_number, block.name);
 
 					emit_block(block.content);
@@ -201,6 +295,8 @@ public:
 
 				if (previous_template != nullptr)
 				{
+					auto line_number = line_iterator.get_line_number(it);
+
 					std::cerr << file_name << "(" << line_number << "): ";
 
 					std::cerr << "error: template already defined: " << block.name << std::endl;
@@ -222,12 +318,16 @@ public:
 			}
 			else
 			{
+				auto line_number = line_iterator.get_line_number(it);
+
 				std::cerr << file_name << "(" << line_number << "): ";
 
 				std::cerr << "error: invalid template definition: " << block.name << std::endl;
 
 				indicate_error();
 			}
+
+			_set_line_number = true;
 
 			bool remove_padding = ends_with_double_newline();
 
@@ -395,6 +495,13 @@ private:
 
 		if (compiler_arguments.add_line_directives)
 		{
+			if (_set_line_number)
+			{
+				_set_line_number = false;
+
+				emit_line_directive();
+			}
+
 			_result += block;
 		}
 		else
@@ -406,6 +513,8 @@ private:
 	template<typename It>
 	void emit_template(std::string content, std::string_view pattern, It arg_start, It arg_end)
 	{
+		_set_line_number = true;
+
 		template_replace(content, pattern, arg_start, arg_end);
 
 		bool add_padding = ends_with_double_newline();
@@ -418,6 +527,40 @@ private:
 		{
 			_result += '\n';
 		}
+
+		_set_line_number = true;
+	}
+
+	void emit_line_directive()
+	{
+		if (compiler_arguments.add_line_directives)
+		{
+			const auto& [location_index, line_count, origin_name] = _origin_stack.back();
+
+			if (location_index == SIZE_MAX)
+			{
+				emit_line_directive(_file_names.back(), line_count);
+			}
+			else
+			{
+				auto location = _template_locations[location_index];
+
+				emit_line_directive(location.first, location.second);
+			}
+		}
+	}
+
+	void emit_line_directive(std::string_view file_name, size_t line_number)
+	{
+		_result += "#line ";
+
+		_result += std::to_string(line_number);
+
+		_result += " \"";
+
+		_result += file_name;
+
+		_result += "\"\n";
 	}
 
 	bool ends_with_double_newline() const
