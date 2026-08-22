@@ -70,7 +70,9 @@ private:
 
 	std::vector<std::pair<std::string_view, ptrdiff_t>> _split_buffer;
 
-	std::vector<std::string> _file_names;
+	std::set<std::string> _file_names;
+
+	std::string_view _current_file_name;
 
 	std::vector<std::pair<std::string_view, size_t>> _template_locations;
 
@@ -88,13 +90,15 @@ public:
 
 	std::string compile(std::string_view path, std::string_view content)
 	{
+		auto path_result = _file_names.emplace(path);
+
+		_current_file_name = *path_result.first;
+
 		auto start = content.begin();
 
 		auto end = content.end();
 
 		auto it = start;
-
-		std::string_view file_name = _file_names.emplace_back(path);
 
 		Line_Iterator line_iterator(it);
 
@@ -133,13 +137,15 @@ public:
 						line_iterator.set_line_number(it, line_number);
 					}
 
-					auto& file_name_string = _file_names.back();
+					std::string file_name;
 
-					if (directive_stream >> std::quoted(file_name_string))
+					if (directive_stream >> std::quoted(file_name))
 					{
-						std::replace(file_name_string.begin(), file_name_string.end(), '\\', '/');
+						std::replace(file_name.begin(), file_name.end(), '\\', '/');
 
-						file_name = file_name_string;
+						auto file_name_result = _file_names.insert(std::move(file_name));
+
+						_current_file_name = *file_name_result.first;
 					}
 
 					if (compiler_arguments.insert_line_directives == false)
@@ -184,7 +190,7 @@ public:
 
 						auto line_number = line_iterator.get_line_number(it);
 
-						std::cerr << file_name << "(" << line_number << "): ";
+						std::cerr << _current_file_name << "(" << line_number << "): ";
 
 						std::cerr << "warning: unknown command: " << command << std::endl;
 
@@ -198,7 +204,7 @@ public:
 
 					auto line_number = line_iterator.get_line_number(it);
 
-					emit_line_directive(file_name, line_number);
+					emit_line_directive(_current_file_name, line_number);
 				}
 
 				std::string_view line(line_start, it);
@@ -231,7 +237,7 @@ public:
 
 						auto line_number = line_iterator.get_line_number(it);
 
-						emit_line_directive(file_name, line_number);
+						emit_line_directive(_current_file_name, line_number);
 					}
 				}
 
@@ -297,7 +303,7 @@ public:
 				{
 					auto line_number = line_iterator.get_line_number(it);
 
-					std::cerr << file_name << "(" << line_number << "): ";
+					std::cerr << _current_file_name << "(" << line_number << "): ";
 
 					std::cerr << "error: template already defined: " << block.name << std::endl;
 
@@ -313,14 +319,14 @@ public:
 				}
 				else
 				{
-					_template_locations.emplace_back(file_name, block_line_number);
+					_template_locations.emplace_back(_current_file_name, block_line_number);
 				}
 			}
 			else
 			{
 				auto line_number = line_iterator.get_line_number(it);
 
-				std::cerr << file_name << "(" << line_number << "): ";
+				std::cerr << _current_file_name << "(" << line_number << "): ";
 
 				std::cerr << "error: invalid template definition: " << block.name << std::endl;
 
@@ -393,7 +399,7 @@ private:
 
 					if (location_index == SIZE_MAX)
 					{
-						location.first = _file_names.back();
+						location.first = _current_file_name;
 
 						location.second = line_count;
 					}
@@ -539,7 +545,7 @@ private:
 
 			if (location_index == SIZE_MAX)
 			{
-				emit_line_directive(_file_names.back(), line_count);
+				emit_line_directive(_current_file_name, line_count);
 			}
 			else
 			{
