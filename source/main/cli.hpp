@@ -31,7 +31,7 @@ void cli_run(const std::vector<std::string>& arguments)
 
 		if (argument == "-l")
 		{
-			compiler_arguments.add_line_directives = true;
+			compiler_arguments.insert_line_directives = true;
 
 			continue;
 		}

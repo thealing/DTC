@@ -6,7 +6,7 @@ public:
 
 	bool stop_on_error;
 
-	bool add_line_directives;
+	bool insert_line_directives;
 
 public:
 
@@ -14,7 +14,7 @@ public:
 	{
 		stop_on_error = false;
 
-		add_line_directives = false;
+		insert_line_directives = false;
 	}
 };
 

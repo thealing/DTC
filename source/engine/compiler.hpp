@@ -142,7 +142,7 @@ public:
 						file_name = file_name_string;
 					}
 
-					if (compiler_arguments.add_line_directives == false)
+					if (compiler_arguments.insert_line_directives == false)
 					{
 						continue;
 					}
@@ -192,7 +192,7 @@ public:
 					}
 				}
 
-				if (compiler_arguments.add_line_directives && _set_line_number)
+				if (compiler_arguments.insert_line_directives && _set_line_number)
 				{
 					_set_line_number = false;
 
@@ -223,7 +223,7 @@ public:
 
 			if (block_end == it)
 			{
-				if (compiler_arguments.add_line_directives && _set_line_number)
+				if (compiler_arguments.insert_line_directives && _set_line_number)
 				{
 					if (*it != '\n' && _result.back() == '\n')
 					{
@@ -493,7 +493,7 @@ private:
 			}
 		}
 
-		if (compiler_arguments.add_line_directives)
+		if (compiler_arguments.insert_line_directives)
 		{
 			if (_set_line_number)
 			{
@@ -533,7 +533,7 @@ private:
 
 	void emit_line_directive()
 	{
-		if (compiler_arguments.add_line_directives)
+		if (compiler_arguments.insert_line_directives)
 		{
 			const auto& [location_index, line_count, origin_name] = _origin_stack.back();
 
