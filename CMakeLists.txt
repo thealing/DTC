@@ -68,7 +68,7 @@ set(TARGET_DEMO "demo")
 
 set(DEMO_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/demo/main.dtl")
 
-set(DEMO_GENERATED "${CMAKE_CURRENT_BINARY_DIR}/demo/generated")
+set(DEMO_GENERATED "${CMAKE_CURRENT_SOURCE_DIR}/demo/generated")
 
 set(DEMO_IMMEDIATE "${CMAKE_CURRENT_SOURCE_DIR}/demo/generated/main.dtl.c")
 
