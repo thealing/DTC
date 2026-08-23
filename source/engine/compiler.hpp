@@ -34,7 +34,7 @@ private:
 
 public:
 
-	Line_Iterator(It it) : _line_it(it), _line_number(1)
+	Line_Iterator(It it, size_t number) : _line_it(it), _line_number(number)
 	{
 	}
 
@@ -84,6 +84,8 @@ private:
 
 	bool _set_line_number = false;
 
+	size_t _definition_line_number = 0;
+
 public:
 
 	Compiler()
@@ -102,7 +104,7 @@ public:
 
 		auto it = start;
 
-		Line_Iterator line_iterator(it);
+		Line_Iterator line_iterator(it, 1);
 
 		while (it != end)
 		{
@@ -447,6 +449,10 @@ private:
 
 		auto it = block_start;
 
+		Line_Iterator line_iterator(it, 0);
+
+		auto start_line_number = _definition_line_number;
+
 		while (string_find(it, block_end, '$'))
 		{
 			string_skip(it, block_end, '$');
@@ -461,6 +467,8 @@ private:
 
 			if (definition_result != _definitions.end())
 			{
+				_definition_line_number = start_line_number + line_iterator.get_line_number(it);
+
 				auto arg_list_start = it;
 
 				string_skip_word(it, block_end);
@@ -487,7 +495,13 @@ private:
 
 					if (string_skip_template(arg_it, arg_end) == false)
 					{
-						std::cerr << "TODO: substitution error message " << arg_list << std::endl;
+						auto location = get_current_block_location();
+
+						location.second += _definition_line_number;
+
+						std::cerr << location.first << "(" << location.second << "): ";
+
+						std::cerr << "error: invalid macro expansion: " << base << arg_list << std::endl;
 
 						break;
 					}
@@ -564,11 +578,15 @@ private:
 			block = replace_buffer;
 		}
 
+		_definition_line_number = start_line_number;
+
 		return replace_buffer;
 	}
 
 	void emit_block(std::string_view block)
 	{
+		_definition_line_number = 0;
+
 		auto replace_buffer = replace_definitions<true>(block);
 
 		auto start = block.begin();
@@ -749,18 +767,9 @@ private:
 	{
 		if (compiler_arguments.insert_line_directives)
 		{
-			const auto& [location_index, line_count, origin_name] = _origin_stack.back();
+			auto location = get_current_block_location();
 
-			if (location_index == SIZE_MAX)
-			{
-				emit_line_directive(_current_file_name, line_count);
-			}
-			else
-			{
-				auto location = _template_locations[location_index];
-
-				emit_line_directive(location.first, location.second);
-			}
+			emit_line_directive(location.first, location.second);
 		}
 	}
 
@@ -775,6 +784,20 @@ private:
 		_result += file_name;
 
 		_result += "\"\n";
+	}
+
+	std::pair<std::string_view, size_t> get_current_block_location() const
+	{
+		const auto& [location_index, line_count, origin_name] = _origin_stack.back();
+
+		if (location_index == SIZE_MAX)
+		{
+			return std::make_pair(_current_file_name, line_count);
+		}
+		else
+		{
+			return _template_locations[location_index];
+		}
 	}
 
 	void indicate_error() const
