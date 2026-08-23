@@ -305,6 +305,45 @@ public:
 							}
 						}
 
+						if (command == "instantiate")
+						{
+							string_skip_space(pragma_it, it);
+
+							auto instance_start = pragma_it;
+
+							string_skip_word(pragma_it, it);
+
+							std::string_view instance(instance_start, pragma_it);
+
+							string_skip_space(pragma_it, it);
+
+							if (instance.empty() == false && pragma_it == it)
+							{
+								auto line_number = line_iterator.get_line_number(it);
+
+								Origin origin = {};
+
+								origin.template_location = { _current_file_name, line_number };
+
+								origin.instance_location = { _current_file_name, line_number };
+
+								origin.instance_name = "pragma";
+
+								_origin_stack.push_back(origin);
+
+								auto get_instance_line_offset = [&]()
+								{
+									return 0;
+								};
+
+								instantiate_template(instance, get_instance_line_offset);
+
+								_origin_stack.pop_back();
+
+								continue;
+							}
+						}
+
 						std::string_view directive(command_start, it);
 
 						auto line_number = line_iterator.get_line_number(it);
@@ -335,20 +374,26 @@ public:
 				continue;
 			}
 
+			bool process_block = true;
+
 			if (_suppression_level > 0)
 			{
-				_result += *it;
-
-				it++;
-
-				continue;
+				process_block = false;
 			}
 
 			Block block;
+			
+			if (process_block)
+			{
+				auto block_end = parser_parse(it, end, block);
 
-			auto block_end = parser_parse(it, end, block);
+				if (block_end == it)
+				{
+					process_block = false;
+				}
+			}
 
-			if (block_end == it)
+			if (process_block == false)
 			{
 				if (compiler_arguments.insert_line_directives && _set_line_number)
 				{
@@ -401,7 +446,7 @@ public:
 
 					_origin_stack.pop_back();
 
-					it = block_end;
+					it += block.content.size();
 
 					continue;
 				}
@@ -468,13 +513,122 @@ public:
 
 			_set_line_number = true;
 
-			it = block_end;
+			it += block.content.size();
 		}
 
 		return std::move(_result);
 	}
 
 private:
+
+	template<typename Get_Instance_Line_Offset>
+	void instantiate_template(std::string_view instance, Get_Instance_Line_Offset get_instance_line_offset)
+	{
+		auto report_error = [&](std::string_view label)
+		{
+			const auto& current_origin = _origin_stack.back();
+
+			auto current_location = current_origin.template_location;
+
+			auto instance_line_offset = get_instance_line_offset();
+
+			current_location.line_number += instance_line_offset;
+
+			std::cerr << current_location.file_name << "(" << current_location.line_number << "): ";
+
+			std::cerr << "error: " << label << ": " << instance << std::endl;
+
+			size_t stack_top_index = _origin_stack.size() - 1;
+
+			for (size_t stack_index = stack_top_index; stack_index <= stack_top_index; stack_index--)
+			{
+				const auto& origin = _origin_stack[stack_index];
+
+				std::cerr << "  " << origin.instance_location.file_name << "(" << origin.instance_location.line_number << "): ";
+
+				if (stack_index == 0)
+				{
+					std::cerr << "note: required from here: " << origin.instance_name << std::endl;
+				}
+				else
+				{
+					std::cerr << "note: instantiated from here: " << origin.instance_name << std::endl;
+				}
+			}
+
+			indicate_error();
+		};
+
+		_split_buffer.clear();
+
+		auto& args = _split_buffer;
+
+		bool valid_template = template_split_instance(instance, args);
+
+		if (valid_template == false)
+		{
+			report_error("invalid template instantiation");
+
+			return;
+		}
+
+		auto result = _template_instances.emplace(instance);
+
+		if (result.second == false)
+		{
+			return;
+		}
+
+		std::string_view end_arg(instance.end(), instance.end());
+
+		args.emplace_back(end_arg, 0);
+
+		auto arg_start = args.begin();
+
+		auto arg_end = args.end();
+
+		auto template_exists = false;
+
+		auto template_block = _template_registry.find_special(arg_start, arg_end - 1, template_exists);
+
+		if (template_block == nullptr)
+		{
+			if (template_exists)
+			{
+				report_error("specialization not found");
+			}
+			else
+			{
+				report_error("template not found");
+			}
+
+			return;
+		}
+
+		std::string content = template_block->instantiate(instance);
+
+		auto template_id = template_block->get_id();
+
+		auto instance_line_offset = get_instance_line_offset();
+
+		const auto& current_origin = _origin_stack.back();
+
+		Origin origin = {};
+
+		origin.template_location = _template_locations[template_id];
+
+		origin.instance_location = current_origin.template_location;
+
+		origin.instance_location.line_number += instance_line_offset;
+
+		origin.instance_name = instance;
+
+		_origin_stack.push_back(origin);
+
+		emit_template(std::move(content), template_block->get_pattern(), arg_start + 1, arg_end);
+
+		_origin_stack.pop_back();
+	}
 
 	template<bool Trim_Start>
 	void replace_definitions(std::string& string)
@@ -516,112 +670,114 @@ private:
 
 			auto definition_result = _definitions.find(base);
 
-			if (definition_result != _definitions.end())
+			if (definition_result == _definitions.end())
 			{
-				_definition_line_offset = start_line_offset + line_iterator.get_line_number(it);
-
-				auto arg_list_start = it;
-
-				string_skip_word(it, block_end);
-
-				std::string_view arg_list(arg_list_start, it);
-
-				std::string arg_buffer = replace_definitions<false>(arg_list);
-
-				auto arg_it = arg_list.begin();
-
-				auto arg_end = arg_list.end();
-
-				const auto& [par_list, replacement] = definition_result->second.back();
-
-				auto par_it = par_list.begin();
-
-				auto par_end = par_list.end();
-
-				std::string content = replacement;
-
-				while (par_it != par_end)
-				{
-					auto arg_start = arg_it;
-
-					if (string_skip_template(arg_it, arg_end) == false)
-					{
-						auto location = get_current_block_location();
-
-						location.line_number += _definition_line_offset;
-
-						std::cerr << location.file_name << "(" << location.line_number << "): ";
-
-						std::cerr << "error: invalid macro expansion: " << base << arg_list << std::endl;
-
-						indicate_error();
-
-						break;
-					}
-
-					auto par_start = par_it;
-
-					par_it++;
-
-					string_skip_word_part(par_it, par_end);
-
-					std::string_view par(par_start, par_it);
-
-					std::string_view arg(arg_start, arg_it);
-
-					content = template_replace_macro(content, par, arg);
-				}
-
-				if (par_it != par_end)
-				{
-					continue;
-				}
-
-				content.append(arg_it, arg_end);
-
-				replace_definitions<Trim_Start>(content);
-
-				auto macro_start = instance_start - 1;
-
-				if constexpr (Trim_Start)
-				{
-					char last_character = 0;
-
-					if (last_character == 0 && macro_start != block_start)
-					{
-						last_character = macro_start[-1];
-					}
-
-					if (last_character == 0 && replace_buffer.empty() == false)
-					{
-						last_character = replace_buffer.back();
-					}
-
-					if (last_character == '$')
-					{
-						macro_start--;
-					}
-
-					if (string_is_word(last_character) == false)
-					{
-						auto content_start = content.begin();
-
-						auto content_end = content.end();
-
-						auto content_it = content_start;
-
-						string_skip(content_it, content_end, '$');
-
-						content.erase(content_start, content_it);
-					}
-				}
-
-				replace_buffer.append(block_start, macro_start);
-
-				replace_buffer.append(content);
-
-				block_start = it;
+				continue;
 			}
+
+			_definition_line_offset = start_line_offset + line_iterator.get_line_number(it);
+
+			auto arg_list_start = it;
+
+			string_skip_word(it, block_end);
+
+			std::string_view arg_list(arg_list_start, it);
+
+			std::string arg_buffer = replace_definitions<false>(arg_list);
+
+			auto arg_it = arg_list.begin();
+
+			auto arg_end = arg_list.end();
+
+			const auto& [par_list, replacement] = definition_result->second.back();
+
+			auto par_it = par_list.begin();
+
+			auto par_end = par_list.end();
+
+			std::string content = replacement;
+
+			while (par_it != par_end)
+			{
+				auto arg_start = arg_it;
+
+				if (string_skip_template(arg_it, arg_end) == false)
+				{
+					auto location = get_current_block_location();
+
+					location.line_number += _definition_line_offset;
+
+					std::cerr << location.file_name << "(" << location.line_number << "): ";
+
+					std::cerr << "error: invalid macro expansion: " << base << arg_list << std::endl;
+
+					indicate_error();
+
+					break;
+				}
+
+				auto par_start = par_it;
+
+				par_it++;
+
+				string_skip_word_part(par_it, par_end);
+
+				std::string_view par(par_start, par_it);
+
+				std::string_view arg(arg_start, arg_it);
+
+				content = template_replace_macro(content, par, arg);
+			}
+
+			if (par_it != par_end)
+			{
+				continue;
+			}
+
+			content.append(arg_it, arg_end);
+
+			replace_definitions<Trim_Start>(content);
+
+			auto macro_start = instance_start - 1;
+
+			if constexpr (Trim_Start)
+			{
+				char last_character = 0;
+
+				if (last_character == 0 && macro_start != block_start)
+				{
+					last_character = macro_start[-1];
+				}
+
+				if (last_character == 0 && replace_buffer.empty() == false)
+				{
+					last_character = replace_buffer.back();
+				}
+
+				if (last_character == '$')
+				{
+					macro_start--;
+				}
+
+				if (string_is_word(last_character) == false)
+				{
+					auto content_start = content.begin();
+
+					auto content_end = content.end();
+
+					auto content_it = content_start;
+
+					string_skip(content_it, content_end, '$');
+
+					content.erase(content_start, content_it);
+				}
+			}
+
+			replace_buffer.append(block_start, macro_start);
+
+			replace_buffer.append(content);
+
+			block_start = it;
 		}
 
 		if (replace_buffer.empty() == false)
@@ -663,108 +819,7 @@ private:
 				return line_iterator.get_line_number(instance_start);
 			};
 
-			auto report_error = [&](std::string_view label)
-			{
-				const auto& current_origin = _origin_stack.back();
-
-				auto current_location = current_origin.template_location;
-
-				auto instance_line_offset = get_instance_line_offset();
-
-				current_location.line_number += instance_line_offset;
-
-				std::cerr << current_location.file_name << "(" << current_location.line_number << "): ";
-
-				std::cerr << "error: " << label << ": " << instance << std::endl;
-
-				size_t stack_top_index = _origin_stack.size() - 1;
-
-				for (size_t stack_index = stack_top_index; stack_index <= stack_top_index; stack_index--)
-				{
-					const auto& origin = _origin_stack[stack_index];
-
-					std::cerr << "  " << origin.instance_location.file_name << "(" << origin.instance_location.line_number << "): ";
-
-					if (stack_index == 0)
-					{
-						std::cerr << "note: required from here: " << origin.instance_name << std::endl;
-					}
-					else
-					{
-						std::cerr << "note: instantiated from here: " << origin.instance_name << std::endl;
-					}
-				}
-
-				indicate_error();
-			};
-
-			_split_buffer.clear();
-
-			auto& args = _split_buffer;
-
-			bool valid_template = template_split_instance(instance, args);
-
-			if (valid_template == false)
-			{
-				report_error("invalid template instantiation");
-
-				continue;
-			}
-
-			auto result = _template_instances.emplace(instance);
-
-			if (result.second)
-			{
-				std::string_view end_arg(instance.end(), instance.end());
-
-				args.emplace_back(end_arg, 0);
-
-				auto arg_start = args.begin();
-
-				auto arg_end = args.end();
-
-				auto template_exists = false;
-
-				auto template_block = _template_registry.find_special(arg_start, arg_end - 1, template_exists);
-
-				if (template_block == nullptr)
-				{
-					if (template_exists)
-					{
-						report_error("specialization not found");
-					}
-					else
-					{
-						report_error("template not found");
-					}
-
-					continue;
-				}
-
-				std::string content = template_block->instantiate(instance);
-
-				auto template_id = template_block->get_id();
-
-				auto instance_line_offset = get_instance_line_offset();
-
-				const auto& current_origin = _origin_stack.back();
-
-				Origin origin = {};
-
-				origin.template_location = _template_locations[template_id];
-
-				origin.instance_location = current_origin.template_location;
-
-				origin.instance_location.line_number += instance_line_offset;
-
-				origin.instance_name = instance;
-
-				_origin_stack.push_back(origin);
-
-				emit_template(std::move(content), template_block->get_pattern(), arg_start + 1, arg_end);
-
-				_origin_stack.pop_back();
-			}
+			instantiate_template(instance, get_instance_line_offset);
 		}
 
 		if (compiler_arguments.insert_line_directives)

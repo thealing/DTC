@@ -55,6 +55,27 @@ void test_strings()
 	Assert($compare_strings$3$4);
 }
 
+enum { ENUM_$X = $Concat$1$X };
+
+#pragma DTC instantiate ENUM_$1
+
+#pragma DTC instantiate ENUM_$2
+
+#pragma DTC disable
+
+const int global_constant_11 = ENUM_$1;
+
+const int global_constant_12 = ENUM_$2;
+
+void test_constants()
+{
+	Assert(global_constant_11 == 11);
+
+	Assert(global_constant_12 == 12);
+}
+
+#pragma DTC enable
+
 void demo_macros()
 {
 	test_values$Square$5$$$Add$Cube$3$$Negate$2();
@@ -64,6 +85,8 @@ void demo_macros()
 	test_declarations();
 
 	test_strings();
+
+	test_constants();
 }
 
 #pragma endregion
