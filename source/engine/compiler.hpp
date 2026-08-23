@@ -423,11 +423,12 @@ public:
 
 private:
 
+	template<bool Trim_Start>
 	void replace_definitions(std::string& string)
 	{
 		std::string_view block = string;
 
-		std::string replace_buffer = replace_definitions(block);
+		std::string replace_buffer = replace_definitions<Trim_Start>(block);
 
 		if (replace_buffer.empty() == false)
 		{
@@ -435,6 +436,7 @@ private:
 		}
 	}
 
+	template<bool Trim_Start>
 	std::string replace_definitions(std::string_view& block)
 	{
 		std::string replace_buffer;
@@ -459,7 +461,17 @@ private:
 
 			if (definition_result != _definitions.end())
 			{
-				string_skip_word_part(it, block_end);
+				auto arg_list_start = it;
+
+				string_skip_word(it, block_end);
+
+				std::string_view arg_list(arg_list_start, it);
+
+				std::string arg_buffer = replace_definitions<false>(arg_list);
+
+				auto arg_it = arg_list.begin();
+
+				auto arg_end = arg_list.end();
 
 				const auto& [par_list, replacement] = definition_result->second.back();
 
@@ -471,11 +483,11 @@ private:
 
 				while (par_it != par_end)
 				{
-					auto arg_start = it;
+					auto arg_start = arg_it;
 
-					if (string_skip_template(it, block_end) == false)
+					if (string_skip_template(arg_it, arg_end) == false)
 					{
-						std::cerr << "TODO: substitution error message" << std::endl;
+						std::cerr << "TODO: substitution error message " << arg_list << std::endl;
 
 						break;
 					}
@@ -488,9 +500,7 @@ private:
 
 					std::string_view par(par_start, par_it);
 
-					std::string_view arg(arg_start, it);
-
-					std::string arg_buffer = replace_definitions(arg);
+					std::string_view arg(arg_start, arg_it);
 
 					content = template_replace_macro(content, par, arg);
 				}
@@ -500,38 +510,43 @@ private:
 					continue;
 				}
 
-				replace_definitions(content);
+				replace_definitions<Trim_Start>(content);
 
 				auto macro_start = instance_start - 1;
 
-				char last_character = 0;
-
-				if (last_character == 0 && macro_start != block_start)
+				if constexpr (Trim_Start)
 				{
-					last_character = macro_start[-1];
-				}
+					char last_character = 0;
 
-				if (last_character == 0 && replace_buffer.empty() == false)
-				{
-					last_character = replace_buffer.back();
-				}
+					if (last_character == 0 && macro_start != block_start)
+					{
+						last_character = macro_start[-1];
+					}
 
-				if (string_is_word(last_character) == false)
-				{
-					auto content_start = content.begin();
+					if (last_character == 0 && replace_buffer.empty() == false)
+					{
+						last_character = replace_buffer.back();
+					}
 
-					auto content_end = content.end();
+					if (string_is_word(last_character) == false)
+					{
+						auto content_start = content.begin();
 
-					auto content_it = content_start;
+						auto content_end = content.end();
 
-					string_skip(content_it, content_end, '$');
+						auto content_it = content_start;
 
-					content.erase(content_start, content_it);
+						string_skip(content_it, content_end, '$');
+
+						content.erase(content_start, content_it);
+					}
 				}
 
 				replace_buffer.append(block_start, macro_start);
 
 				replace_buffer.append(content);
+
+				replace_buffer.append(arg_it, arg_end);
 
 				block_start = it;
 			}
@@ -549,7 +564,7 @@ private:
 
 	void emit_block(std::string_view block)
 	{
-		auto replace_buffer = replace_definitions(block);
+		auto replace_buffer = replace_definitions<true>(block);
 
 		auto start = block.begin();
 
