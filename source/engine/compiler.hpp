@@ -58,6 +58,27 @@ public:
 	}
 };
 
+struct Location
+{
+	std::string_view file_name;
+
+	size_t line_number;
+};
+
+struct Template_Location : Location
+{
+	size_t name_line_number;
+};
+
+struct Origin
+{
+	Location template_location;
+
+	Location instance_location;
+
+	std::string_view instance_name;
+};
+
 class Compiler
 {
 private:
@@ -76,15 +97,15 @@ private:
 
 	std::string_view _current_file_name;
 
-	std::vector<std::pair<std::string_view, size_t>> _template_locations;
+	std::vector<Template_Location> _template_locations;
 
-	std::vector<std::tuple<size_t, size_t, std::string_view>> _origin_stack;
+	std::vector<Origin> _origin_stack;
 
 	intptr_t _suppression_level = 0;
 
 	bool _set_line_number = false;
 
-	size_t _definition_line_number = 0;
+	size_t _definition_line_offset = 0;
 
 public:
 
@@ -336,6 +357,8 @@ public:
 
 			auto block_name_it = content.begin() + block_name_offset;
 
+			auto block_name_line_number = line_iterator.get_line_number(block_name_it);
+
 			_split_buffer.clear();
 
 			auto& pars = _split_buffer;
@@ -346,9 +369,15 @@ public:
 			{
 				if (pars.size() == 1)
 				{
-					auto line_number = line_iterator.get_line_number(it);
+					Origin origin = {};
 
-					_origin_stack.emplace_back(SIZE_MAX, line_number, block.name);
+					origin.template_location = { _current_file_name, block_line_number };
+
+					origin.instance_location = { _current_file_name, block_name_line_number };
+
+					origin.instance_name = block.name;
+
+					_origin_stack.push_back(origin);
 
 					emit_block(block.content);
 
@@ -383,9 +412,7 @@ public:
 
 				if (previous_template != nullptr)
 				{
-					auto line_number = line_iterator.get_line_number(it);
-
-					std::cerr << _current_file_name << "(" << line_number << "): ";
+					std::cerr << _current_file_name << "(" << block_name_line_number << "): ";
 
 					std::cerr << "error: template already defined: " << block.name << std::endl;
 
@@ -393,7 +420,7 @@ public:
 
 					auto previous_template_location = _template_locations[previous_template_id];
 
-					std::cerr << "  " << previous_template_location.first << "(" << previous_template_location.second << "): ";
+					std::cerr << "  " << previous_template_location.file_name << "(" << previous_template_location.name_line_number << "): ";
 
 					std::cerr << "note: previous definition: " << previous_template->get_name() << std::endl;
 
@@ -401,14 +428,20 @@ public:
 				}
 				else
 				{
-					_template_locations.emplace_back(_current_file_name, block_line_number);
+					Template_Location location = {};
+
+					location.file_name = _current_file_name;
+
+					location.line_number = block_line_number;
+
+					location.name_line_number = block_name_line_number;
+
+					_template_locations.push_back(location);
 				}
 			}
 			else
 			{
-				auto line_number = line_iterator.get_line_number(it);
-
-				std::cerr << _current_file_name << "(" << line_number << "): ";
+				std::cerr << _current_file_name << "(" << block_name_line_number << "): ";
 
 				std::cerr << "error: invalid template definition: " << block.name << std::endl;
 
@@ -451,7 +484,7 @@ private:
 
 		Line_Iterator line_iterator(it, 0);
 
-		auto start_line_number = _definition_line_number;
+		auto start_line_offset = _definition_line_offset;
 
 		while (string_find(it, block_end, '$'))
 		{
@@ -467,7 +500,7 @@ private:
 
 			if (definition_result != _definitions.end())
 			{
-				_definition_line_number = start_line_number + line_iterator.get_line_number(it);
+				_definition_line_offset = start_line_offset + line_iterator.get_line_number(it);
 
 				auto arg_list_start = it;
 
@@ -497,9 +530,9 @@ private:
 					{
 						auto location = get_current_block_location();
 
-						location.second += _definition_line_number;
+						location.line_number += _definition_line_offset;
 
-						std::cerr << location.first << "(" << location.second << "): ";
+						std::cerr << location.file_name << "(" << location.line_number << "): ";
 
 						std::cerr << "error: invalid macro expansion: " << base << arg_list << std::endl;
 
@@ -578,14 +611,14 @@ private:
 			block = replace_buffer;
 		}
 
-		_definition_line_number = start_line_number;
+		_definition_line_offset = start_line_offset;
 
 		return replace_buffer;
 	}
 
 	void emit_block(std::string_view block)
 	{
-		_definition_line_number = 0;
+		_definition_line_offset = 0;
 
 		auto replace_buffer = replace_definitions<true>(block);
 
@@ -597,79 +630,49 @@ private:
 
 		template_get_instances(start, end, std::back_inserter(instances));
 
-		size_t line_distance = 0;
-
-		size_t line_offset = 0;
+		Line_Iterator line_iterator(start, 0);
 
 		for (auto instance : instances)
 		{
-			auto advance_line = [&]()
+			auto get_instance_line_offset = [&]()
 			{
-				size_t offset = instance.data() - block.data();
+				auto instance_offset = instance.data() - block.data();
 
-				while (line_offset != offset)
-				{
-					if (block[line_offset] == '\n')
-					{
-						line_distance++;
-					}
+				auto instance_start = start + instance_offset;
 
-					line_offset++;
-				}
+				return line_iterator.get_line_number(instance_start);
 			};
 
 			auto report_error = [&](std::string_view label)
 			{
-				auto last_line_count = line_distance;
+				const auto& current_origin = _origin_stack.back();
 
-				auto last_origin_name = instance;
+				auto current_location = current_origin.template_location;
+
+				auto instance_line_offset = get_instance_line_offset();
+
+				current_location.line_number += instance_line_offset;
+
+				std::cerr << current_location.file_name << "(" << current_location.line_number << "): ";
+
+				std::cerr << "error: " << label << ": " << instance << std::endl;
 
 				size_t stack_top_index = _origin_stack.size() - 1;
 
 				for (size_t stack_index = stack_top_index; stack_index <= stack_top_index; stack_index--)
 				{
-					std::pair<std::string_view, size_t> location;
+					const auto& origin = _origin_stack[stack_index];
 
-					auto [location_index, line_count, origin_name] = _origin_stack[stack_index];
+					std::cerr << "  " << origin.instance_location.file_name << "(" << origin.instance_location.line_number << "): ";
 
-					if (location_index == SIZE_MAX)
+					if (stack_index == 0)
 					{
-						location.first = _current_file_name;
-
-						location.second = line_count;
+						std::cerr << "note: concrete origin: " << origin.instance_name << std::endl;
 					}
 					else
 					{
-						location = _template_locations[location_index];
+						std::cerr << "note: instance origin: " << origin.instance_name << std::endl;
 					}
-
-					location.second += last_line_count;
-
-					if (stack_index == stack_top_index)
-					{
-						std::cerr << location.first << "(" << location.second << "): ";
-
-						std::cerr << "error: " << label << ": " << instance << std::endl;
-					}
-					else
-					{
-						std::cerr << "  " << location.first << "(" << location.second << "): ";
-
-						std::cerr << "note: within template: " << last_origin_name << std::endl;
-					}
-
-					location.second -= last_line_count;
-
-					if (location_index == SIZE_MAX)
-					{
-						std::cerr << "  " << location.first << "(" << location.second << "): ";
-
-						std::cerr << "note: originated from: " << origin_name << std::endl;
-					}
-
-					last_line_count = line_count;
-
-					last_origin_name = origin_name;
 				}
 
 				indicate_error();
@@ -683,8 +686,6 @@ private:
 
 			if (valid_template == false)
 			{
-				advance_line();
-
 				report_error("invalid template instantiation");
 
 				continue;
@@ -694,8 +695,6 @@ private:
 
 			if (result.second)
 			{
-				advance_line();
-
 				std::string_view end_arg(instance.end(), instance.end());
 
 				args.emplace_back(end_arg, 0);
@@ -726,7 +725,21 @@ private:
 
 				auto template_id = template_block->get_id();
 
-				_origin_stack.emplace_back(template_id, line_distance, instance);
+				auto instance_line_offset = get_instance_line_offset();
+
+				const auto& current_origin = _origin_stack.back();
+
+				Origin origin = {};
+
+				origin.template_location = _template_locations[template_id];
+
+				origin.instance_location = current_origin.template_location;
+
+				origin.instance_location.line_number += instance_line_offset;
+
+				origin.instance_name = instance;
+
+				_origin_stack.push_back(origin);
 
 				emit_template(std::move(content), template_block->get_pattern(), arg_start + 1, arg_end);
 
@@ -769,7 +782,7 @@ private:
 		{
 			auto location = get_current_block_location();
 
-			emit_line_directive(location.first, location.second);
+			emit_line_directive(location.file_name, location.line_number);
 		}
 	}
 
@@ -786,18 +799,11 @@ private:
 		_result += "\"\n";
 	}
 
-	std::pair<std::string_view, size_t> get_current_block_location() const
+	Location get_current_block_location() const
 	{
-		const auto& [location_index, line_count, origin_name] = _origin_stack.back();
+		const auto& origin = _origin_stack.back();
 
-		if (location_index == SIZE_MAX)
-		{
-			return std::make_pair(_current_file_name, line_count);
-		}
-		else
-		{
-			return _template_locations[location_index];
-		}
+		return origin.template_location;
 	}
 
 	void indicate_error() const
