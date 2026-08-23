@@ -15,6 +15,11 @@ bool string_is_word(char c)
 	return c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '_' || c == '$';
 }
 
+bool string_is_word_part(char c)
+{
+	return c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '_';
+}
+
 bool string_is_digit(char c)
 {
 	return c >= '0' && c <= '9';
@@ -150,6 +155,15 @@ void string_skip_word(It& it, It end)
 }
 
 template<typename It>
+void string_skip_word_part(It& it, It end)
+{
+	while (it != end && string_is_word_part(*it))
+	{
+		it++;
+	}
+}
+
+template<typename It>
 void string_skip_space(It& it, It end)
 {
 	while (it != end && string_is_space(*it))
@@ -231,6 +245,32 @@ void string_skip_statement(It& it, It end)
 	{
 		it++;
 	}
+}
+
+template<typename It>
+bool string_skip_template(It& it, It end)
+{
+	ptrdiff_t level = 1;
+
+	while (it != end && *it == '$')
+	{
+		It start = it;
+
+		string_skip(it, end, '$');
+
+		auto d = it - start;
+
+		level += d - 2;
+
+		string_skip_word_part(it, end);
+
+		if (level == 0)
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 template<typename It, typename Inserter>

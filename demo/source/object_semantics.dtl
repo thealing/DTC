@@ -40,14 +40,14 @@ void Construct$$$Zero_Initialized$T($T* value)
 	*value = 0;
 }
 
-#pragma DTC push Int Zero_Initialized$Int
+#pragma DTC push Int $$Zero_Initialized$int
 
 void demo_object_semantics()
 {
 	int uninitialized = 1;
 	Construct$int(&uninitialized);
 
-	Int zero_initialized = 1;
+	$Int zero_initialized = 1;
 	Construct$Int(&zero_initialized);
 
 	Assert(uninitialized == 1);

@@ -66,7 +66,7 @@ private:
 
 	std::set<std::string> _template_instances;
 
-	std::map<std::string, std::vector<std::string>, std::less<>> _definitions;
+	std::map<std::string, std::vector<std::pair<std::string, std::string>>, std::less<>> _definitions;
 
 	std::string _result;
 
@@ -200,17 +200,31 @@ public:
 
 							std::string_view pattern(pattern_start, pragma_it);
 
-							if (pattern.empty() == false)
+							if (pattern.empty() == false && pattern.starts_with('$') == false)
 							{
-								string_skip_space(pragma_it, it);
+								if (pattern.ends_with('$') == false && pattern.find("$$") == SIZE_MAX)
+								{
+									auto base_length = pattern.find('$');
 
-								std::string_view replacement(pragma_it, it);
+									if (base_length == SIZE_MAX)
+									{
+										base_length = pattern.size();
+									}
 
-								auto definition_result = _definitions.emplace(pattern, 0);
+									auto base = pattern.substr(0, base_length);
 
-								definition_result.first->second.emplace_back(replacement);
+									auto par_list = pattern.substr(base_length);
 
-								continue;
+									string_skip_space(pragma_it, it);
+
+									std::string_view replacement(pragma_it, it);
+
+									auto definition_result = _definitions.emplace(base, 0);
+
+									definition_result.first->second.emplace_back(par_list, replacement);
+
+									continue;
+								}
 							}
 						}
 
@@ -411,6 +425,109 @@ private:
 
 	void emit_block(std::string_view block)
 	{
+		std::string replace_buffer;
+
+		auto block_start = block.begin();
+
+		auto block_end = block.end();
+
+		auto it = block_start;
+
+		while (string_find(it, block_end, '$'))
+		{
+			string_skip(it, block_end, '$');
+
+			auto instance_start = it;
+
+			string_skip_word_part(it, block_end);
+
+			std::string_view base(instance_start, it);
+
+			auto definition_result = _definitions.find(base);
+
+			if (definition_result != _definitions.end())
+			{
+				string_skip_word_part(it, block_end);
+
+				const auto& [par_list, replacement] = definition_result->second.back();
+
+				auto par_it = par_list.begin();
+
+				auto par_end = par_list.end();
+
+				auto content = replacement;
+
+				while (par_it != par_end)
+				{
+					auto arg_start = it;
+
+					if (string_skip_template(it, block_end) == false)
+					{
+						std::cerr << "TODO: substitution error message" << std::endl;
+
+						break;
+					}
+
+					auto par_start = par_it;
+
+					par_it++;
+
+					string_skip_word_part(par_it, par_end);
+
+					std::string_view par(par_start, par_it);
+
+					std::string_view arg(arg_start, it);
+
+					content = template_replace_macro(content, par, arg);
+				}
+
+				if (par_it != par_end)
+				{
+					continue;
+				}
+
+				auto macro_start = instance_start - 1;
+
+				char last_character = 0;
+
+				if (last_character == 0 && macro_start != block_start)
+				{
+					last_character = macro_start[-1];
+				}
+
+				if (last_character == 0 && replace_buffer.empty() == false)
+				{
+					last_character = replace_buffer.back();
+				}
+
+				if (string_is_word(last_character) == false)
+				{
+					auto content_start = content.begin();
+
+					auto content_end = content.end();
+
+					auto content_it = content_start;
+
+					string_skip(content_it, content_end, '$');
+
+					content.erase(content_start, content_it);
+				}
+
+				replace_buffer.append(block_start, macro_start);
+
+				replace_buffer.append(content);
+
+				block_start = it;
+			}
+		}
+
+		if (replace_buffer.empty() == false)
+		{
+			replace_buffer.append(block_start, block_end);
+
+			block = replace_buffer;
+		}
+
 		auto start = block.begin();
 
 		auto end = block.end();
@@ -518,9 +635,9 @@ private:
 			{
 				advance_line();
 
-				std::string_view arg_sentinel(instance.data() + instance.size(), 0);
+				std::string_view end_arg(instance.end(), instance.end());
 
-				args.emplace_back(arg_sentinel, 0);
+				args.emplace_back(end_arg, 0);
 
 				auto arg_start = args.begin();
 

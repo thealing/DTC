@@ -11,7 +11,7 @@ std::string_view::const_iterator template_get_start(std::string_view string)
 	return template_get_start(string.begin(), string.end());
 }
 
-template<typename It>
+template<bool Macro, typename It>
 std::string template_replace(It source_start, It source_end, It par_start, It par_end, It arg_start, It arg_end)
 {
 	std::string result;
@@ -64,45 +64,29 @@ std::string template_replace(It source_start, It source_end, It par_start, It pa
 
 		if (match_found)
 		{
-			bool trim_start = false;
+			char last_character = 0;
 
-			bool concat_word = false;
-
-			if (result.empty())
+			if (result.empty() == false)
 			{
-				trim_start = true;
-			}
-			else
-			{
-				auto front = result.back();
-
-				if (string_is_word(front) == false)
-				{
-					trim_start = true;
-				}
-
-				if (front == '$')
-				{
-					trim_start = true;
-
-					concat_word = true;
-				}
+				last_character = result.back();
 			}
 
 			It arg_it = arg_start;
 
-			if (trim_start)
+			if constexpr (Macro)
 			{
-				string_skip(arg_it, arg_end, '$');
-			}
+				arg_it++;
 
-			if (concat_word)
-			{
-				result.pop_back();
-
-				if (source_it != source_end && *source_it == '$')
+				if (last_character != '$')
 				{
-					source_it++;
+					string_skip(arg_it, arg_end, '$');
+				}
+			}
+			else
+			{
+				if (string_is_word(last_character) == false)
+				{
+					string_skip(arg_it, arg_end, '$');
 				}
 			}
 
@@ -128,7 +112,12 @@ std::string template_replace(It source_start, It source_end, It par_start, It pa
 
 std::string template_replace(std::string_view source, std::string_view par, std::string_view arg)
 {
-	return template_replace(source.begin(), source.end(), par.begin(), par.end(), arg.begin(), arg.end());
+	return template_replace<false>(source.begin(), source.end(), par.begin(), par.end(), arg.begin(), arg.end());
+}
+
+std::string template_replace_macro(std::string_view source, std::string_view par, std::string_view arg)
+{
+	return template_replace<true>(source.begin(), source.end(), par.begin(), par.end(), arg.begin(), arg.end());
 }
 
 template<typename It>
@@ -169,7 +158,7 @@ void template_replace(std::string& content, std::string_view pattern, It arg_sta
 	}
 }
 
-template<typename It, typename Container, bool Special>
+template<bool Special, typename It, typename Container>
 ptrdiff_t template_split_template_part(It& it, It end, Container& container)
 {
 	if (it == end)
@@ -207,7 +196,7 @@ ptrdiff_t template_split_template_part(It& it, It end, Container& container)
 
 	for (ptrdiff_t sub_index = 0; sub_index < sub_count - 1; sub_index++)
 	{
-		auto result = template_split_template_part<It, Container, Special>(it, end, container);
+		auto result = template_split_template_part<Special>(it, end, container);
 
 		if (result == -1)
 		{
@@ -222,7 +211,7 @@ ptrdiff_t template_split_template_part(It& it, It end, Container& container)
 	return part_count;
 }
 
-template<typename It, typename Container, bool Special = false>
+template<bool Special, typename It, typename Container>
 bool template_split_template(It start, It end, Container& container)
 {
 	auto it = start;
@@ -239,7 +228,7 @@ bool template_split_template(It start, It end, Container& container)
 
 	while (it != end)
 	{
-		auto result = template_split_template_part<It, Container, Special>(it, end, container);
+		auto result = template_split_template_part<Special>(it, end, container);
 
 		if (result == -1)
 		{
@@ -257,7 +246,7 @@ bool template_split_template(It start, It end, Container& container)
 template<typename It, typename Container>
 bool template_split_instance(It start, It end, Container& container)
 {
-	return template_split_template<It, Container, false>(start, end, container);
+	return template_split_template<false>(start, end, container);
 }
 
 template<typename Container>
@@ -269,7 +258,7 @@ bool template_split_instance(std::string_view string, Container& container)
 template<typename It, typename Container>
 bool template_split_special(It start, It end, Container& container)
 {
-	return template_split_template<It, Container, true>(start, end, container);
+	return template_split_template<true>(start, end, container);
 }
 
 template<typename Container>
