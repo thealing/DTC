@@ -423,7 +423,7 @@ public:
 
 private:
 
-	void emit_block(std::string_view block)
+	std::string replace_definitions(std::string_view& block)
 	{
 		std::string replace_buffer;
 
@@ -478,6 +478,8 @@ private:
 
 					std::string_view arg(arg_start, it);
 
+					std::string arg_buffer = replace_definitions(arg);
+
 					content = template_replace_macro(content, par, arg);
 				}
 
@@ -527,6 +529,13 @@ private:
 
 			block = replace_buffer;
 		}
+
+		return replace_buffer;
+	}
+
+	void emit_block(std::string_view block)
+	{
+		auto replace_buffer = replace_definitions(block);
 
 		auto start = block.begin();
 

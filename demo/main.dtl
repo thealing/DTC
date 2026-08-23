@@ -23,8 +23,19 @@
 
 #include "source/constant_expressions.dtl"
 
+#pragma DTC push a$b$c$d $c$d
+
+#pragma DTC push concat$a$b $a$b
+
+void fff$A$B()
+{
+	int x = $concat$$$$a$11$20$30$40;
+}
+
 int main()
 {
+	fff$$Ref$$Ref$int$$Const$$Const$char();
+
 	demo_basic_types();
 
 	demo_object_semantics();
