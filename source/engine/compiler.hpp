@@ -223,31 +223,45 @@ public:
 
 							std::string_view pattern(pattern_start, pragma_it);
 
-							if (pattern.empty() == false && pattern.starts_with('$') == false)
+							bool valid_pattern = true;
+
+							if (pattern.empty())
 							{
-								if (pattern.ends_with('$') == false && pattern.find("$$") == SIZE_MAX)
+								valid_pattern = false;
+							}
+
+							if (pattern.starts_with('$') || pattern.ends_with('$'))
+							{
+								valid_pattern = false;
+							}
+
+							if (pattern.find("$$") != SIZE_MAX)
+							{
+								valid_pattern = false;
+							}
+
+							if (valid_pattern)
+							{
+								auto base_length = pattern.find('$');
+
+								if (base_length == SIZE_MAX)
 								{
-									auto base_length = pattern.find('$');
-
-									if (base_length == SIZE_MAX)
-									{
-										base_length = pattern.size();
-									}
-
-									auto base = pattern.substr(0, base_length);
-
-									auto par_list = pattern.substr(base_length);
-
-									string_skip_space(pragma_it, it);
-
-									std::string_view replacement(pragma_it, it);
-
-									auto definition_result = _definitions.emplace(base, 0);
-
-									definition_result.first->second.emplace_back(par_list, replacement);
-
-									continue;
+									base_length = pattern.size();
 								}
+
+								auto base = pattern.substr(0, base_length);
+
+								auto par_list = pattern.substr(base_length);
+
+								string_skip_space(pragma_it, it);
+
+								std::string_view replacement(pragma_it, it);
+
+								auto definition_result = _definitions.emplace(base, 0);
+
+								definition_result.first->second.emplace_back(par_list, replacement);
+
+								continue;
 							}
 						}
 
