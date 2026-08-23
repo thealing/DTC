@@ -55,7 +55,10 @@ void test_strings()
 	Assert($compare_strings$3$4);
 }
 
-enum { ENUM_$X = $Concat$1$X };
+enum
+{
+	ENUM_$X = $Concat$1$X
+};
 
 #pragma DTC instantiate ENUM_$1
 
