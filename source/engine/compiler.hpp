@@ -273,7 +273,9 @@ public:
 
 									std::cerr << _current_file_name << "(" << line_number << "): ";
 
-									std::cerr << "warning: pattern not defined: " << pattern << std::endl;
+									std::cerr << "error: pattern not defined: " << pattern << std::endl;
+
+									indicate_error();
 
 									continue;
 								}
@@ -295,7 +297,9 @@ public:
 
 						std::cerr << _current_file_name << "(" << line_number << "): ";
 
-						std::cerr << "warning: invalid pragma: " << directive << std::endl;
+						std::cerr << "error: invalid pragma: " << directive << std::endl;
+
+						indicate_error();
 
 						continue;
 					}
@@ -422,7 +426,7 @@ public:
 
 					std::cerr << "  " << previous_template_location.file_name << "(" << previous_template_location.name_line_number << "): ";
 
-					std::cerr << "note: previous definition: " << previous_template->get_name() << std::endl;
+					std::cerr << "note: previous definition is here: " << previous_template->get_name() << std::endl;
 
 					indicate_error();
 				}
@@ -535,6 +539,8 @@ private:
 						std::cerr << location.file_name << "(" << location.line_number << "): ";
 
 						std::cerr << "error: invalid macro expansion: " << base << arg_list << std::endl;
+
+						indicate_error();
 
 						break;
 					}
@@ -667,11 +673,11 @@ private:
 
 					if (stack_index == 0)
 					{
-						std::cerr << "note: concrete origin: " << origin.instance_name << std::endl;
+						std::cerr << "note: required from here: " << origin.instance_name << std::endl;
 					}
 					else
 					{
-						std::cerr << "note: instance origin: " << origin.instance_name << std::endl;
+						std::cerr << "note: instantiated from here: " << origin.instance_name << std::endl;
 					}
 				}
 

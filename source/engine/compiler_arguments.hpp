@@ -12,9 +12,6 @@ public:
 
 	Compiler_Arguments()
 	{
-		stop_on_error = false;
-
-		insert_line_directives = false;
 	}
 };
 
