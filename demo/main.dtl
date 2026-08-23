@@ -7,6 +7,8 @@
 
 #include <stdlib.h>
 
+#include <string.h>
+
 #pragma DTC enable
 
 #include "source/assert.dtl"
@@ -23,26 +25,10 @@
 
 #include "source/constant_expressions.dtl"
 
-#pragma DTC push a$b$c$d $c$d
-
-#pragma DTC push concat$a$b $a$b
-
-#pragma DTC push D $E
-#pragma DTC push E $D
-#pragma DTC push Layer$x $x
-
-void fff$A$B()
-{
-	int x = $concat$$$$a$11$20$30$40;
-
-	$Layer$$Layer$$Layer$$Layer$$Layer$5;
-	//$D;
-}
+#include "source/macros.dtl"
 
 int main()
 {
-	fff$$Ref$$Ref$int$$Const$$Const$char();
-
 	demo_basic_types();
 
 	demo_object_semantics();
@@ -52,4 +38,6 @@ int main()
 	demo_algorithms();
 
 	demo_constant_expressions();
+
+	demo_macros();
 }

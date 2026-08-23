@@ -1,0 +1,69 @@
+#pragma once
+
+#pragma DTC push Square$X $$$Multiply$$X$$X
+
+#pragma DTC push Cube$X $$$$Multiply$$X$$X$$X
+
+#pragma DTC push Swap$X$Y $$Y$$X
+
+#pragma DTC push Concat$X$Y $X$Y
+
+#pragma DTC push Forward$X $$X
+
+#pragma DTC push Repeat$X $X$X$X
+
+#pragma region DEMO
+
+#pragma DTC push to_int$X (int)$X
+
+void test_values$A$B()
+{
+	Assert($to_int$A == $to_int$B);
+}
+
+#pragma DTC push const_int $Forward$$Const$int
+
+void test_declarations()
+{
+	int aaabbb = 1;
+
+	Assert($Concat$$Repeat$a$Forward$bbb == 1);
+
+	$Forward$Forward$const_int const_int = 2;
+
+	Assert(const_int == 2);
+}
+
+#pragma DTC push stringify$X$Y "$X$Y"
+
+#pragma DTC push compare_strings$X$Y strcmp(message_$X, message_$Y) == 0
+
+#pragma DTC push append_eat$X $Concat$$X$eat
+
+void test_strings()
+{
+	const char* message_1 = "$Concat$Swap$$Concat$Swap$a$b$$Concat$Swap$c$d";
+
+	const char* message_2 = $stringify$dc$ba;
+
+	Assert($compare_strings$1$2);
+
+	const char* message_3 = "$Forward$$append_eat$Rep$a";
+
+	const char* message_4 = "aaa";
+
+	Assert($compare_strings$3$4);
+}
+
+void demo_macros()
+{
+	test_values$Square$5$$$Add$Cube$3$$Negate$2();
+
+	test_values$$$Swap$1$Increment$2();
+
+	test_declarations();
+
+	test_strings();
+}
+
+#pragma endregion
