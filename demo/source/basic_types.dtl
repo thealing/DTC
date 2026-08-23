@@ -9,19 +9,25 @@ typedef $Element Array$Element$Count[$Count];
 
 void demo_basic_types()
 {
-	int i = 0;
+	int i = 1;
 
 	Const$$Ref$int const_intPointer = &i;
 
 	Ref$$Const$int pointer_to_constInt = &i;
 
-	*const_intPointer = 1;
+	*const_intPointer = 2;
 
 	pointer_to_constInt = 0;
 
 	Array$int$100 array_of_100_ints = { 1, 2, 3 };
 
 	Array$float$200 array_of_200_floats = { 4.5f, 6.7f, 8.9f };
+
+	Assert(i == 2);
+
+	Assert(sizeof(array_of_100_ints) == sizeof(int) * 100);
+
+	Assert(sizeof(array_of_200_floats) == sizeof(float) * 200);
 }
 
 #pragma endregion
