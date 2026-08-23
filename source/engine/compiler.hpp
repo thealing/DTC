@@ -510,6 +510,8 @@ private:
 					continue;
 				}
 
+				content.append(arg_it, arg_end);
+
 				replace_definitions<Trim_Start>(content);
 
 				auto macro_start = instance_start - 1;
@@ -526,6 +528,11 @@ private:
 					if (last_character == 0 && replace_buffer.empty() == false)
 					{
 						last_character = replace_buffer.back();
+					}
+
+					if (last_character == '$')
+					{
+						macro_start--;
 					}
 
 					if (string_is_word(last_character) == false)
@@ -545,8 +552,6 @@ private:
 				replace_buffer.append(block_start, macro_start);
 
 				replace_buffer.append(content);
-
-				replace_buffer.append(arg_it, arg_end);
 
 				block_start = it;
 			}
