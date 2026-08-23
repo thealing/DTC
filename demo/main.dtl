@@ -27,9 +27,16 @@
 
 #pragma DTC push concat$a$b $a$b
 
+#pragma DTC push D $E
+#pragma DTC push E $D
+#pragma DTC push Layer$x $x
+
 void fff$A$B()
 {
 	int x = $concat$$$$a$11$20$30$40;
+
+	$Layer$$Layer$$Layer$$Layer$$Layer$5;
+	//$D;
 }
 
 int main()

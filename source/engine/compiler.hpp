@@ -423,6 +423,18 @@ public:
 
 private:
 
+	void replace_definitions(std::string& string)
+	{
+		std::string_view block = string;
+
+		std::string replace_buffer = replace_definitions(block);
+
+		if (replace_buffer.empty() == false)
+		{
+			std::swap(string, replace_buffer);
+		}
+	}
+
 	std::string replace_definitions(std::string_view& block)
 	{
 		std::string replace_buffer;
@@ -455,7 +467,7 @@ private:
 
 				auto par_end = par_list.end();
 
-				auto content = replacement;
+				std::string content = replacement;
 
 				while (par_it != par_end)
 				{
@@ -487,6 +499,8 @@ private:
 				{
 					continue;
 				}
+
+				replace_definitions(content);
 
 				auto macro_start = instance_start - 1;
 
