@@ -8,6 +8,8 @@ public:
 
 	bool insert_line_directives;
 
+	bool conformance_mode;
+
 public:
 
 	Compiler_Arguments()

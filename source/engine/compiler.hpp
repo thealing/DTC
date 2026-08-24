@@ -889,6 +889,8 @@ private:
 			instantiate_template(instance, get_instance_line_offset);
 		}
 
+		auto result_size = _result.size();
+
 		if (compiler_arguments.insert_line_directives)
 		{
 			if (_set_line_number)
@@ -903,6 +905,15 @@ private:
 		else
 		{
 			string_copy_block(block, std::back_inserter(_result));
+		}
+
+		if (compiler_arguments.conformance_mode)
+		{
+			auto result_start = _result.begin() + result_size;
+
+			auto result_end = _result.end();
+
+			std::replace(result_start, result_end, '$', '_');
 		}
 	}
 

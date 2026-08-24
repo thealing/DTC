@@ -36,6 +36,13 @@ void cli_run(const std::vector<std::string>& arguments)
 			continue;
 		}
 
+		if (argument == "-c")
+		{
+			compiler_arguments.conformance_mode = true;
+
+			continue;
+		}
+
 		if (argument.starts_with('-'))
 		{
 			std::cerr << "invalid argument: " << argument << std::endl;
