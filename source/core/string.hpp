@@ -267,9 +267,9 @@ bool string_skip_template(It& it, It end)
 
 		string_skip(it, end, '$');
 
-		auto d = it - start;
+		auto sub_count = it - start;
 
-		level += d - 2;
+		level += sub_count - 2;
 
 		string_skip_word_part(it, end);
 

@@ -158,7 +158,12 @@ void template_replace(std::string& content, std::string_view pattern, It arg_sta
 	}
 }
 
-template<bool Special, typename It, typename Container>
+enum class Template_Split_Mode
+{
+	Instance, Special, Pattern
+};
+
+template<Template_Split_Mode Mode, typename It, typename Container>
 ptrdiff_t template_split_template_part(It& it, It end, Container& container)
 {
 	if (it == end)
@@ -180,7 +185,7 @@ ptrdiff_t template_split_template_part(It& it, It end, Container& container)
 
 	container.emplace_back(part, 0);
 
-	if constexpr (Special)
+	if constexpr (Mode == Template_Split_Mode::Special)
 	{
 		if (sub_count == 1)
 		{
@@ -192,11 +197,19 @@ ptrdiff_t template_split_template_part(It& it, It end, Container& container)
 		container[part_index].first.remove_prefix(1);
 	}
 
+	if constexpr (Mode == Template_Split_Mode::Pattern)
+	{
+		if (sub_count > 1)
+		{
+			sub_count--;
+		}
+	}
+
 	ptrdiff_t part_count = 1;
 
 	for (ptrdiff_t sub_index = 0; sub_index < sub_count - 1; sub_index++)
 	{
-		auto result = template_split_template_part<Special>(it, end, container);
+		auto result = template_split_template_part<Mode>(it, end, container);
 
 		if (result == -1)
 		{
@@ -211,7 +224,7 @@ ptrdiff_t template_split_template_part(It& it, It end, Container& container)
 	return part_count;
 }
 
-template<bool Special, typename It, typename Container>
+template<Template_Split_Mode Mode, typename It, typename Container>
 bool template_split_template(It start, It end, Container& container)
 {
 	auto it = start;
@@ -228,7 +241,7 @@ bool template_split_template(It start, It end, Container& container)
 
 	while (it != end)
 	{
-		auto result = template_split_template_part<Special>(it, end, container);
+		auto result = template_split_template_part<Mode>(it, end, container);
 
 		if (result == -1)
 		{
@@ -246,7 +259,7 @@ bool template_split_template(It start, It end, Container& container)
 template<typename It, typename Container>
 bool template_split_instance(It start, It end, Container& container)
 {
-	return template_split_template<false>(start, end, container);
+	return template_split_template<Template_Split_Mode::Instance>(start, end, container);
 }
 
 template<typename Container>
@@ -258,13 +271,25 @@ bool template_split_instance(std::string_view string, Container& container)
 template<typename It, typename Container>
 bool template_split_special(It start, It end, Container& container)
 {
-	return template_split_template<true>(start, end, container);
+	return template_split_template<Template_Split_Mode::Special>(start, end, container);
 }
 
 template<typename Container>
 bool template_split_special(std::string_view string, Container& container)
 {
 	return template_split_special(string.begin(), string.end(), container);
+}
+
+template<typename It, typename Container>
+bool template_split_pattern(It start, It end, Container& container)
+{
+	return template_split_template<Template_Split_Mode::Pattern>(start, end, container);
+}
+
+template<typename Container>
+bool template_split_pattern(std::string_view string, Container& container)
+{
+	return template_split_pattern(string.begin(), string.end(), container);
 }
 
 template<typename It, typename Inserter>

@@ -205,6 +205,15 @@ public:
 
 				arg.remove_suffix(1);
 
+				if (arg.size() == 1)
+				{
+					find_specials(trie_index, arg_it, arg_end, 1, instance, inserter);
+
+					break;
+				}
+
+				arg.remove_suffix(1);
+
 				for (const auto& [key, value] : trie_node.map)
 				{
 					if (key.starts_with(arg) == false)
@@ -249,6 +258,34 @@ public:
 			}
 
 			break;
+		}
+	}
+
+	template<typename It, typename Inserter>
+	void find_specials(size_t trie_index, It arg_it, It arg_end, size_t level, std::string& instance, Inserter inserter) const
+	{
+		const auto& trie_node = _trie[trie_index];
+
+		for (const auto& [key, value] : trie_node.map)
+		{
+			auto sub_count = std::count(key.begin(), key.end(), '$');
+
+			auto next_level = level + sub_count - 2;
+
+			auto instance_size = instance.size();
+
+			instance += key;
+
+			if (next_level == 0)
+			{
+				find_specials(value, arg_it, arg_end, instance, inserter);
+			}
+			else
+			{
+				find_specials(value, arg_it, arg_end, next_level, instance, inserter);
+			}
+
+			instance.erase(instance_size);
 		}
 	}
 

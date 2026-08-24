@@ -74,21 +74,19 @@ enum
 	SPECIAL_1_$$4 = 14
 };
 
+enum
+{
+	SPECIAL_1_$$$1$$5 = 15
+};
+
 #pragma DTC instantiate SPECIAL_1_$*
 
 enum
 {
-	SPECIAL_2_$$$1$$5 = 15
+	SPECIAL_2_$$$1$$6 = 16
 };
 
-#pragma DTC instantiate SPECIAL_2_$$*$*
-
-enum
-{
-	SPECIAL_3_$$$1$$6 = 16
-};
-
-#pragma DTC instantiate SPECIAL_3_$$*$*
+#pragma DTC instantiate SPECIAL_2_$$$*$$*
 
 #pragma DTC disable
 
@@ -100,9 +98,9 @@ const int global_constant_13 = SPECIAL_1_$3;
 
 const int global_constant_14 = SPECIAL_1_$4;
 
-const int global_constant_15 = SPECIAL_2_$$1$5;
+const int global_constant_15 = SPECIAL_1_$$1$5;
 
-const int global_constant_16 = SPECIAL_3_$$1$6;
+const int global_constant_16 = SPECIAL_2_$$1$6;
 
 void test_constants()
 {

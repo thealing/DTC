@@ -359,7 +359,7 @@ public:
 
 									auto& args = _split_buffer;
 
-									bool valid_template = template_split_instance(pattern, args);
+									bool valid_template = template_split_pattern(pattern, args);
 
 									if (valid_template == false)
 									{
