@@ -274,7 +274,7 @@ public:
 							string_skip_word(pragma_it, it);
 
 							std::string_view pattern(pattern_start, pragma_it);
-							
+
 							string_skip_space(pragma_it, it);
 
 							if (pattern.empty() == false && pragma_it == it)
@@ -449,7 +449,7 @@ public:
 			}
 
 			Block block;
-			
+
 			if (process_block)
 			{
 				auto block_end = parser_parse(it, end, block);
