@@ -145,6 +145,15 @@ void string_skip(It& it, It end, char c)
 	}
 }
 
+template<typename It, typename Predicate>
+void string_skip(It& it, It end, Predicate predicate)
+{
+	while (it != end && predicate(*it))
+	{
+		it++;
+	}
+}
+
 template<typename It>
 void string_skip_word(It& it, It end)
 {

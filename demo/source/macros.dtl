@@ -60,6 +60,8 @@ enum
 	ENUM_$X = $Concat$1$X
 };
 
+#pragma DTC instantiate List$double$*
+
 #pragma DTC instantiate ENUM_$1
 
 #pragma DTC instantiate ENUM_$2

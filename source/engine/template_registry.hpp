@@ -179,4 +179,90 @@ public:
 
 		return nullptr;
 	}
+
+	template<typename It, typename Inserter>
+	void find_specials(size_t trie_index, It arg_it, It arg_end, std::string& instance, Inserter inserter) const
+	{
+		while (true)
+		{
+			const auto& trie_node = _trie[trie_index];
+
+			if (arg_it == arg_end)
+			{
+				if (trie_node.end_index != 0)
+				{
+					*inserter = instance;
+				}
+
+				break;
+			}
+
+			auto arg = arg_it->first;
+
+			if (arg == "$*")
+			{
+				arg_it++;
+
+				for (const auto& [key, value] : trie_node.map)
+				{
+					auto instance_size = instance.size();
+
+					instance += key;
+
+					find_specials(value, arg_it, arg_end, instance, inserter);
+
+					instance.erase(instance_size);
+				}
+
+				break;
+			}
+
+			instance += arg;
+
+			auto trie_it = trie_node.map.find(arg);
+
+			auto trie_end = trie_node.map.end();
+
+			if (trie_it != trie_end)
+			{
+				trie_index = trie_it->second;
+
+				arg_it++;
+
+				continue;
+			}
+
+			if (trie_node.generic_index != 0)
+			{
+				trie_index = trie_node.generic_index;
+
+				arg_it += arg_it->second;
+
+				continue;
+			}
+
+			break;
+		}
+	}
+
+	template<typename It, typename Inserter>
+	void find_specials(It arg_start, It arg_end, Inserter inserter) const
+	{
+		auto trie_key = *arg_start;
+
+		auto trie_map_it = _trie_map.find(trie_key);
+
+		if (trie_map_it == _trie_map.end())
+		{
+			return;
+		}
+
+		auto trie_index = trie_map_it->second;
+
+		auto arg_it = arg_start + 1;
+
+		std::string instance(trie_key.first);
+
+		find_specials(trie_index, arg_it, arg_end, instance, inserter);
+	}
 };

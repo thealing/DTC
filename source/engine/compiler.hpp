@@ -309,15 +309,20 @@ public:
 						{
 							string_skip_space(pragma_it, it);
 
-							auto instance_start = pragma_it;
+							auto is_pattern = [](char c)
+							{
+								return string_is_word(c) || c == '*';
+							};
 
-							string_skip_word(pragma_it, it);
+							auto pattern_start = pragma_it;
 
-							std::string_view instance(instance_start, pragma_it);
+							string_skip(pragma_it, it, is_pattern);
+
+							std::string_view pattern(pattern_start, pragma_it);
 
 							string_skip_space(pragma_it, it);
 
-							if (instance.empty() == false && pragma_it == it)
+							if (pattern.empty() == false && pragma_it == it)
 							{
 								auto line_number = line_iterator.get_line_number(it);
 
@@ -336,7 +341,44 @@ public:
 									return 0;
 								};
 
-								instantiate_template(instance, get_instance_line_offset);
+								if (pattern.find('*') != SIZE_MAX)
+								{
+									_split_buffer.clear();
+
+									auto& args = _split_buffer;
+
+									bool valid_template = template_split_instance(pattern, args);
+
+									if (valid_template == false)
+									{
+										auto line_number = line_iterator.get_line_number(it);
+
+										std::cerr << _current_file_name << "(" << line_number << "): ";
+
+										std::cerr << "error: invalid template pattern: " << pattern << std::endl;
+
+										indicate_error();
+
+										continue;
+									}
+
+									auto arg_start = args.begin();
+
+									auto arg_end = args.end();
+
+									std::vector<std::string> instances;
+
+									_template_registry.find_specials(arg_start, arg_end, std::back_inserter(instances));
+
+									for (const auto& instance : instances)
+									{
+										instantiate_template(instance, get_instance_line_offset);
+									}
+								}
+								else
+								{
+									instantiate_template(pattern, get_instance_line_offset);
+								}
 
 								_origin_stack.pop_back();
 
