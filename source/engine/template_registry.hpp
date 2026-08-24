@@ -199,12 +199,19 @@ public:
 
 			auto arg = arg_it->first;
 
-			if (arg == "$*")
+			if (arg.ends_with('*'))
 			{
 				arg_it++;
 
+				arg.remove_suffix(1);
+
 				for (const auto& [key, value] : trie_node.map)
 				{
+					if (key.starts_with(arg) == false)
+					{
+						continue;
+					}
+
 					auto instance_size = instance.size();
 
 					instance += key;

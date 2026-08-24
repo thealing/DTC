@@ -322,7 +322,19 @@ public:
 
 							string_skip_space(pragma_it, it);
 
-							if (pattern.empty() == false && pragma_it == it)
+							bool valid_pattern = true;
+
+							if (pattern.empty())
+							{
+								valid_pattern = false;
+							}
+
+							if (pattern.find("**") != SIZE_MAX)
+							{
+								valid_pattern = false;
+							}
+
+							if (valid_pattern && pragma_it == it)
 							{
 								auto line_number = line_iterator.get_line_number(it);
 
@@ -369,6 +381,19 @@ public:
 									std::vector<std::string> instances;
 
 									_template_registry.find_specials(arg_start, arg_end, std::back_inserter(instances));
+
+									if (instances.empty())
+									{
+										auto line_number = line_iterator.get_line_number(it);
+
+										std::cerr << _current_file_name << "(" << line_number << "): ";
+
+										std::cerr << "error: pattern not found: " << pattern << std::endl;
+
+										indicate_error();
+
+										continue;
+									}
 
 									for (const auto& instance : instances)
 									{
