@@ -590,7 +590,7 @@ private:
 
 				if (stack_index == 0)
 				{
-					std::cerr << "note: required from here: " << origin.instance_name << std::endl;
+					std::cerr << "note: instantiation origin: " << origin.instance_name << std::endl;
 				}
 				else
 				{
