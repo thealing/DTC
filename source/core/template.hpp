@@ -199,7 +199,7 @@ ptrdiff_t template_split_template_part(It& it, It end, Container& container)
 
 	if constexpr (Mode == Template_Split_Mode::Pattern)
 	{
-		if (sub_count > 1)
+		if (sub_count > 1 && part.ends_with('*'))
 		{
 			sub_count--;
 		}

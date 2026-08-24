@@ -199,10 +199,12 @@ public:
 
 			auto arg = arg_it->first;
 
+			auto arg_count = arg_it->second;
+
+			arg_it++;
+
 			if (arg.ends_with('*'))
 			{
-				arg_it++;
-
 				arg.remove_suffix(1);
 
 				if (arg.size() == 1)
@@ -243,8 +245,6 @@ public:
 			{
 				trie_index = trie_it->second;
 
-				arg_it++;
-
 				continue;
 			}
 
@@ -252,7 +252,12 @@ public:
 			{
 				trie_index = trie_node.generic_index;
 
-				arg_it += arg_it->second;
+				for (ptrdiff_t arg_index = 1; arg_index < arg_count; arg_index++)
+				{
+					instance += arg_it->first;
+
+					arg_it++;
+				}
 
 				continue;
 			}
