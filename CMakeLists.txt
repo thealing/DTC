@@ -14,13 +14,15 @@ if(MSVC)
 
 	string(REPLACE "/GR" "/GR-" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
-	string(REPLACE "/MDd" "/MTd" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-
-	string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-
 	add_compile_options(/GF /GS- /sdl-)
 
 	add_link_options(/MANIFEST:NO)
+
+	if(CMAKE_BUILD_TYPE STREQUAL "Release")
+
+		set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
+
+	endif()
 
 endif()
 
