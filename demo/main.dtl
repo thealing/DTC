@@ -27,6 +27,8 @@
 
 #include "source/macros.dtl"
 
+#include "source/advanced/dynamic_cast.dtl"
+
 int main()
 {
 	demo_basic_types();
@@ -40,4 +42,6 @@ int main()
 	demo_constant_expressions();
 
 	demo_macros();
+
+	demo_advanced_dynamic_cast();
 }

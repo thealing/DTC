@@ -1,0 +1,146 @@
+
+enum
+{
+	RUNTIME_TYPE_A = 10,
+
+	RUNTIME_TYPE_B = 20,
+
+	RUNTIME_TYPE_C = 30
+};
+
+typedef struct _Base Base;
+
+typedef struct _A A;
+
+typedef struct _B B;
+
+typedef struct _C C;
+
+struct _Base
+{
+	int type;
+
+	char name;
+};
+
+struct _A
+{
+	Base base;
+
+	int value;
+};
+
+struct _B
+{
+	Base base;
+
+	int value;
+};
+
+struct _C
+{
+	Base base;
+
+	int value;
+};
+
+void Construct$$A(A* a)
+{
+	a->value = 100;
+}
+
+void Construct$$B(B* b)
+{
+	b->value = 200;
+}
+
+void Construct$$C(C* c)
+{
+	c->value = 300;
+}
+
+$T* ToDerived$T(Base* base)
+{
+	if (base->type == $Concat$RUNTIME_TYPE_$T)
+	{
+		return ($T*)base;
+	}
+
+	return NULL;
+}
+
+#pragma region DEMO
+
+#pragma DTC push GetName$X '$X'
+
+Base* CreateDerived$T()
+{
+	$T* derived = calloc(1, sizeof($T));
+
+	derived->base.type = $Concat$RUNTIME_TYPE_$T;
+
+	derived->base.name = $GetName$T;
+
+	Construct$T(derived);
+
+	return &derived->base;
+}
+
+#pragma DTC pop GetName
+
+void InsertDerived$T(List$$Ref$Base* list)
+{
+	Base* base = CreateDerived$T();
+
+	List$$Ref$Base$Insert(list, &base);
+}
+
+void PrintDerived$T(Base* base)
+{
+	$T* derived = ToDerived$T(base);
+
+	if (derived != NULL)
+	{
+		printf("$T %i", derived->value);
+	}
+}
+
+void demo_advanced_dynamic_cast()
+{
+	List$$Ref$Base list;
+
+	List$$Ref$Base$Create(&list);
+
+	InsertDerived$A(&list);
+
+	InsertDerived$A(&list);
+
+	InsertDerived$B(&list);
+
+	InsertDerived$B(&list);
+
+	InsertDerived$C(&list);
+
+	InsertDerived$C(&list);
+
+	for (Index index = 0; index < 6; index++)
+	{
+		Base** base_ptr = List$$Ref$Base$GetItem(&list, index);
+
+		Base* base = *base_ptr;
+
+		printf("%zu: %i %c - ", index, base->type, base->name);
+
+		PrintDerived$A(base);
+
+		PrintDerived$B(base);
+
+		PrintDerived$C(base);
+
+		printf("\n");
+	}
+
+	List$$Ref$Base$Destroy(&list);
+}
+
+#pragma endregion
