@@ -79,6 +79,75 @@ struct Origin
 	std::string_view instance_name;
 };
 
+class Definition_Stack
+{
+private:
+
+	std::vector<std::pair<std::string, std::string>> _definitions;
+
+	std::vector<std::pair<size_t, size_t>> _event_history;
+
+public:
+
+	void add_definition(std::string_view par_list, std::string_view replacement, size_t version)
+	{
+		_definitions.emplace_back(par_list, replacement);
+
+		auto depth = _definitions.size();
+
+		_event_history.emplace_back(version, depth);
+	}
+
+	bool remove_definition(size_t version)
+	{
+		if (_event_history.empty())
+		{
+			return false;
+		}
+
+		const auto& event = _event_history.back();
+
+		auto depth = event.second;
+
+		if (depth == 0)
+		{
+			return false;
+		}
+
+		_event_history.emplace_back(version, depth - 1);
+
+		return true;
+	}
+
+	std::pair<std::string_view, std::string_view> get_definition(size_t version) const
+	{
+		auto compare = [version](const auto& event)
+		{
+			return event.first <= version;
+		};
+
+		auto it = std::partition_point(_event_history.begin(), _event_history.end(), compare);
+
+		if (it == _event_history.begin())
+		{
+			return {};
+		}
+
+		it--;
+
+		auto depth = it->second;
+
+		if (depth == 0)
+		{
+			return {};
+		}
+
+		const auto& [par_list, replacement] = _definitions[depth - 1];
+
+		return { par_list, replacement };
+	}
+};
+
 class Compiler
 {
 private:
@@ -87,7 +156,7 @@ private:
 
 	std::set<std::string> _template_instances;
 
-	std::map<std::string, std::vector<std::pair<std::string, std::string>>, std::less<>> _definitions;
+	std::map<std::string, Definition_Stack, std::less<>> _definition_map;
 
 	std::string _result;
 
@@ -106,6 +175,8 @@ private:
 	bool _set_line_number = false;
 
 	size_t _definition_line_offset = 0;
+
+	size_t _definition_version = SIZE_MAX;
 
 public:
 
@@ -257,9 +328,20 @@ public:
 
 								std::string_view replacement(pragma_it, it);
 
-								auto definition_result = _definitions.emplace(base, 0);
+								size_t version = _template_locations.size();
 
-								definition_result.first->second.emplace_back(par_list, replacement);
+								auto definition_it = _definition_map.find(base);
+
+								if (definition_it == _definition_map.end())
+								{
+									Definition_Stack stack;
+
+									auto result = _definition_map.emplace(base, std::move(stack));
+
+									definition_it = result.first;
+								}
+
+								definition_it->second.add_definition(par_list, replacement, version);
 
 								continue;
 							}
@@ -279,27 +361,25 @@ public:
 
 							if (pattern.empty() == false && pragma_it == it)
 							{
-								auto definition_it = _definitions.find(pattern);
+								auto definition_it = _definition_map.find(pattern);
 
-								if (definition_it == _definitions.end())
+								if (definition_it != _definition_map.end())
 								{
-									auto line_number = line_iterator.get_line_number(it);
+									size_t version = _template_locations.size();
 
-									std::cerr << _current_file_name << "(" << line_number << "): ";
-
-									std::cerr << "error: pattern not defined: " << pattern << std::endl;
-
-									indicate_error();
-
-									continue;
+									if (definition_it->second.remove_definition(version))
+									{
+										continue;
+									}
 								}
 
-								definition_it->second.pop_back();
+								auto line_number = line_iterator.get_line_number(it);
 
-								if (definition_it->second.empty())
-								{
-									_definitions.erase(definition_it);
-								}
+								std::cerr << _current_file_name << "(" << line_number << "): ";
+
+								std::cerr << "error: pattern not defined: " << pattern << std::endl;
+
+								indicate_error();
 
 								continue;
 							}
@@ -509,7 +589,7 @@ public:
 
 					_origin_stack.push_back(origin);
 
-					emit_block(block.content);
+					emit_block(block.content, SIZE_MAX);
 
 					_origin_stack.pop_back();
 
@@ -692,7 +772,7 @@ private:
 
 		_origin_stack.push_back(origin);
 
-		emit_template(std::move(content), template_block->get_pattern(), arg_start + 1, arg_end);
+		emit_template(std::move(content), template_block->get_pattern(), arg_start + 1, arg_end, template_id);
 
 		_origin_stack.pop_back();
 	}
@@ -702,7 +782,7 @@ private:
 	{
 		std::string_view block = string;
 
-		std::string replace_buffer = replace_definitions<Trim_Start>(block);
+		auto replace_buffer = replace_definitions<Trim_Start>(block);
 
 		if (replace_buffer.empty() == false)
 		{
@@ -735,12 +815,18 @@ private:
 
 			std::string_view base(instance_start, it);
 
-			auto definition_result = _definitions.find(base);
+			auto definition_result = _definition_map.find(base);
 
-			if (definition_result == _definitions.end())
+			if (definition_result == _definition_map.end())
 			{
 				continue;
 			}
+
+			const auto& [par_list, replacement] = definition_result->second.get_definition(_definition_version);
+
+			auto par_it = par_list.begin();
+
+			auto par_end = par_list.end();
 
 			_definition_line_offset = start_line_offset + line_iterator.get_line_number(it);
 
@@ -756,13 +842,7 @@ private:
 
 			auto arg_end = arg_list.end();
 
-			const auto& [par_list, replacement] = definition_result->second.back();
-
-			auto par_it = par_list.begin();
-
-			auto par_end = par_list.end();
-
-			std::string content = replacement;
+			std::string content(replacement);
 
 			while (par_it != par_end)
 			{
@@ -859,9 +939,11 @@ private:
 		return replace_buffer;
 	}
 
-	void emit_block(std::string_view block)
+	void emit_block(std::string_view block, size_t version)
 	{
 		_definition_line_offset = 0;
+
+		_definition_version = version;
 
 		auto replace_buffer = replace_definitions<true>(block);
 
@@ -918,13 +1000,13 @@ private:
 	}
 
 	template<typename It>
-	void emit_template(std::string content, std::string_view pattern, It arg_start, It arg_end)
+	void emit_template(std::string content, std::string_view pattern, It arg_start, It arg_end, size_t template_id)
 	{
 		_set_line_number = true;
 
 		template_replace(content, pattern, arg_start, arg_end);
 
-		emit_block(content);
+		emit_block(content, template_id);
 
 		_set_line_number = true;
 	}
