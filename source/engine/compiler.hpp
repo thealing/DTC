@@ -119,7 +119,7 @@ public:
 		return true;
 	}
 
-	std::pair<std::string_view, std::string_view> get_definition(size_t version) const
+	std::pair<std::string_view, std::string_view> get_definition(size_t version, bool& found) const
 	{
 		auto compare = [version](const auto& event)
 		{
@@ -141,6 +141,8 @@ public:
 		{
 			return {};
 		}
+
+		found = true;
 
 		const auto& [par_list, replacement] = _definitions[depth - 1];
 
@@ -822,7 +824,14 @@ private:
 				continue;
 			}
 
-			const auto& [par_list, replacement] = definition_result->second.get_definition(_definition_version);
+			bool definition_found = false;
+
+			const auto& [par_list, replacement] = definition_result->second.get_definition(_definition_version, definition_found);
+
+			if (definition_found == false)
+			{
+				continue;
+			}
 
 			auto par_it = par_list.begin();
 
