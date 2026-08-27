@@ -53,7 +53,7 @@ void demo_object_semantics()
 	Assert(uninitialized == 1);
 	Assert(zero_initialized == 0);
 }
- 
+
 #pragma DTC pop Int
 
 #pragma endregion
