@@ -79,19 +79,29 @@ struct Origin
 	std::string_view instance_name;
 };
 
+struct Definition
+{
+	std::string par_list;
+
+	std::string replacement;
+
+	bool replace_content = false;
+};
+
 class Definition_Stack
 {
 private:
 
-	std::vector<std::pair<std::string, std::string>> _definitions;
+	std::vector<Definition> _definitions;
 
 	std::vector<std::pair<size_t, size_t>> _event_history;
 
 public:
 
-	void add_definition(std::string_view par_list, std::string_view replacement, size_t version)
+	template<typename Definition>
+	void add_definition(Definition&& definition, size_t version)
 	{
-		_definitions.emplace_back(par_list, replacement);
+		_definitions.push_back(std::forward<Definition>(definition));
 
 		auto depth = _definitions.size();
 
@@ -119,7 +129,7 @@ public:
 		return true;
 	}
 
-	std::pair<std::string_view, std::string_view> get_definition(size_t version, bool& found) const
+	const Definition* get_definition(size_t version) const
 	{
 		auto compare = [version](const auto& event)
 		{
@@ -130,7 +140,7 @@ public:
 
 		if (it == _event_history.begin())
 		{
-			return {};
+			return nullptr;
 		}
 
 		it--;
@@ -139,14 +149,12 @@ public:
 
 		if (depth == 0)
 		{
-			return {};
+			return nullptr;
 		}
 
-		found = true;
+		const auto& definition = _definitions[depth - 1];
 
-		const auto& [par_list, replacement] = _definitions[depth - 1];
-
-		return { par_list, replacement };
+		return &definition;
 	}
 };
 
@@ -343,7 +351,18 @@ public:
 									definition_it = result.first;
 								}
 
-								definition_it->second.add_definition(par_list, replacement, version);
+								Definition definition;
+
+								definition.par_list = par_list;
+
+								definition.replacement = replacement;
+
+								if (_suppression_level == 0)
+								{
+									definition.replace_content = true;
+								}
+
+								definition_it->second.add_definition(std::move(definition), version);
 
 								continue;
 							}
@@ -824,14 +843,14 @@ private:
 				continue;
 			}
 
-			bool definition_found = false;
+			const Definition* definition = definition_result->second.get_definition(_definition_version);
 
-			const auto& [par_list, replacement] = definition_result->second.get_definition(_definition_version, definition_found);
-
-			if (definition_found == false)
+			if (definition == nullptr)
 			{
 				continue;
 			}
+
+			const auto& [par_list, replacement, replace_content] = *definition;
 
 			auto par_it = par_list.begin();
 
@@ -892,7 +911,10 @@ private:
 
 			content.append(arg_it, arg_end);
 
-			replace_definitions<Trim_Start>(content);
+			if (replace_content)
+			{
+				replace_definitions<Trim_Start>(content);
+			}
 
 			auto macro_start = instance_start - 1;
 
