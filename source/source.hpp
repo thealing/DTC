@@ -26,6 +26,8 @@
 
 #include <utility>
 
+#include <functional>
+
 #include "core/string.hpp"
 
 #include "core/block.hpp"

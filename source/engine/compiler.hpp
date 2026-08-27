@@ -158,6 +158,202 @@ public:
 	}
 };
 
+template<typename Print_Error, typename Process_Content, typename Definition_Map>
+class Definition_Replacer
+{
+private:
+
+	Print_Error _print_error;
+
+	Process_Content _process_content;
+
+	const Definition_Map* _map;
+
+	size_t _version;
+
+	size_t _line_offset;
+
+public:
+
+	Definition_Replacer(Print_Error print_error, Process_Content process_content, const Definition_Map* map, size_t version) : _print_error(print_error), _process_content(process_content)
+	{
+		_map = map;
+
+		_version = version;
+
+		_line_offset = 0;
+	}
+
+	template<bool Trim_Start>
+	void replace_definitions(std::string& string)
+	{
+		std::string_view block = string;
+
+		auto replace_buffer = replace_definitions<Trim_Start>(block);
+
+		if (replace_buffer.empty() == false)
+		{
+			std::swap(string, replace_buffer);
+		}
+	}
+
+	template<bool Trim_Start>
+	std::string replace_definitions(std::string_view& block)
+	{
+		std::string replace_buffer;
+
+		auto block_start = block.begin();
+
+		auto block_end = block.end();
+
+		auto it = block_start;
+
+		Line_Iterator line_iterator(it, 0);
+
+		auto start_line_offset = _line_offset;
+
+		while (string_find(it, block_end, '$'))
+		{
+			string_skip(it, block_end, '$');
+
+			auto instance_start = it;
+
+			string_skip_word_part(it, block_end);
+
+			std::string_view base(instance_start, it);
+
+			auto definition_result = _map->find(base);
+
+			if (definition_result == _map->end())
+			{
+				continue;
+			}
+
+			const Definition* definition = definition_result->second.get_definition(_version);
+
+			if (definition == nullptr)
+			{
+				continue;
+			}
+
+			const auto& [par_list, replacement, replace_content] = *definition;
+
+			auto par_it = par_list.begin();
+
+			auto par_end = par_list.end();
+
+			_line_offset = start_line_offset + line_iterator.get_line_number(it);
+
+			auto arg_list_start = it;
+
+			string_skip_word(it, block_end);
+
+			std::string_view arg_list(arg_list_start, it);
+
+			std::string arg_buffer = replace_definitions<false>(arg_list);
+
+			auto arg_it = arg_list.begin();
+
+			auto arg_end = arg_list.end();
+
+			std::string content(replacement);
+
+			while (par_it != par_end)
+			{
+				auto arg_start = arg_it;
+
+				if (string_skip_template(arg_it, arg_end) == false)
+				{
+					_print_error(_line_offset, base, arg_list);
+
+					break;
+				}
+
+				auto par_start = par_it;
+
+				par_it++;
+
+				string_skip_word_part(par_it, par_end);
+
+				std::string_view par(par_start, par_it);
+
+				std::string_view arg(arg_start, arg_it);
+
+				content = template_replace_macro(content, par, arg);
+			}
+
+			if (par_it != par_end)
+			{
+				continue;
+			}
+
+			content.append(arg_it, arg_end);
+
+			if constexpr (std::is_same_v<Process_Content, std::nullptr_t> == false)
+			{
+				_process_content(content);
+			}
+
+			if (replace_content)
+			{
+				replace_definitions<Trim_Start>(content);
+			}
+
+			auto macro_start = instance_start - 1;
+
+			if constexpr (Trim_Start)
+			{
+				char last_character = 0;
+
+				if (last_character == 0 && macro_start != block_start)
+				{
+					last_character = macro_start[-1];
+				}
+
+				if (last_character == 0 && replace_buffer.empty() == false)
+				{
+					last_character = replace_buffer.back();
+				}
+
+				if (last_character == '$')
+				{
+					macro_start--;
+				}
+
+				if (string_is_word(last_character) == false)
+				{
+					auto content_start = content.begin();
+
+					auto content_end = content.end();
+
+					auto content_it = content_start;
+
+					string_skip(content_it, content_end, '$');
+
+					content.erase(content_start, content_it);
+				}
+			}
+
+			replace_buffer.append(block_start, macro_start);
+
+			replace_buffer.append(content);
+
+			block_start = it;
+		}
+
+		if (replace_buffer.empty() == false)
+		{
+			replace_buffer.append(block_start, block_end);
+
+			block = replace_buffer;
+		}
+
+		_line_offset = start_line_offset;
+
+		return replace_buffer;
+	}
+};
+
 class Compiler
 {
 private:
@@ -183,10 +379,6 @@ private:
 	intptr_t _suppression_level = 0;
 
 	bool _set_line_number = false;
-
-	size_t _definition_line_offset = 0;
-
-	size_t _definition_version = SIZE_MAX;
 
 public:
 
@@ -610,7 +802,15 @@ public:
 
 					_origin_stack.push_back(origin);
 
-					emit_block(block.content, SIZE_MAX);
+					auto print_error = std::bind_front(&Compiler::print_definition_error, this);
+
+					Definition_Replacer replacer(print_error, nullptr, &_definition_map, SIZE_MAX);
+
+					std::string_view block_content = block.content;
+
+					auto replace_buffer = replacer.template replace_definitions<true>(block_content);
+
+					emit_block(block_content);
 
 					_origin_stack.pop_back();
 
@@ -798,186 +998,8 @@ private:
 		_origin_stack.pop_back();
 	}
 
-	template<bool Trim_Start>
-	void replace_definitions(std::string& string)
+	void emit_block(std::string_view block)
 	{
-		std::string_view block = string;
-
-		auto replace_buffer = replace_definitions<Trim_Start>(block);
-
-		if (replace_buffer.empty() == false)
-		{
-			std::swap(string, replace_buffer);
-		}
-	}
-
-	template<bool Trim_Start>
-	std::string replace_definitions(std::string_view& block)
-	{
-		std::string replace_buffer;
-
-		auto block_start = block.begin();
-
-		auto block_end = block.end();
-
-		auto it = block_start;
-
-		Line_Iterator line_iterator(it, 0);
-
-		auto start_line_offset = _definition_line_offset;
-
-		while (string_find(it, block_end, '$'))
-		{
-			string_skip(it, block_end, '$');
-
-			auto instance_start = it;
-
-			string_skip_word_part(it, block_end);
-
-			std::string_view base(instance_start, it);
-
-			auto definition_result = _definition_map.find(base);
-
-			if (definition_result == _definition_map.end())
-			{
-				continue;
-			}
-
-			const Definition* definition = definition_result->second.get_definition(_definition_version);
-
-			if (definition == nullptr)
-			{
-				continue;
-			}
-
-			const auto& [par_list, replacement, replace_content] = *definition;
-
-			auto par_it = par_list.begin();
-
-			auto par_end = par_list.end();
-
-			_definition_line_offset = start_line_offset + line_iterator.get_line_number(it);
-
-			auto arg_list_start = it;
-
-			string_skip_word(it, block_end);
-
-			std::string_view arg_list(arg_list_start, it);
-
-			std::string arg_buffer = replace_definitions<false>(arg_list);
-
-			auto arg_it = arg_list.begin();
-
-			auto arg_end = arg_list.end();
-
-			std::string content(replacement);
-
-			while (par_it != par_end)
-			{
-				auto arg_start = arg_it;
-
-				if (string_skip_template(arg_it, arg_end) == false)
-				{
-					auto location = get_current_block_location();
-
-					location.line_number += _definition_line_offset;
-
-					std::cerr << location.file_name << "(" << location.line_number << "): ";
-
-					std::cerr << "error: invalid macro expansion: " << base << arg_list << std::endl;
-
-					indicate_error();
-
-					break;
-				}
-
-				auto par_start = par_it;
-
-				par_it++;
-
-				string_skip_word_part(par_it, par_end);
-
-				std::string_view par(par_start, par_it);
-
-				std::string_view arg(arg_start, arg_it);
-
-				content = template_replace_macro(content, par, arg);
-			}
-
-			if (par_it != par_end)
-			{
-				continue;
-			}
-
-			content.append(arg_it, arg_end);
-
-			if (replace_content)
-			{
-				replace_definitions<Trim_Start>(content);
-			}
-
-			auto macro_start = instance_start - 1;
-
-			if constexpr (Trim_Start)
-			{
-				char last_character = 0;
-
-				if (last_character == 0 && macro_start != block_start)
-				{
-					last_character = macro_start[-1];
-				}
-
-				if (last_character == 0 && replace_buffer.empty() == false)
-				{
-					last_character = replace_buffer.back();
-				}
-
-				if (last_character == '$')
-				{
-					macro_start--;
-				}
-
-				if (string_is_word(last_character) == false)
-				{
-					auto content_start = content.begin();
-
-					auto content_end = content.end();
-
-					auto content_it = content_start;
-
-					string_skip(content_it, content_end, '$');
-
-					content.erase(content_start, content_it);
-				}
-			}
-
-			replace_buffer.append(block_start, macro_start);
-
-			replace_buffer.append(content);
-
-			block_start = it;
-		}
-
-		if (replace_buffer.empty() == false)
-		{
-			replace_buffer.append(block_start, block_end);
-
-			block = replace_buffer;
-		}
-
-		_definition_line_offset = start_line_offset;
-
-		return replace_buffer;
-	}
-
-	void emit_block(std::string_view block, size_t version)
-	{
-		_definition_line_offset = 0;
-
-		_definition_version = version;
-
-		auto replace_buffer = replace_definitions<true>(block);
-
 		auto start = block.begin();
 
 		auto end = block.end();
@@ -1035,9 +1057,20 @@ private:
 	{
 		_set_line_number = true;
 
-		template_replace(content, pattern, arg_start, arg_end);
+		auto process_content = [&](std::string& template_content)
+		{
+			template_replace(template_content, pattern, arg_start, arg_end);
+		};
 
-		emit_block(content, template_id);
+		process_content(content);
+
+		auto print_error = std::bind_front(&Compiler::print_definition_error, this);
+
+		Definition_Replacer replacer(print_error, process_content, &_definition_map, template_id);
+
+		replacer.template replace_definitions<true>(content);
+
+		emit_block(content);
 
 		_set_line_number = true;
 	}
@@ -1063,6 +1096,19 @@ private:
 		_result += file_name;
 
 		_result += "\"\n";
+	}
+
+	void print_definition_error(size_t line_offset, std::string_view base, std::string_view arg_list) const
+	{
+		auto location = get_current_block_location();
+
+		location.line_number += line_offset;
+
+		std::cerr << location.file_name << "(" << location.line_number << "): ";
+
+		std::cerr << "error: invalid macro expansion: " << base << arg_list << std::endl;
+
+		indicate_error();
 	}
 
 	Location get_current_block_location() const
