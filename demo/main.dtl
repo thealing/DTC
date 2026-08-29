@@ -29,6 +29,8 @@
 
 #include "source/advanced/dynamic_cast.dtl"
 
+#include "source/advanced/data_layout.dtl"
+
 int main()
 {
 	demo_basic_types();
@@ -44,4 +46,6 @@ int main()
 	demo_macros();
 
 	demo_advanced_dynamic_cast();
+
+	demo_advanced_data_layout();
 }

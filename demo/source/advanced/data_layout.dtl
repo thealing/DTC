@@ -1,0 +1,105 @@
+
+typedef $T Field$$AOS$T;
+
+typedef $T* Field$$SOA$T;
+
+#pragma DTC disable
+
+#pragma DTC push FL Field$Layout
+
+#pragma DTC enable
+
+typedef struct _Sprite$Layout Sprite$Layout;
+
+struct _Sprite$Layout
+{
+	$FL$double position_x;
+
+	$FL$double position_y;
+
+	$FL$double position_z;
+
+	$FL$double scale_horizontal;
+
+	$FL$double scale_vertical;
+
+	$FL$int layer;
+
+	$FL$float opacity;
+};
+
+#pragma DTC pop FL
+
+typedef $T* Array$$AOS$T;
+
+typedef $T Array$$SOA$T;
+
+typedef Array$Layout$$Sprite$Layout Sprite_Array$Layout;
+
+typedef struct _Sprite_List$Layout Sprite_List$Layout;
+
+struct _Sprite_List$Layout
+{
+	Sprite_Array$Layout character_array;
+
+	Count character_count;
+};
+
+void Sprite_Array$$AOS$$Create(Sprite_Array$AOS* character_array, Count character_count)
+{
+	*character_array = Allocate$$Sprite$AOS(character_count);
+}
+
+typedef double Sprite_Field_Type$$position_x;
+
+typedef double Sprite_Field_Type$$position_y;
+
+typedef double Sprite_Field_Type$$position_z;
+
+typedef double Sprite_Field_Type$$scale_horizontal;
+
+typedef double Sprite_Field_Type$$scale_vertical;
+
+typedef int Sprite_Field_Type$$layer;
+
+typedef float Sprite_Field_Type$$opacity;
+
+void Sprite_Array_SOA_Initialize$field(Sprite_Array$SOA* character_array, Count character_count)
+{
+	character_array->$field = Allocate$$Sprite_Field_Type$field(character_count);
+}
+
+void Sprite_Array$$SOA$$Create(Sprite_Array$SOA* character_array, Count character_count)
+{
+	Sprite_Array_SOA_Initialize$position_x(character_array, character_count);
+
+	Sprite_Array_SOA_Initialize$position_y(character_array, character_count);
+
+	Sprite_Array_SOA_Initialize$position_z(character_array, character_count);
+
+	Sprite_Array_SOA_Initialize$scale_horizontal(character_array, character_count);
+
+	Sprite_Array_SOA_Initialize$scale_vertical(character_array, character_count);
+
+	Sprite_Array_SOA_Initialize$layer(character_array, character_count);
+
+	Sprite_Array_SOA_Initialize$opacity(character_array, character_count);
+}
+
+void Sprite_List$Layout$$Create(Sprite_List$Layout* character_list, Count character_count)
+{
+	Sprite_Array$Layout$Create(&character_list->character_array, character_count);
+
+	character_list->character_count = character_count;
+}
+
+void demo_advanced_data_layout()
+{
+	Sprite_List$AOS aos_entity_list;
+
+	Sprite_List$AOS$Create(&aos_entity_list, 1000);
+
+	Sprite_List$SOA soa_entity_list;
+
+	Sprite_List$SOA$Create(&soa_entity_list, 1000);
+}
