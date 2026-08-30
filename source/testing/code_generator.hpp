@@ -47,7 +47,7 @@ public:
 		name = "base";
 
 		// dynamic base
-		name += std::to_string(_counter);
+		//name += std::to_string(_counter);
 		//name += std::to_string(_counter / 100000);
 
 		_counter++;
@@ -65,7 +65,7 @@ public:
 			if (0) // dont template
 				break;
 
-			if (0)//use special
+			if (1)//use special
 			{
 				if (std::distance(nc, ns.end()) >= 3)
 				{
@@ -143,7 +143,7 @@ public:
 		source_stream << '\n';
 
 		val_stream << ins_name;
-		
+
 		val_stream << ' ';
 
 		val_stream << val_name;
@@ -382,7 +382,7 @@ public:
 			return;
 		}
 
-		
+
 	}
 
 	void generate_source(std::ostream& source_stream, std::ostream& val_stream, int block_count)
@@ -579,7 +579,7 @@ private:
 		result += std::to_string(id);
 
 #if 0
-		
+
 		auto id_string = std::to_string(id);
 
 		for (auto c : id_string)
@@ -625,7 +625,7 @@ private:
 					result += "unsigned ";
 				}
 			}
-			
+
 			result += base;
 		}
 		else

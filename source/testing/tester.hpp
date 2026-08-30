@@ -27,25 +27,40 @@ void tester_run(const std::vector<std::string>& arguments)
 
 	auto val_string = std::move(val_stream).str();
 
-	auto time_0 = clock();
+	int cc = 0;
+	while (1)
+	{
+		cc++;
 
-	Compiler compiler;
+		auto time_0 = clock();
 
-	//AllocTrace::enable();
+		//compiler_arguments.conformance_mode = true;
 
-	auto compiled_code = compiler.compile(test_output_path, source_string);
+		Compiler compiler;
 
-	//AllocTrace::print();
+		//AllocTrace::enable();
 
-	auto time_1 = clock();
+		auto compiled_code = compiler.compile(test_output_path, source_string);
 
-	std::cout << "Compilation time: " << time_1 - time_0 << " ms" << std::endl;
+		//AllocTrace::print();
 
-	std::ofstream test_output_file(test_output_path);
+		auto time_1 = clock();
 
-	test_output_file << compiled_code;
+		std::cout << "Compilation time: " << time_1 - time_0 << " ms" << std::endl;
 
-	test_output_file << "\n\n";
+		if (cc < 10)
+		{
+			continue;
+		}
 
-	test_output_file << val_string;
+		std::ofstream test_output_file(test_output_path);
+
+		test_output_file << compiled_code;
+
+		test_output_file << "\n\n";
+
+		test_output_file << val_string;
+
+		break;
+	}
 }
