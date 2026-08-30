@@ -38,8 +38,6 @@ add_executable("${PROJECT_NAME}" "Source.cpp")
 
 set_target_properties("${PROJECT_NAME}" PROPERTIES OUTPUT_NAME "${PROJECT_NAME}" PDB_NAME "${PROJECT_NAME}.exe" PREFIX "")
 
-# DEMO
-
 set(TARGET_DEMO "demo")
 
 set(DEMO_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/demo/main.dtl")
