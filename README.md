@@ -67,14 +67,16 @@ void Print$$String(String* string)
 }
 
 // a print function specialization for lists of any type
-void Print$$$List$Item(List$Item* list) {
+void Print$$$List$Item(List$Item* list)
+{
   for (Index i = 0; i < list->item_count; i++) {
     Print$Item(&list->items[i]);
   }
 }
 
 // a print function specialization for integer lists
-void Print$$$List$$int(List$int* list) {
+void Print$$$List$$int(List$int* list)
+{
   for (Index i = 0; i < list->item_count; i++) {
     printf("%i\n", list->items[i]);
   }
@@ -83,7 +85,8 @@ void Print$$$List$$int(List$int* list) {
 
 Template instantiations consist of a base name and the argument list:
 ```c
-void example() {
+void example()
+{
   // an array of 5 integers
   Array$int$5 numbers;
 
@@ -110,7 +113,9 @@ A macro can be used by prepending `$` to its name, which works within other symb
 ```c
 #pragma DTC push Concat$X$Y $X$Y
 #pragma DTC push Swap$X$Y $$Y$$X
-void example() {
+
+void example()
+{
   const char* name = Get$Concat$Na$me(); // expands to: GetName
   Pair$int$float pair = GetPair$Swap$float$int(); // expands to: GetPair$int$float
 }
@@ -135,17 +140,38 @@ struct Pair$First$Second {
 #pragma DTC instantiate Pair$int$int
 #pragma DTC instantiate Pair$float$double
 
-struct Vector$$64 {
-  char data[8];
-};
+typedef struct {
+  int data[2];
+} Vector$$64;
 
-struct Vector$$128 {
-  char data[16];
-};
+typedef struct {
+  int data[4];
+} Vector$$128;
 
-struct Vector$$256 {
-  char data[32];
-};
+typedef struct {
+  int data[8];
+} Vector$$256;
+
+void Vector$$64$$Add(Vector$$64* result, Vector$$64* a, Vector$$64* b)
+{
+	for (Index i = 0; i < 2; i++) {
+		result->data[i] = a->data[i] + b->data[i];
+	}
+}
+
+void Vector$$128$$Add(Vector$$128* result, Vector$$128* a, Vector$$128* b)
+{
+	for (Index i = 0; i < 4; i++) {
+		result->data[i] = a->data[i] + b->data[i];
+	}
+}
+
+void Vector$$256$$Add(Vector$$256* result, Vector$$256* a, Vector$$256* b)
+{
+	for (Index i = 0; i < 8; i++) {
+		result->data[i] = a->data[i] + b->data[i];
+	}
+}
 
 // instantiate all Vector specializations
 #pragma DTC instantiate Vector$*
