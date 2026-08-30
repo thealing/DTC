@@ -182,7 +182,7 @@ void Vector$$256$$Add(Vector$256* result, Vector$256* a, Vector$256* b)
 #pragma DTC instantiate Vector$*$*
 ```
 
-## Examples
-Example code for all language features can be found within the `demo` folder, compiled together as a CMake target.
+## Complete Examples
+The `demo` folder contains working example code for all language features, compiled together as a CMake target.
 
 Observe the generated `build.c` file to see how the templates got instantiated.
