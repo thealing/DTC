@@ -152,21 +152,21 @@ typedef struct {
 	int values[8];
 } Vector$$256;
 
-void Vector$$64$$Add(Vector$$64* result, Vector$$64* a, Vector$$64* b)
+void Vector$$64$$Add(Vector$64* result, Vector$64* a, Vector$64* b)
 {
 	for (Index i = 0; i < 2; i++) {
 		result->values[i] = a->values[i] + b->values[i];
 	}
 }
 
-void Vector$$128$$Add(Vector$$128* result, Vector$$128* a, Vector$$128* b)
+void Vector$$128$$Add(Vector$128* result, Vector$128* a, Vector$128* b)
 {
 	for (Index i = 0; i < 4; i++) {
 		result->values[i] = a->values[i] + b->values[i];
 	}
 }
 
-void Vector$$256$$Add(Vector$$256* result, Vector$$256* a, Vector$$256* b)
+void Vector$$256$$Add(Vector$256* result, Vector$256* a, Vector$256* b)
 {
 	for (Index i = 0; i < 8; i++) {
 		result->values[i] = a->values[i] + b->values[i];
