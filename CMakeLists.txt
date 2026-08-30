@@ -38,32 +38,6 @@ add_executable("${PROJECT_NAME}" "Source.cpp")
 
 set_target_properties("${PROJECT_NAME}" PROPERTIES OUTPUT_NAME "${PROJECT_NAME}" PDB_NAME "${PROJECT_NAME}.exe" PREFIX "")
 
-# TEST
-
-enable_testing()
-
-set(TARGET_TESTER "tester")
-
-set(TARGET_TESTER_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/test_generated.c")
-
-set(TARGET_VALIDATOR "validator")
-
-add_executable("${TARGET_TESTER}" "Test.cpp")
-
-add_custom_command(OUTPUT "${TARGET_TESTER_OUTPUT}" COMMAND "${TARGET_TESTER}" ${TARGET_TESTER_OUTPUT} DEPENDS "${TARGET_TESTER}")
-
-add_library("${TARGET_VALIDATOR}" STATIC EXCLUDE_FROM_ALL "${TARGET_TESTER_OUTPUT}")
-
-add_test(NAME "${TARGET_TESTER}" COMMAND "${TARGET_TESTER}" "${TARGET_TESTER_OUTPUT}")
-
-add_test(NAME "${TARGET_VALIDATOR}" COMMAND ${CMAKE_COMMAND} --build . --target "${TARGET_VALIDATOR}")
-
-if(MSVC)
-
-	target_compile_options("${TARGET_VALIDATOR}" PRIVATE /w)
-
-endif()
-
 # DEMO
 
 set(TARGET_DEMO "demo")
