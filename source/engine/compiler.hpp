@@ -259,7 +259,7 @@ public:
 
 								std::cerr << _current_file_name << "(" << line_number << "): ";
 
-								std::cerr << "error: pattern not defined: " << pattern << std::endl;
+								std::cerr << "error: macro not defined: " << pattern << std::endl;
 
 								indicate_error();
 
