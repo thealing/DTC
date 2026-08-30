@@ -21,9 +21,9 @@ struct _Shape_Interface
 
 const Shape_Interface ShapeImplementation$Instance =
 {
-	$Concat$Instance$_GetArea,
+	(void*)$Concat$Instance$_GetArea,
 
-	$Concat$Instance$_Scale,
+	(void*)$Concat$Instance$_Scale,
 
 	NULL
 };
