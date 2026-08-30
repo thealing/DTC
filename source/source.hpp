@@ -20,8 +20,6 @@
 
 #include <set>
 
-#include <random>
-
 #include <algorithm>
 
 #include <utility>
@@ -51,7 +49,3 @@
 #include "engine/compiler.hpp"
 
 #include "main/cli.hpp"
-
-#include "testing/code_generator.hpp"
-
-#include "testing/tester.hpp"
