@@ -63,17 +63,13 @@ Circle Circle_Make(double radius)
 	return circle;
 }
 
-double Circle_GetArea(void* self)
+double Circle_GetArea(Circle* circle)
 {
-	Circle* circle = (Circle*)self;
-
 	return circle->radius * circle->radius * 3.14159265358979;
 }
 
-void Circle_Scale(void* self, double amount)
+void Circle_Scale(Circle* circle, double amount)
 {
-	Circle* circle = (Circle*)self;
-
 	circle->radius *= amount;
 }
 
@@ -93,17 +89,13 @@ Square Square_Make(double side_length)
 	return square;
 }
 
-double Square_GetArea(void* self)
+double Square_GetArea(Square* square)
 {
-	Square* square = (Square*)self;
-
 	return square->side_length * square->side_length;
 }
 
-void Square_Scale(void* self, double amount)
+void Square_Scale(Square* square, double amount)
 {
-	Square* square = (Square*)self;
-
 	square->side_length *= amount;
 }
 
@@ -127,17 +119,13 @@ Triangle Triangle_Make(double width, double height)
 	return triangle;
 }
 
-double Triangle_GetArea(void* self)
+double Triangle_GetArea(Triangle* triangle)
 {
-	Triangle* triangle = (Triangle*)self;
-
 	return triangle->width * triangle->height * 0.5;
 }
 
-void Triangle_Scale(void* self, double amount)
+void Triangle_Scale(Triangle* triangle, double amount)
 {
-	Triangle* triangle = (Triangle*)self;
-
 	triangle->width *= amount;
 
 	triangle->height *= amount;
