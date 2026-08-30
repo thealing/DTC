@@ -31,6 +31,8 @@
 
 #include "source/advanced/data_layout.dtl"
 
+#include "source/advanced/type_erasure.dtl"
+
 int main()
 {
 	demo_basic_types();
@@ -48,4 +50,6 @@ int main()
 	demo_advanced_dynamic_cast();
 
 	demo_advanced_data_layout();
+
+	demo_advanced_type_erasure();
 }

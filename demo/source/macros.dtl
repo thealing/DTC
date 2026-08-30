@@ -1,9 +1,5 @@
 #pragma once
 
-#pragma DTC push Square$X $$$Multiply$$X$$X
-
-#pragma DTC push Cube$X $$$$Multiply$$X$$X$$X
-
 #pragma DTC push Swap$X$Y $$Y$$X
 
 #pragma DTC push Concat$X$Y $X$Y
@@ -131,9 +127,13 @@ void test_constants()
 
 #pragma DTC enable
 
+#pragma DTC push square$X $$$Multiply$$X$$X
+
+#pragma DTC push cube$X $$$$Multiply$$X$$X$$X
+
 void demo_macros()
 {
-	test_values$Square$5$$$Add$Cube$3$$Negate$2();
+	test_values$square$5$$$Add$cube$3$$Negate$2();
 
 	test_values$$$Swap$1$Increment$2();
 
@@ -143,5 +143,9 @@ void demo_macros()
 
 	test_constants();
 }
+
+#pragma DTC pop square
+
+#pragma DTC pop cube
 
 #pragma endregion

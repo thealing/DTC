@@ -1,0 +1,190 @@
+
+typedef struct _Shape Shape;
+
+typedef struct _Shape_Interface Shape_Interface;
+
+struct _Shape
+{
+	void* instance;
+
+	const Shape_Interface* interface;
+};
+
+struct _Shape_Interface
+{
+	double (*get_area)(void* self);
+
+	void (*scale)(void* self, double amount);
+
+	void* interface_end;
+};
+
+const Shape_Interface ShapeImplementation$Instance =
+{
+	$Concat$Instance$_GetArea,
+
+	$Concat$Instance$_Scale,
+
+	NULL
+};
+
+void Shape_Initialize$Instance(Shape* shape, $Instance* instance)
+{
+	shape->instance = instance;
+
+	shape->interface = &ShapeImplementation$Instance;
+}
+
+double Shape_GetArea(Shape* shape)
+{
+	return shape->interface->get_area(shape->instance);
+}
+
+void Shape_Scale(Shape* shape, double amount)
+{
+	shape->interface->scale(shape->instance, amount);
+}
+
+#pragma region DEMO
+
+typedef struct _Circle Circle;
+
+struct _Circle
+{
+	double radius;
+};
+
+Circle Circle_Make(double radius)
+{
+	Circle circle;
+
+	circle.radius = radius;
+
+	return circle;
+}
+
+double Circle_GetArea(void* self)
+{
+	Circle* circle = (Circle*)self;
+
+	return circle->radius * circle->radius * 3.14159265358979;
+}
+
+void Circle_Scale(void* self, double amount)
+{
+	Circle* circle = (Circle*)self;
+
+	circle->radius *= amount;
+}
+
+typedef struct _Square Square;
+
+struct _Square
+{
+	double side_length;
+};
+
+Square Square_Make(double side_length)
+{
+	Square square;
+
+	square.side_length = side_length;
+
+	return square;
+}
+
+double Square_GetArea(void* self)
+{
+	Square* square = (Square*)self;
+
+	return square->side_length * square->side_length;
+}
+
+void Square_Scale(void* self, double amount)
+{
+	Square* square = (Square*)self;
+
+	square->side_length *= amount;
+}
+
+typedef struct _Triangle Triangle;
+
+struct _Triangle
+{
+	double width;
+
+	double height;
+};
+
+Triangle Triangle_Make(double width, double height)
+{
+	Triangle triangle;
+
+	triangle.width = width;
+
+	triangle.height = height;
+
+	return triangle;
+}
+
+double Triangle_GetArea(void* self)
+{
+	Triangle* triangle = (Triangle*)self;
+
+	return triangle->width * triangle->height * 0.5;
+}
+
+void Triangle_Scale(void* self, double amount)
+{
+	Triangle* triangle = (Triangle*)self;
+
+	triangle->width *= amount;
+
+	triangle->height *= amount;
+}
+
+void demo_advanced_type_erasure()
+{
+	Circle circle = Circle_Make(2);
+
+	Square square = Square_Make(3);
+
+	Triangle triangle = Triangle_Make(4, 5);
+
+	double expected_areas[3];
+
+	expected_areas[0] = 2 * 2 * 3.14159265358979;
+
+	expected_areas[1] = 3 * 3;
+
+	expected_areas[2] = 4 * 5 * 0.5;
+
+	Shape shapes[3];
+
+	Shape_Initialize$Circle(&shapes[0], &circle);
+
+	Shape_Initialize$Square(&shapes[1], &square);
+
+	Shape_Initialize$Triangle(&shapes[2], &triangle);
+
+	for (Index index = 0; index < 3; index++)
+	{
+		double area = Shape_GetArea(&shapes[index]);
+
+		Assert(area == expected_areas[index]);
+	}
+
+	for (Index index = 0; index < 3; index++)
+	{
+		Shape_Scale(&shapes[index], 10);
+	}
+
+	for (Index index = 0; index < 3; index++)
+	{
+		double area = Shape_GetArea(&shapes[index]);
+
+		Assert(area == expected_areas[index] * 100);
+	}
+}
+
+#pragma endregion
