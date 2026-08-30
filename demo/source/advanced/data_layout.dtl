@@ -3,53 +3,6 @@ typedef $T Field$$AOS$T;
 
 typedef $T* Field$$SOA$T;
 
-#pragma DTC disable
-
-#pragma DTC push FL Field$Layout
-
-#pragma DTC enable
-
-typedef struct _Sprite$Layout Sprite$Layout;
-
-struct _Sprite$Layout
-{
-	$FL$double position_x;
-
-	$FL$double position_y;
-
-	$FL$double position_z;
-
-	$FL$double scale_horizontal;
-
-	$FL$double scale_vertical;
-
-	$FL$int layer;
-
-	$FL$float opacity;
-};
-
-#pragma DTC pop FL
-
-typedef $T* Array$$AOS$T;
-
-typedef $T Array$$SOA$T;
-
-typedef Array$Layout$$Sprite$Layout Sprite_Array$Layout;
-
-typedef struct _Sprite_List$Layout Sprite_List$Layout;
-
-struct _Sprite_List$Layout
-{
-	Sprite_Array$Layout character_array;
-
-	Count character_count;
-};
-
-void Sprite_Array$$AOS$$Create(Sprite_Array$AOS* character_array, Count character_count)
-{
-	*character_array = Allocate$$Sprite$AOS(character_count);
-}
-
 typedef double Sprite_Field_Type$$position_x;
 
 typedef double Sprite_Field_Type$$position_y;
@@ -63,6 +16,49 @@ typedef double Sprite_Field_Type$$scale_vertical;
 typedef int Sprite_Field_Type$$layer;
 
 typedef float Sprite_Field_Type$$opacity;
+
+#pragma DTC disable
+
+#pragma DTC push Declare$field Field$Layout$$Sprite_Field_Type$$field $field
+
+#pragma DTC enable
+
+typedef struct _Sprite$Layout Sprite$Layout;
+
+struct _Sprite$Layout
+{
+	$Declare$position_x;
+
+	$Declare$position_y;
+
+	$Declare$position_z;
+
+	$Declare$scale_horizontal;
+
+	$Declare$scale_vertical;
+
+	$Declare$layer;
+
+	$Declare$opacity;
+};
+
+#pragma DTC pop Declare
+
+typedef $T* Array$$AOS$T;
+
+typedef $T Array$$SOA$T;
+
+typedef Array$Layout$$Sprite$Layout Sprite_Array$Layout;
+
+void Sprite_Array$$AOS$$Create(Sprite_Array$AOS* character_array, Count character_count)
+{
+	*character_array = Allocate$$Sprite$AOS(character_count);
+}
+
+void Sprite_Array$$AOS$$Destroy(Sprite_Array$AOS* character_array)
+{
+	Free(*character_array);
+}
 
 void Sprite_Array_SOA_Initialize$field(Sprite_Array$SOA* character_array, Count character_count)
 {
@@ -86,6 +82,49 @@ void Sprite_Array$$SOA$$Create(Sprite_Array$SOA* character_array, Count characte
 	Sprite_Array_SOA_Initialize$opacity(character_array, character_count);
 }
 
+void Sprite_Array_SOA_Uninitialize$field(Sprite_Array$SOA* character_array)
+{
+	Free(character_array->$field);
+}
+
+void Sprite_Array$$SOA$$Destroy(Sprite_Array$SOA* character_array)
+{
+	Sprite_Array_SOA_Uninitialize$position_x(character_array);
+	
+	Sprite_Array_SOA_Uninitialize$position_y(character_array);
+	
+	Sprite_Array_SOA_Uninitialize$position_z(character_array);
+	
+	Sprite_Array_SOA_Uninitialize$scale_horizontal(character_array);
+	
+	Sprite_Array_SOA_Uninitialize$scale_vertical(character_array);
+	
+	Sprite_Array_SOA_Uninitialize$layer(character_array);
+	
+	Sprite_Array_SOA_Uninitialize$opacity(character_array);
+}
+
+Sprite_Field_Type$field* Sprite_Array$$AOS$$Get$field(Sprite_Array$AOS* character_array, Index index)
+{
+	return &(*character_array + index)->$field;
+}
+
+Sprite_Field_Type$field* Sprite_Array$$SOA$$Get$field(Sprite_Array$SOA* character_array, Index index)
+{
+	return &character_array->$field[index];
+}
+
+#pragma region DEMO
+
+typedef struct _Sprite_List$Layout Sprite_List$Layout;
+
+struct _Sprite_List$Layout
+{
+	Sprite_Array$Layout character_array;
+
+	Count character_count;
+};
+
 void Sprite_List$Layout$$Create(Sprite_List$Layout* character_list, Count character_count)
 {
 	Sprite_Array$Layout$Create(&character_list->character_array, character_count);
@@ -93,13 +132,93 @@ void Sprite_List$Layout$$Create(Sprite_List$Layout* character_list, Count charac
 	character_list->character_count = character_count;
 }
 
+void Sprite_List$Layout$$Destroy(Sprite_List$Layout* character_list)
+{
+	Sprite_Array$Layout$Destroy(&character_list->character_array);
+}
+
+Sprite_Field_Type$field* Sprite_List$Layout$$Get$field(Sprite_List$Layout* character_list, Index index)
+{
+	return Sprite_Array$Layout$Get$field(&character_list->character_array, index);
+}
+
+Sprite_Field_Type$field Sprite_List$Layout$$GetValue$field(Sprite_List$Layout* character_list, Index index)
+{
+	Sprite_Field_Type$field* field = Sprite_List$Layout$Get$field(character_list, index);
+
+	return *field;
+}
+
+void Sprite_List$Layout$$SetValue$field(Sprite_List$Layout* character_list, Index index, Sprite_Field_Type$field value)
+{
+	Sprite_Field_Type$field* field = Sprite_List$Layout$Get$field(character_list, index);
+
+	*field = value;
+}
+
+void set_values$List($List* list, Index index, int base_value)
+{
+	$List$SetValue$position_x(list, index, base_value + 1);
+	
+	$List$SetValue$position_y(list, index, base_value + 2);
+	
+	$List$SetValue$position_z(list, index, base_value + 3);
+	
+	$List$SetValue$scale_horizontal(list, index, base_value + 4);
+	
+	$List$SetValue$scale_vertical(list, index, base_value + 5);
+	
+	$List$SetValue$layer(list, index, base_value + 6);
+	
+	$List$SetValue$opacity(list, index, base_value + 7);
+}
+
+void test_values$List($List* list, Index index, int base_value)
+{
+	Assert($List$GetValue$position_x(list, index) == base_value + 1);
+
+	Assert($List$GetValue$position_y(list, index) == base_value + 2);
+
+	Assert($List$GetValue$position_z(list, index) == base_value + 3);
+
+	Assert($List$GetValue$scale_horizontal(list, index) == base_value + 4);
+
+	Assert($List$GetValue$scale_vertical(list, index) == base_value + 5);
+
+	Assert($List$GetValue$layer(list, index) == base_value + 6);
+
+	Assert($List$GetValue$opacity(list, index) == base_value + 7);
+}
+
 void demo_advanced_data_layout()
 {
-	Sprite_List$AOS aos_entity_list;
+	Sprite_List$AOS aos_sprite_list;
 
-	Sprite_List$AOS$Create(&aos_entity_list, 1000);
+	Sprite_List$SOA soa_sprite_list;
 
-	Sprite_List$SOA soa_entity_list;
+	Count sprite_count = 1000;
 
-	Sprite_List$SOA$Create(&soa_entity_list, 1000);
+	Sprite_List$AOS$Create(&aos_sprite_list, sprite_count);
+
+	Sprite_List$SOA$Create(&soa_sprite_list, sprite_count);
+
+	for (Index index = 0; index < sprite_count; index++)
+	{
+		set_values$$Sprite_List$AOS(&aos_sprite_list, index, (int)index * 10);
+
+		set_values$$Sprite_List$SOA(&soa_sprite_list, index, (int)index * 10);
+	}
+
+	for (Index index = 0; index < sprite_count; index++)
+	{
+		test_values$$Sprite_List$AOS(&aos_sprite_list, index, (int)index * 10);
+
+		test_values$$Sprite_List$SOA(&soa_sprite_list, index, (int)index * 10);
+	}
+
+	Sprite_List$AOS$Destroy(&aos_sprite_list);
+
+	Sprite_List$SOA$Destroy(&soa_sprite_list);
 }
+
+#pragma endregion
