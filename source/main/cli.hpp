@@ -106,7 +106,7 @@ void cli_run(const std::vector<std::string>& arguments)
 			return;
 		}
 
-		std::cout << "compiling dtl: " << cli_path_to_string(source_path) << std::endl;
+		std::cout << "compiling: " << cli_path_to_string(source_path) << std::endl;
 
 		std::ostringstream source_stream;
 

@@ -34,11 +34,17 @@
 
 #include "core/parser.hpp"
 
-#include "core/template.hpp"
+#include "core/location.hpp"
 
-#include "core/template_block.hpp"
+#include "core/line_iterator.hpp"
+
+#include "engine/template.hpp"
+
+#include "engine/template_block.hpp"
 
 #include "engine/template_registry.hpp"
+
+#include "engine/preprocessor.hpp"
 
 #include "engine/compiler_arguments.hpp"
 
