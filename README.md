@@ -124,8 +124,10 @@ void example()
 A global region can be escaped by pragmas (for code using compiler extensions or `$` characters not intended to be part of a template):
 ```c
 #pragma DTC disable
+
 #include <stdio.h>
 const char* string_10$ = "10 dollars";
+
 #pragma DTC enable
 ```
 
