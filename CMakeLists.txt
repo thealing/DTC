@@ -66,7 +66,7 @@ else()
 
 	add_custom_command(OUTPUT "${DEMO_TEMP_FILE}" APPEND COMMAND "${CMAKE_C_COMPILER}" -E -x c "${DEMO_SOURCE}" -o "${DEMO_TEMP_FILE}.tmp")
 
-	add_custom_command(OUTPUT "${DEMO_TEMP_FILE}" APPEND COMMAND "${CMAKE_COMMAND}" -DINPUT="${DEMO_TEMP_FILE}.tmp" -DOUTPUT="${DEMO_TEMP_FILE}" -P "${CMAKE_SOURCE_DIR}/GCC_RELD.cmake")
+	add_custom_command(OUTPUT "${DEMO_TEMP_FILE}" APPEND COMMAND "${CMAKE_COMMAND}" -DINPUT="${DEMO_TEMP_FILE}.tmp" -DOUTPUT="${DEMO_TEMP_FILE}" -P "${CMAKE_SOURCE_DIR}/gcc_reld.cmake")
 
 	add_custom_command(OUTPUT "${DEMO_TEMP_FILE}" APPEND COMMAND "${CMAKE_COMMAND}" -E remove "${DEMO_TEMP_FILE}.tmp")
 
