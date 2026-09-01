@@ -1,5 +1,7 @@
 #pragma once
 
+using Definition_Time = std::pair<size_t, size_t>;
+
 struct Definition
 {
 	std::string par_list;
@@ -15,21 +17,25 @@ private:
 
 	std::vector<Definition> _definitions;
 
-	std::vector<std::pair<size_t, size_t>> _event_history;
+	std::vector<std::pair<Definition_Time, size_t>> _event_history;
 
 public:
 
 	template<typename Definition>
-	void add_definition(Definition&& definition, size_t version)
+	void add_definition(Definition&& definition, size_t version, size_t& counter)
 	{
 		_definitions.push_back(std::forward<Definition>(definition));
 
+		Definition_Time time(version, counter);
+
 		auto depth = _definitions.size();
 
-		_event_history.emplace_back(version, depth);
+		_event_history.emplace_back(time, depth);
+
+		counter++;
 	}
 
-	bool remove_definition(size_t version)
+	bool remove_definition(size_t version, size_t& counter)
 	{
 		if (_event_history.empty())
 		{
@@ -45,16 +51,20 @@ public:
 			return false;
 		}
 
-		_event_history.emplace_back(version, depth - 1);
+		Definition_Time time(version, counter);
+
+		_event_history.emplace_back(time, depth - 1);
+
+		counter++;
 
 		return true;
 	}
 
-	const Definition* get_definition(size_t version) const
+	const Definition* get_definition(Definition_Time& time) const
 	{
-		auto compare = [version](const auto& event)
+		auto compare = [time](const auto& event)
 		{
-			return event.first <= version;
+			return event.first < time;
 		};
 
 		auto it = std::partition_point(_event_history.begin(), _event_history.end(), compare);
@@ -73,6 +83,8 @@ public:
 			return nullptr;
 		}
 
+		time = it->first;
+
 		const auto& definition = _definitions[depth - 1];
 
 		return &definition;
@@ -90,7 +102,7 @@ private:
 
 	const Definition_Map* _map;
 
-	size_t _version;
+	Definition_Time _time;
 
 	size_t _line_offset;
 
@@ -100,7 +112,7 @@ public:
 	{
 		_map = map;
 
-		_version = version;
+		_time = { version, SIZE_MAX };
 
 		_line_offset = 0;
 	}
@@ -160,7 +172,9 @@ public:
 				continue;
 			}
 
-			const Definition* definition = definition_result->second.get_definition(_version);
+			Definition_Time local_time = _time;
+
+			const Definition* definition = definition_result->second.get_definition(local_time);
 
 			if (definition == nullptr)
 			{
@@ -227,7 +241,11 @@ public:
 
 			if (replace_content)
 			{
+				std::swap(local_time, _time);
+
 				replace_definitions<Trim_Start>(content);
+
+				std::swap(local_time, _time);
 			}
 
 			auto macro_start = instance_start - 1;

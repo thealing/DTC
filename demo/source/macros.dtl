@@ -34,7 +34,9 @@ void test_declarations()
 
 #pragma DTC push compare_strings$X$Y strcmp(message_$X, message_$Y) == 0
 
-#pragma DTC push append_eat$X $Concat$$X$eat
+#pragma DTC push eval_now$X $$X
+
+#pragma DTC push append_eat$X $eval_now$$Concat$$X$eat
 
 void test_strings()
 {

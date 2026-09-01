@@ -45,6 +45,8 @@ private:
 
 	std::vector<Origin> _origin_stack;
 
+	size_t _definition_counter = 0;
+
 	intptr_t _suppression_level = 0;
 
 	bool _set_line_number = false;
@@ -223,7 +225,7 @@ public:
 									definition.replace_content = true;
 								}
 
-								definition_it->second.add_definition(std::move(definition), version);
+								definition_it->second.add_definition(std::move(definition), version, _definition_counter);
 
 								continue;
 							}
@@ -249,7 +251,7 @@ public:
 								{
 									size_t version = _template_locations.size();
 
-									if (definition_it->second.remove_definition(version))
+									if (definition_it->second.remove_definition(version, _definition_counter))
 									{
 										continue;
 									}
