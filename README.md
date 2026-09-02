@@ -108,7 +108,7 @@ To facilitate these use cases, the macro system can be used with the following p
 #pragma DTC pop <base name>
 ```
 
-A macro can be used by prepending `$` to its name; this works within other symbols as well. Some examples:
+A macro can be used by prepending `$` to its name (this works within other symbols as well). Some examples:
 ```c
 #pragma DTC push Concat$X$Y $X$Y
 #pragma DTC push Swap$X$Y $$Y$$X
