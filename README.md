@@ -1,14 +1,16 @@
 # Dollar Template Compiler
-A generic template and macro pre-compiler that generates C language output from **Dollar Template Language (DTL)** code.
+A generic template and macro pre-compiler that generates standard C output from **Dollar Template Language (DTL)** code.
 
-Powerful **DTL** constructs include: generic containers and algorithms, reference counting, dependent names, external polymorphism, and more...
+**DTL** is a superset of the C language, with native support for **generic containers and algorithms, reference counting, dependent names, external polymorphism, and more...** achieved by just one simple addition: giving special meaning to the `$` symbol within identifiers.
 
 ## Features
 - **Simplicity**: The only extensions used beyond regular C syntax are `$` characters and pragmas.
-- **Flexibility**: Template arguments can be anything: a type, a number, or even a method or field name.
-- **Expressiveness**: Nested templates and specializations reach C++-level generality while staying fully explicit.
-- **Ergonomics**: Friendly error messages help to find template syntax errors easily.
-- **Compatibility**: Any conformant C code can be run through the pre-compiler.
+- **Flexibility**: Template arguments can be anything: a type, a number, or even a method/field name.
+- **Expressiveness**: Recursive templates and specializations reach C++ level generality while staying fully explicit.
+- **Ergonomics**: Friendly error messages help to find syntax errors easily.
+- **Scalability**: Unambiguous template semantics allow fast compilation of a large system of generic constructs.
+- **Debuggability**: Both the original **DTL** and the generated C code can be inspected in a C-compatible debugger.
+- **Compatibility**: Any conformant C code can be used from **DTL**, without modifications.
 
 ## Usage
 `dtc [flags] <output file> <input files...>`
@@ -18,11 +20,8 @@ Powerful **DTL** constructs include: generic containers and algorithms, referenc
 - -l : Emit line directives, so compilation errors map into the original **DTL** files, instead of the generated C code.
 - -c : Replace `$` signs with `_` in the output, for compilers that don't support `$` characters within symbols.
 ### Input Requirements
-The input files must be pre-processed, syntactically valid C files, which may include pragmas and line directives.
-
-Template blocks can be defined and instantiated by using `$` characters in identifiers.
-### Output Guarantees
-The output file contains standard C code, which can be compiled with any C compiler.
+The **DTL** pre-compiler is intended to run after the preprocessor, just before the C compilation step.
+This means that the input files must contain pre-processed **DTL** code, which may include pragmas and line directives.
 
 ## Language Mechanics
 ### Template System
@@ -109,7 +108,7 @@ To facilitate these use cases, the macro system can be used with the following p
 #pragma DTC pop <base name>
 ```
 
-A macro can be used by prepending `$` to its name, which works within other symbols as well. Some examples:
+A macro can be used by prepending `$` to its name; this works within other symbols as well. Some examples:
 ```c
 #pragma DTC push Concat$X$Y $X$Y
 #pragma DTC push Swap$X$Y $$Y$$X
@@ -185,4 +184,4 @@ void Vector$$256$$Add(Vector$256* result, Vector$256* a, Vector$256* b)
 ## Complete Examples
 The `demo` folder contains working example code for all language features, compiled together as a CMake target.
 
-Observe the generated `build.c` file to see how the templates got instantiated.
+Observe the generated `build.c` file to see how the templates were instantiated.
