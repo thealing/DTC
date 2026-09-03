@@ -1,5 +1,5 @@
 # Dollar Template Compiler
-A generic template and macro pre-compiler that generates standard C output from **Dollar Template Language (DTL)** code.
+A pre-compiler that turns **Dollar Template Language (DTL)** code into standard C, for further compilation.
 
 **DTL** is a superset of the C language, with native support for **generic containers and algorithms, reference counting, dependent names, external polymorphism, and more...** achieved by just one simple addition: giving special meaning to the `$` symbol within identifiers.
 
