@@ -25,6 +25,8 @@
 
 #include "source/constant_expressions.dtl"
 
+#include "source/reference_counting.dtl"
+
 #include "source/macros.dtl"
 
 #include "source/advanced/dynamic_cast.dtl"
@@ -44,6 +46,8 @@ int main()
 	demo_algorithms();
 
 	demo_constant_expressions();
+
+	demo_reference_counting();
 
 	demo_macros();
 

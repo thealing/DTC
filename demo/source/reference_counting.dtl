@@ -1,0 +1,115 @@
+
+typedef Count RefCount;
+
+typedef struct _RefCounted$T RefCounted$T;
+
+struct _RefCounted$T
+{
+	$T object;
+
+	RefCount ref_count;
+};
+
+$T* MakeRef$T()
+{
+	RefCounted$T* ref_counted = calloc(1, sizeof(RefCounted$T));
+
+	Construct$T(&ref_counted->object);
+
+	ref_counted->ref_count = 1;
+
+	return ($T*)ref_counted;
+}
+
+RefCount GetRefCount$T($T* object)
+{
+	RefCounted$T* ref_counted = (RefCounted$T*)object;
+
+	return ref_counted->ref_count;
+}
+
+$T* CopyRef$T($T* object)
+{
+	RefCounted$T* ref_counted = (RefCounted$T*)object;
+
+	ref_counted->ref_count++;
+
+	return object;
+}
+
+void DeleteRef$T($T* object)
+{
+	RefCounted$T* ref_counted = (RefCounted$T*)object;
+
+	RefCount ref_count = ref_counted->ref_count;
+
+	if (ref_count == 1)
+	{
+		Destruct$T(&ref_counted->object);
+
+		free(ref_counted);
+
+		return;
+	}
+
+	ref_counted->ref_count = ref_count - 1;
+}
+
+#pragma region DEMO
+
+typedef int RC_Demo_Object;
+
+int rc_demo_state;
+
+void Construct$$RC_Demo_Object(RC_Demo_Object* object)
+{
+	rc_demo_state = 1;
+}
+
+void Destruct$$RC_Demo_Object(RC_Demo_Object* object)
+{
+	rc_demo_state = 2;
+}
+
+void test_object_lifecycle()
+{
+	Assert(rc_demo_state == 0);
+
+	RC_Demo_Object* object = MakeRef$RC_Demo_Object();
+
+	Assert(rc_demo_state == 1);
+
+	DeleteRef$RC_Demo_Object(object);
+
+	Assert(rc_demo_state == 2);
+}
+
+void test_reference_counting()
+{
+	int* value = MakeRef$int();
+
+	*value = 1000;
+
+	Assert(GetRefCount$int(value) == 1);
+
+	int* value_copy = CopyRef$int(value);
+
+	Assert(GetRefCount$int(value) == 2);
+
+	Assert(*value_copy == 1000);
+
+	DeleteRef$int(value_copy);
+
+	Assert(GetRefCount$int(value) == 1);
+
+	DeleteRef$int(value);
+}
+
+void demo_reference_counting()
+{
+	test_object_lifecycle();
+
+	test_reference_counting();
+}
+
+#pragma endregion
