@@ -1,5 +1,5 @@
 # Dollar Template Compiler
-A pre-compiler that turns **Dollar Template Language (DTL)** code into standard C, for further compilation.
+A pre-compiler that turns **Dollar Template Language (DTL)** code into standard C for further compilation.
 
 **DTL** is a superset of the C language, with native support for **generic containers and algorithms, reference counting, dependent names, external polymorphism, and more...** achieved by just one simple addition: giving special meaning to the `$` symbol within identifiers.
 
@@ -8,7 +8,7 @@ A pre-compiler that turns **Dollar Template Language (DTL)** code into standard 
 - **Flexibility**: Template arguments can be anything: a type, a number, or even a method/field name.
 - **Expressiveness**: Recursive templates and specializations reach C++ level generality while staying fully explicit.
 - **Ergonomics**: Friendly error messages help to find syntax errors easily.
-- **Scalability**: Unambiguous template semantics allow fast compilation of a large system of generic constructs.
+- **Scalability**: Unambiguous template semantics allow fast compilation of templated code.
 - **Debuggability**: Both the original **DTL** and the generated C code can be inspected in a C-compatible debugger.
 - **Compatibility**: Any conformant C code can be used from **DTL**, without modifications.
 
