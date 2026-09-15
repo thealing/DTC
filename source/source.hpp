@@ -42,6 +42,8 @@
 
 #include "engine/template_registry.hpp"
 
+#include "engine/namespace_registry.hpp"
+
 #include "engine/preprocessor.hpp"
 
 #include "engine/compiler_arguments.hpp"
