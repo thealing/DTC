@@ -39,7 +39,7 @@ public:
 
 			std::string_view part(part_start, it);
 
-			auto trie_index = std::distance(_trie.begin(), trie_node);
+			auto trie_index = _trie.size();
 
 			auto trie_result = trie_node->map.emplace(part, trie_index);
 
@@ -55,6 +55,11 @@ public:
 			}
 
 			trie_node->path = { start, it };
+
+			if (it != end)
+			{
+				it++;
+			}
 		}
 
 		trie_node->symbols.emplace(symbol_name);
@@ -62,80 +67,87 @@ public:
 
 	std::string_view find_symbol_namespace(std::string_view current_namespace, std::string_view string) const
 	{
-		std::string_view result;
+		auto start = current_namespace.begin();
+
+		auto end = current_namespace.end();
+
+		auto it = start;
 
 		auto trie_node = _trie.begin();
 
-		find_symbol_namespace<false>(result, trie_node, current_namespace, string);
+		find_symbol_namespace<false>(it, start, end, trie_node, string);
+
+		std::string_view result(start, it);
+
+		if (result.ends_with('$'))
+		{
+			result.remove_suffix(1);
+		}
 
 		return result;
 	}
 
 private:
 
-	template<bool Strict, typename Trie_Node>
-	void find_symbol_namespace(std::string_view& result, Trie_Node trie_node, std::string_view current_namespace, std::string_view string) const
+	template<bool Strict, typename It, typename Trie_Node>
+	void find_symbol_namespace(It& result_it, It it, It end, Trie_Node trie_node, std::string_view string) const
 	{
-		auto it = current_namespace.begin();
+		auto string_start = string.begin();
 
-		auto end = current_namespace.end();
+		auto string_end = string.end();
 
-		while (it != end)
+		auto string_it = string_start;
+
+		string_find(string_it, string_end, '$');
+
+		std::string string_prefix(string_start, string_it);
+
+		if (trie_node->symbols.contains(string_prefix))
 		{
-			auto string_start = string.begin();
+			result_it = it;
+		}
 
-			auto string_end = string.end();
+		auto part_start = it;
 
-			auto string_it = string_start;
+		string_find(it, end, '$');
 
-			string_find(string_it, string_end, '$');
+		std::string_view part(part_start, it);
 
-			std::string string_prefix(string_start, string_it);
-
-			bool string_prefix_found = trie_node->symbols.contains(string_prefix);
-
-			if (string_prefix_found)
+		if constexpr (Strict)
+		{
+			if (part != string_prefix)
 			{
-				result = string;
+				return;
 			}
+		}
 
-			if constexpr (Strict)
+		auto trie_it = trie_node->map.find(part);
+
+		auto trie_end = trie_node->map.end();
+
+		if (trie_it == trie_end)
+		{
+			return;
+		}
+
+		trie_node = _trie.begin() + trie_it->second;
+
+		if (it != end)
+		{
+			it++;
+		}
+
+		find_symbol_namespace<Strict>(result_it, it, end, trie_node, string);
+
+		if constexpr (Strict == false)
+		{
+			if (string_it != string_end)
 			{
-				if (string_prefix_found == false)
-				{
-					break;
-				}
-			}
+				string_it++;
 
-			auto part_start = it;
+				std::string_view string_suffix(string_it, string_end);
 
-			string_find(it, end, '$');
-
-			std::string_view part(part_start, it);
-
-			auto trie_it = trie_node->map.find(part);
-
-			auto trie_end = trie_node->map.end();
-
-			if (trie_it == trie_end)
-			{
-				break;
-			}
-
-			trie_node = _trie.begin();
-
-			std::advance(trie_node, trie_it->second);
-
-			if constexpr (Strict == false)
-			{
-				if (string_prefix_found)
-				{
-					std::string_view inner_namespace(it, end);
-
-					std::string_view string_suffix(string_it, string_end);
-
-					find_symbol_namespace<true>(result, trie_node, inner_namespace, string_suffix);
-				}
+				find_symbol_namespace<true>(result_it, it, end, trie_node, string_suffix);
 			}
 		}
 	}
