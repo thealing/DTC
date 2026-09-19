@@ -14,7 +14,7 @@ if(MSVC)
 
 	string(REPLACE "/GR" "/GR-" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
-	add_compile_options(/GF /GS- /sdl-)
+	add_compile_options(/GF /GS- /sdl- /permissive-)
 
 	add_link_options(/MANIFEST:NO)
 
