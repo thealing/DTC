@@ -20,11 +20,6 @@ bool string_is_word_part(char c)
 	return c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '_';
 }
 
-bool string_is_digit(char c)
-{
-	return c >= '0' && c <= '9';
-}
-
 template<typename It>
 bool string_continues_with(It it, It end, It pattern_it, It pattern_end)
 {
@@ -301,7 +296,13 @@ void string_copy_block(It start, It end, Inserter inserter)
 
 			string_skip_inline_space(it, end);
 
-			if (string_continues_with(it, end, "line"))
+			auto directive_start = it;
+
+			string_skip_word(it, end);
+
+			std::string_view directive(directive_start, it);
+
+			if (directive == "line")
 			{
 				is_line_directive = true;
 			}
