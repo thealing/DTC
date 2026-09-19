@@ -23,6 +23,19 @@ public:
 	}
 };
 
+struct Macro_Definition
+{
+	std::string par_list;
+
+	std::string replacement;
+
+	bool replace_content = false;
+};
+
+struct Quote_Definition
+{
+};
+
 class Compiler
 {
 private:
@@ -31,7 +44,9 @@ private:
 
 	std::set<std::string> _template_instances;
 
-	std::map<std::string, Definition_Stack, std::less<>> _definition_map;
+	std::map<std::string, Definition_Stack<Macro_Definition>, std::less<>> _macro_definition_map;
+
+	std::map<std::string, Definition_Stack<Quote_Definition>, std::less<>> _quote_definition_map;
 
 	std::string _result;
 
@@ -143,18 +158,81 @@ public:
 
 						std::string_view command(command_start, pragma_it);
 
-						if (command == "disable")
+						if (command == "quote")
 						{
-							_suppression_level++;
+							string_skip_space(pragma_it, it);
 
-							continue;
+							auto pattern_start = pragma_it;
+
+							string_skip_word(pragma_it, it);
+
+							std::string_view pattern(pattern_start, pragma_it);
+
+							string_skip_space(pragma_it, it);
+
+							if (pragma_it == it)
+							{
+								if (pattern.empty())
+								{
+									_suppression_level++;
+								}
+								else
+								{
+									auto definition_it = _quote_definition_map.find(pattern);
+
+									if (definition_it == _quote_definition_map.end())
+									{
+										Definition_Stack<Quote_Definition> stack;
+
+										auto result = _quote_definition_map.emplace(pattern, std::move(stack));
+
+										definition_it = result.first;
+									}
+
+									Quote_Definition definition;
+
+									size_t version = _template_locations.size();
+
+									definition_it->second.add_definition(std::move(definition), version, _definition_counter);
+								}
+
+								continue;
+							}
 						}
 
-						if (command == "enable")
+						if (command == "unquote")
 						{
-							_suppression_level--;
+							string_skip_space(pragma_it, it);
 
-							continue;
+							auto pattern_start = pragma_it;
+
+							string_skip_word(pragma_it, it);
+
+							std::string_view pattern(pattern_start, pragma_it);
+
+							string_skip_space(pragma_it, it);
+
+							if (pragma_it == it)
+							{
+								if (pattern.empty() && _suppression_level > 0)
+								{
+									_suppression_level--;
+
+									continue;
+								}
+
+								auto definition_it = _quote_definition_map.find(pattern);
+
+								if (definition_it != _quote_definition_map.end())
+								{
+									size_t version = _template_locations.size();
+
+									if (definition_it->second.remove_definition(version, _definition_counter))
+									{
+										continue;
+									}
+								}
+							}
 						}
 
 						if (command == "push")
@@ -201,20 +279,18 @@ public:
 
 								std::string_view replacement(pragma_it, it);
 
-								size_t version = _template_locations.size();
+								auto definition_it = _macro_definition_map.find(base);
 
-								auto definition_it = _definition_map.find(base);
-
-								if (definition_it == _definition_map.end())
+								if (definition_it == _macro_definition_map.end())
 								{
-									Definition_Stack stack;
+									Definition_Stack<Macro_Definition> stack;
 
-									auto result = _definition_map.emplace(base, std::move(stack));
+									auto result = _macro_definition_map.emplace(base, std::move(stack));
 
 									definition_it = result.first;
 								}
 
-								Definition definition;
+								Macro_Definition definition;
 
 								definition.par_list = par_list;
 
@@ -224,6 +300,8 @@ public:
 								{
 									definition.replace_content = true;
 								}
+
+								size_t version = _template_locations.size();
 
 								definition_it->second.add_definition(std::move(definition), version, _definition_counter);
 
@@ -245,9 +323,9 @@ public:
 
 							if (pattern.empty() == false && pragma_it == it)
 							{
-								auto definition_it = _definition_map.find(pattern);
+								auto definition_it = _macro_definition_map.find(pattern);
 
-								if (definition_it != _definition_map.end())
+								if (definition_it != _macro_definition_map.end())
 								{
 									size_t version = _template_locations.size();
 
@@ -327,8 +405,6 @@ public:
 
 									if (valid_template == false)
 									{
-										auto line_number = line_iterator.get_line_number(it);
-
 										std::cerr << _current_file_name << "(" << line_number << "): ";
 
 										std::cerr << "error: invalid template pattern: " << pattern << std::endl;
@@ -348,8 +424,6 @@ public:
 
 									if (instances.empty())
 									{
-										auto line_number = line_iterator.get_line_number(it);
-
 										std::cerr << _current_file_name << "(" << line_number << "): ";
 
 										std::cerr << "error: pattern not found: " << pattern << std::endl;
@@ -461,7 +535,31 @@ public:
 
 			if (valid_template)
 			{
+				bool is_template = true;
+
 				if (pars.size() == 1)
+				{
+					is_template = false;
+				}
+
+				if (is_template)
+				{
+					auto definition_it = _quote_definition_map.find(block.name);
+
+					if (definition_it != _quote_definition_map.end())
+					{
+						Definition_Time time(SIZE_MAX, SIZE_MAX);
+
+						auto definition = definition_it->second.get_definition(time);
+
+						if (definition != nullptr)
+						{
+							is_template = false;
+						}
+					}
+				}
+
+				if (is_template == false)
 				{
 					Origin origin = {};
 
@@ -475,13 +573,13 @@ public:
 
 					auto print_error = std::bind_front(&Compiler::print_definition_error, this);
 
-					Preprocessor preprocessor(print_error, nullptr, &_definition_map, SIZE_MAX);
+					Preprocessor preprocessor(print_error, nullptr, &_macro_definition_map, SIZE_MAX);
 
 					std::string_view block_content = block.content;
 
 					auto preprocess_buffer = preprocessor.preprocess(block_content);
 
-					emit_block(block_content);
+					emit_block(block_content, SIZE_MAX);
 
 					_origin_stack.pop_back();
 
@@ -669,7 +767,7 @@ private:
 		_origin_stack.pop_back();
 	}
 
-	void emit_block(std::string_view block)
+	void emit_block(std::string_view block, size_t version)
 	{
 		auto start = block.begin();
 
@@ -691,6 +789,20 @@ private:
 
 				return line_iterator.get_line_number(instance_start);
 			};
+
+			auto definition_it = _quote_definition_map.find(instance);
+
+			if (definition_it != _quote_definition_map.end())
+			{
+				Definition_Time time(version, SIZE_MAX);
+
+				auto definition = definition_it->second.get_definition(time);
+
+				if (definition != nullptr)
+				{
+					continue;
+				}
+			}
 
 			instantiate_template(instance, get_instance_line_offset);
 		}
@@ -737,11 +849,11 @@ private:
 
 		auto print_error = std::bind_front(&Compiler::print_definition_error, this);
 
-		Preprocessor preprocessor(print_error, process_content, &_definition_map, template_id);
+		Preprocessor preprocessor(print_error, process_content, &_macro_definition_map, template_id);
 
 		preprocessor.preprocess(content);
 
-		emit_block(content);
+		emit_block(content, template_id);
 
 		_set_line_number = true;
 	}

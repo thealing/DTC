@@ -1,96 +1,5 @@
 #pragma once
 
-using Definition_Time = std::pair<size_t, size_t>;
-
-struct Definition
-{
-	std::string par_list;
-
-	std::string replacement;
-
-	bool replace_content = false;
-};
-
-class Definition_Stack
-{
-private:
-
-	std::vector<Definition> _definitions;
-
-	std::vector<std::pair<Definition_Time, size_t>> _event_history;
-
-public:
-
-	template<typename Definition>
-	void add_definition(Definition&& definition, size_t version, size_t& counter)
-	{
-		_definitions.push_back(std::forward<Definition>(definition));
-
-		Definition_Time time(version, counter);
-
-		auto depth = _definitions.size();
-
-		_event_history.emplace_back(time, depth);
-
-		counter++;
-	}
-
-	bool remove_definition(size_t version, size_t& counter)
-	{
-		if (_event_history.empty())
-		{
-			return false;
-		}
-
-		const auto& event = _event_history.back();
-
-		auto depth = event.second;
-
-		if (depth == 0)
-		{
-			return false;
-		}
-
-		Definition_Time time(version, counter);
-
-		_event_history.emplace_back(time, depth - 1);
-
-		counter++;
-
-		return true;
-	}
-
-	const Definition* get_definition(Definition_Time& time) const
-	{
-		auto compare = [time](const auto& event)
-		{
-			return event.first < time;
-		};
-
-		auto it = std::partition_point(_event_history.begin(), _event_history.end(), compare);
-
-		if (it == _event_history.begin())
-		{
-			return nullptr;
-		}
-
-		it--;
-
-		auto depth = it->second;
-
-		if (depth == 0)
-		{
-			return nullptr;
-		}
-
-		time = it->first;
-
-		const auto& definition = _definitions[depth - 1];
-
-		return &definition;
-	}
-};
-
 template<typename Print_Error, typename Process_Content, typename Definition_Map>
 class Preprocessor
 {
@@ -165,16 +74,16 @@ public:
 
 			std::string_view base(instance_start, it);
 
-			auto definition_result = _map->find(base);
+			auto definition_it = _map->find(base);
 
-			if (definition_result == _map->end())
+			if (definition_it == _map->end())
 			{
 				continue;
 			}
 
 			Definition_Time local_time = _time;
 
-			const Definition* definition = definition_result->second.get_definition(local_time);
+			auto definition = definition_it->second.get_definition(local_time);
 
 			if (definition == nullptr)
 			{
@@ -210,6 +119,8 @@ public:
 				if (string_skip_template(arg_it, arg_end) == false)
 				{
 					_print_error(_line_offset, base, arg_list);
+
+					arg_it = arg_start;
 
 					break;
 				}
