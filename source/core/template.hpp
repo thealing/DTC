@@ -16,7 +16,7 @@ std::string template_replace(It source_start, It source_end, It par_start, It pa
 {
 	std::string result;
 
-	auto distance = std::distance(source_start, source_end);
+	auto distance = source_end - source_start;
 
 	result.reserve(distance * 2);
 

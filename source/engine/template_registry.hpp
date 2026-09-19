@@ -34,7 +34,7 @@ public:
 
 		auto trie_index = _trie.size();
 
-		auto trie_map_result = _trie_map.emplace(trie_key, trie_index);
+		auto trie_map_result = _trie_map.try_emplace(trie_key, trie_index);
 
 		if (trie_map_result.second)
 		{
@@ -66,7 +66,7 @@ public:
 			}
 			else
 			{
-				auto trie_result = trie_node.map.emplace(par_it->first, trie_index);
+				auto trie_result = trie_node.map.try_emplace(par_it->first, trie_index);
 
 				if (trie_result.second)
 				{
@@ -129,7 +129,7 @@ public:
 			{
 				if (trie_node.generic_index != 0)
 				{
-					auto arg_index = std::distance(arg_start, arg_it);
+					auto arg_index = arg_it - arg_start;
 
 					arg_index += arg_it->second;
 
@@ -165,7 +165,7 @@ public:
 
 			arg_it = arg_start;
 
-			std::advance(arg_it, arg_index);
+			arg_it += arg_index;
 		}
 
 		auto& trie_node = _trie[trie_index];
