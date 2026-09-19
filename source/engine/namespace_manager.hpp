@@ -10,6 +10,8 @@ private:
 
 	std::string _namespace_builder;
 
+	std::vector<size_t> _namespace_offsets;
+
 	std::string_view _current_namespace;
 
 public:
@@ -24,6 +26,8 @@ public:
 		{
 			return false;
 		}
+
+		_namespace_offsets.push_back(_namespace_builder.size());
 
 		if (_namespace_builder.empty() == false)
 		{
@@ -41,27 +45,14 @@ public:
 
 	bool leave()
 	{
-		if (_namespace_builder.empty())
+		if (_namespace_offsets.empty())
 		{
 			return false;
 		}
 
-		while (true)
-		{
-			_namespace_builder.pop_back();
+		_namespace_builder.resize(_namespace_offsets.back());
 
-			if (_namespace_builder.empty())
-			{
-				break;
-			}
-
-			if (_namespace_builder.back() == '$')
-			{
-				_namespace_builder.pop_back();
-
-				break;
-			}
-		}
+		_namespace_offsets.pop_back();
 
 		auto namespace_result = _namespaces.insert(_namespace_builder);
 
@@ -70,82 +61,70 @@ public:
 		return true;
 	}
 
-	std::string register_block(Block& block)
+	std::string_view register_symbol(std::string_view symbol)
 	{
-		if (_current_namespace.empty())
+		if (_current_namespace.empty() == false)
 		{
-			return "";
+			_registry.add_symbol(_current_namespace, symbol);
 		}
 
-		_registry.add_symbol(_current_namespace, block.name);
+		return _current_namespace;
+	}
 
-		auto start = block.content.begin();
+	std::string replace_namespaces(std::string_view& block) const
+	{
+		std::string replace_buffer;
 
-		auto end = block.content.end();
-
-		auto it = start;
-
-		std::string buffer;
-
-		ptrdiff_t name_start = 0;
-
-		ptrdiff_t name_end = 0;
-
-		while (true)
+		if (_current_namespace.empty() == false)
 		{
-			auto segment_start = it;
+			auto block_start = block.begin();
 
-			string_skip_non_word(it, end);
+			auto block_end = block.end();
 
-			buffer.append(segment_start, it);
+			auto it = block_start;
 
-			if (it == end)
+			while (true)
 			{
-				break;
+				string_skip_non_word(it, block_end);
+
+				if (it == block_end)
+				{
+					break;
+				}
+
+				auto symbol_start = it;
+
+				string_skip_word(it, block_end);
+
+				std::string_view symbol(symbol_start, it);
+
+				auto symbol_namespace = _registry.find_symbol_namespace(_current_namespace, symbol);
+
+				if (symbol_namespace.empty())
+				{
+					continue;
+				}
+
+				replace_buffer.append(block_start, symbol_start);
+
+				replace_buffer += symbol_namespace;
+
+				replace_buffer += '$';
+
+				replace_buffer += symbol;
+
+				block_start = it;
 			}
 
-			auto symbol_start = it;
-
-			string_skip_word(it, end);
-
-			std::string_view symbol(symbol_start, it);
-
-			auto symbol_namespace = _registry.find_symbol(_current_namespace, symbol);
-			
-			if (symbol_namespace.empty())
+			if (replace_buffer.empty() == false)
 			{
-				buffer += symbol;
+				replace_buffer.append(block_start, block_end);
 
-				continue;
-			}
-
-			if (symbol == block.name)
-			{
-				name_start = buffer.end() - buffer.begin();
-			}
-
-			buffer += symbol_namespace;
-
-			buffer += '$';
-
-			buffer += symbol;
-
-			if (symbol == block.name)
-			{
-				name_end = buffer.end() - buffer.begin();
+				block = replace_buffer;
 			}
 		}
 
-		if (name_start == name_end)
-		{
-			return "";
-		}
-
-		block.content = buffer;
-
-		block.name = { buffer.begin() + name_start, buffer.begin() + name_end };
-
-		return buffer;
+		return replace_buffer;
 	}
 
 	size_t find_namespace_length(std::string_view symbol) const

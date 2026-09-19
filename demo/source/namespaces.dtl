@@ -1,0 +1,60 @@
+
+typedef const char* String;
+
+#pragma DTC begin a
+
+String get_string()
+{
+	return "a";
+}
+
+String get_string$T()
+{
+	return "a.$T";
+}
+
+#pragma DTC begin b
+
+String get_string$T()
+{
+	return "a::b.$T";
+}
+
+#pragma DTC end
+
+#pragma DTC begin c
+
+String get_string$T()
+{
+	return "a::c.$T";
+}
+
+#pragma DTC end
+
+#pragma DTC end
+
+String get_string$T()
+{
+	return ".$T";
+}
+
+#pragma DTC begin d$e
+
+String get_string$T()
+{
+	return "d::e.$T";
+}
+
+#pragma DTC end
+
+#pragma DTC end
+
+#pragma region DEMO
+
+void demo_namespaces()
+{
+	printf("%s\n", a$get_string());
+	printf("%s\n", a$get_string$int());
+}
+
+#pragma endregion

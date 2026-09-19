@@ -9,8 +9,6 @@ private:
 		std::set<std::string_view> symbols;
 
 		std::map<std::string_view, ptrdiff_t> map;
-
-		std::string_view path;
 	};
 
 	std::vector<Trie_Node> _trie;
@@ -25,11 +23,9 @@ public:
 	{
 		auto trie_it = _trie.begin();
 
-		auto start = symbol_namespace.begin();
+		auto it = symbol_namespace.begin();
 
 		auto end = symbol_namespace.end();
-
-		auto it = start;
 
 		while (it != end)
 		{
@@ -39,9 +35,9 @@ public:
 
 			std::string_view part(part_start, it);
 
-			auto trie_index = _trie.size();
+			auto trie_index = _trie.end() - _trie.begin();
 
-			auto trie_result = trie_it->map.emplace(part, trie_index);
+			auto trie_result = trie_it->map.try_emplace(part, trie_index);
 
 			if (trie_result.second)
 			{
@@ -54,18 +50,16 @@ public:
 				trie_it = _trie.begin() + trie_result.first->second;
 			}
 
-			trie_it->path = { start, it };
-
 			if (it != end)
 			{
 				it++;
 			}
 		}
 
-		trie_it->symbols.emplace(symbol_name);
+		trie_it->symbols.insert(symbol_name);
 	}
 
-	std::string_view find_symbol(std::string_view current_namespace, std::string_view string) const
+	std::string_view find_symbol_namespace(std::string_view current_namespace, std::string_view string) const
 	{
 		auto start = current_namespace.begin();
 
@@ -112,13 +106,13 @@ public:
 
 	std::string_view find_namespace_prefix(std::string_view string) const
 	{
-		auto trie_it = _trie.begin();
-
 		auto start = string.begin();
 
 		auto end = string.end();
 
 		auto it = start;
+
+		auto trie_it = _trie.begin();
 
 		std::string_view result;
 
@@ -144,9 +138,9 @@ public:
 			if (it != end)
 			{
 				it++;
-			}
 
-			result = { start, it };
+				result = { start, it };
+			}
 		}
 
 		return result;
@@ -157,11 +151,9 @@ private:
 	template<typename Trie_It>
 	bool match_symbol(Trie_It trie_it, std::string_view string) const
 	{
-		auto start = string.begin();
+		auto it = string.begin();
 
 		auto end = string.end();
-
-		auto it = start;
 
 		while (it != end)
 		{

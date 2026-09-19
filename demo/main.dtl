@@ -29,14 +29,32 @@
 
 #include "source/macros.dtl"
 
+#include "source/namespaces.dtl"
+
 #include "source/advanced/dynamic_cast.dtl"
 
 #include "source/advanced/data_layout.dtl"
 
 #include "source/advanced/type_erasure.dtl"
 
+enum FOO
+{
+	BOO_int,
+	BOO_float,
+	BOO_Ref$int,
+};
+
+void user$T()
+{
+	int x = $Concat$BOO_$T;
+}
+
 int main()
 {
+	user$int();
+	user$float();
+	//user$$Ref$int(); // quote
+
 	demo_basic_types();
 
 	demo_object_semantics();
@@ -50,6 +68,8 @@ int main()
 	demo_reference_counting();
 
 	demo_macros();
+
+	demo_namespaces();
 
 	demo_advanced_dynamic_cast();
 
