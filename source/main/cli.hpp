@@ -119,7 +119,5 @@ void cli_run(const std::vector<std::string>& arguments)
 		auto output = compiler.compile(file_name, source);
 
 		output_file << output;
-
-		output_file << "\n\n";
 	}
 }
