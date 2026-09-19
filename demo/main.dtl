@@ -29,8 +29,6 @@
 
 #include "source/macros.dtl"
 
-#include "source/namespaces.dtl"
-
 #include "source/advanced/dynamic_cast.dtl"
 
 #include "source/advanced/data_layout.dtl"
@@ -68,8 +66,6 @@ int main()
 	demo_reference_counting();
 
 	demo_macros();
-
-	demo_namespaces();
 
 	demo_advanced_dynamic_cast();
 

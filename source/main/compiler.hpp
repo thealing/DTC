@@ -29,8 +29,6 @@ private:
 
 	Template_Registry _template_registry;
 
-	Namespace_Manager _namespace_manager;
-
 	std::set<std::string> _template_instances;
 
 	std::map<std::string, Definition_Stack, std::less<>> _definition_map;
@@ -377,58 +375,6 @@ public:
 							}
 						}
 
-						if (command == "begin")
-						{
-							string_skip_space(pragma_it, it);
-
-							auto namespace_start = pragma_it;
-
-							string_skip_word(pragma_it, it);
-
-							std::string_view namespace_name(namespace_start, pragma_it);
-
-							bool valid_namespace = true;
-
-							if (namespace_name.starts_with('$') || namespace_name.ends_with('$'))
-							{
-								valid_namespace = false;
-							}
-
-							if (namespace_name.find("$$") != SIZE_MAX)
-							{
-								valid_namespace = false;
-							}
-
-							if (valid_namespace && pragma_it == it)
-							{
-								if (_namespace_manager.enter(namespace_name))
-								{
-									continue;
-								}
-							}
-						}
-
-						if (command == "end")
-						{
-							string_skip_space(pragma_it, it);
-
-							auto namespace_start = pragma_it;
-
-							string_skip_word(pragma_it, it);
-
-							std::string_view namespace_name(namespace_start, pragma_it);
-
-							string_skip_space(pragma_it, it);
-
-							if (namespace_name.empty() && pragma_it == it)
-							{
-								if (_namespace_manager.leave())
-								{
-									continue;
-								}
-							}
-						}
-
 						std::string_view directive(command_start, it);
 
 						auto line_number = line_iterator.get_line_number(it);
@@ -517,16 +463,6 @@ public:
 			{
 				if (pars.size() == 1)
 				{
-					it += block.content.size();
-
-					auto print_error = std::bind_front(&Compiler::print_definition_error, this);
-
-					Preprocessor preprocessor(print_error, nullptr, &_definition_map, SIZE_MAX);
-
-					auto preprocess_buffer = preprocessor.preprocess(block.content);
-
-					auto namespace_buffer = _namespace_manager.register_block(block);
-
 					Origin origin = {};
 
 					origin.template_location = { _current_file_name, block_line_number };
@@ -536,10 +472,20 @@ public:
 					origin.instance_name = block.name;
 
 					_origin_stack.push_back(origin);
-					
-					emit_block(block.content);
+
+					auto print_error = std::bind_front(&Compiler::print_definition_error, this);
+
+					Preprocessor preprocessor(print_error, nullptr, &_definition_map, SIZE_MAX);
+
+					std::string_view block_content = block.content;
+
+					auto preprocess_buffer = preprocessor.preprocess(block_content);
+
+					emit_block(block_content);
 
 					_origin_stack.pop_back();
+
+					it += block.content.size();
 
 					continue;
 				}
@@ -652,15 +598,11 @@ private:
 			indicate_error();
 		};
 
-		auto namespace_length = _namespace_manager.find_namespace_length(instance);
-
-		auto local_instance = instance.substr(namespace_length);
-
 		_split_buffer.clear();
 
 		auto& args = _split_buffer;
 
-		bool valid_template = template_split_instance(local_instance, args);
+		bool valid_template = template_split_instance(instance, args);
 
 		if (valid_template == false)
 		{
@@ -668,13 +610,6 @@ private:
 
 			return;
 		}
-
-		if (args.size() == 1)
-		{
-			return;
-		}
-
-		args[0].first = { instance.data(), namespace_length + args[0].first.size() };
 
 		auto result = _template_instances.emplace(instance);
 

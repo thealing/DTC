@@ -42,10 +42,6 @@
 
 #include "engine/template_registry.hpp"
 
-#include "engine/namespace_registry.hpp"
-
-#include "engine/namespace_manager.hpp"
-
 #include "engine/preprocessor.hpp"
 
 #include "main/compiler_arguments.hpp"
