@@ -1,16 +1,5 @@
 #pragma once
 
-template<typename It>
-It template_get_start(It start, It end)
-{
-	return std::find(start, end, '$');
-}
-
-std::string_view::const_iterator template_get_start(std::string_view string)
-{
-	return template_get_start(string.begin(), string.end());
-}
-
 template<bool Macro, typename It>
 std::string template_replace(It source_start, It source_end, It par_start, It par_end, It arg_start, It arg_end)
 {
@@ -129,7 +118,7 @@ void template_replace(std::string& content, std::string_view pattern, It arg_sta
 
 	auto arg_it = arg_start;
 
-	while (par_it != par_end)
+	while (par_it != par_end && arg_it != arg_end)
 	{
 		auto par_start = par_it;
 
@@ -227,6 +216,13 @@ ptrdiff_t template_split_template_part(It& it, It end, Container& container)
 template<Template_Split_Mode Mode, typename It, typename Container>
 bool template_split_template(It start, It end, Container& container)
 {
+	std::string_view template_view(start, end);
+
+	if (template_view.starts_with('$') || template_view.ends_with('$'))
+	{
+		return false;
+	}
+
 	auto it = start;
 
 	string_find(it, end, '$');
