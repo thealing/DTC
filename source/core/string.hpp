@@ -173,6 +173,15 @@ void string_skip_word_part(It& it, It end)
 }
 
 template<typename It>
+void string_skip_non_word(It& it, It end)
+{
+	while (it != end && string_is_word(*it) == false)
+	{
+		it++;
+	}
+}
+
+template<typename It>
 void string_skip_space(It& it, It end)
 {
 	while (it != end && string_is_space(*it))

@@ -110,6 +110,48 @@ public:
 		return result;
 	}
 
+	std::string_view find_namespace_prefix(std::string_view string) const
+	{
+		auto trie_it = _trie.begin();
+
+		auto start = string.begin();
+
+		auto end = string.end();
+
+		auto it = start;
+
+		std::string_view result;
+
+		while (it != end)
+		{
+			auto part_start = it;
+
+			string_find(it, end, '$');
+
+			std::string_view part(part_start, it);
+
+			auto trie_map_it = trie_it->map.find(part);
+
+			auto trie_map_end = trie_it->map.end();
+
+			if (trie_map_it == trie_map_end)
+			{
+				break;
+			}
+
+			trie_it = _trie.begin() + trie_map_it->second;
+
+			if (it != end)
+			{
+				it++;
+			}
+
+			result = { start, it };
+		}
+
+		return result;
+	}
+
 private:
 
 	template<typename Trie_It>

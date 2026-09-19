@@ -44,6 +44,8 @@
 
 #include "engine/namespace_registry.hpp"
 
+#include "engine/namespace_manager.hpp"
+
 #include "engine/preprocessor.hpp"
 
 #include "engine/compiler_arguments.hpp"
