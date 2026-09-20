@@ -163,8 +163,6 @@ public:
 				{
 					_print_error(_line_offset, base, arg_list);
 
-					arg_it = arg_start;
-
 					break;
 				}
 
@@ -210,17 +208,19 @@ public:
 
 				if (last_character == 0 && macro_start != block_start)
 				{
-					last_character = macro_start[-1];
+					auto last_character_it = macro_start - 1;
+
+					last_character = *last_character_it;
+
+					if (last_character == '$')
+					{
+						macro_start = last_character_it;
+					}
 				}
 
 				if (last_character == 0 && replace_buffer.empty() == false)
 				{
 					last_character = replace_buffer.back();
-				}
-
-				if (last_character == '$')
-				{
-					macro_start--;
 				}
 
 				if (string_is_word(last_character) == false)
