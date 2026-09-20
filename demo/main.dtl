@@ -1,5 +1,5 @@
 
-#pragma DTC disable
+#pragma DTC quote
 
 #include <stdbool.h>
 
@@ -9,7 +9,7 @@
 
 #include <string.h>
 
-#pragma DTC enable
+#pragma DTC unquote
 
 #include "source/assert.dtl"
 
@@ -35,23 +35,89 @@
 
 #include "source/advanced/type_erasure.dtl"
 
+#pragma DTC quote BOO_Ref$int
 enum FOO
 {
 	BOO_int,
 	BOO_float,
+
 	BOO_Ref$int,
+
 };
+#pragma DTC unquote BOO_Ref$int
+
+#pragma DTC quote BOO1_Ref$int
+
+int BOO1_int() { return 1; }
+
+int BOO1_float() { return 2; }
+
+int BOO1_Ref$int() { return 3; }
+
+#pragma DTC quote BOO_Ref$int
 
 void user$T()
 {
+	//BOO1_Ref$float;
+
 	int x = $Concat$BOO_$T;
+
+	int y = $Concat$BOO1_$T();
 }
+
+#pragma DTC unquote BOO_Ref$int
+
+enum ROOO$T
+{
+	HEHEHE_$Concat$HA$T
+};
+
+#pragma DTC instantiate ROOO$eeee
+#pragma DTC instantiate ROOO$ffff
+
+int x2 = HEHEHE_HAeeee;
+int x3 = HEHEHE_HAffff;
+
+#pragma DTC quote $Concat$HE
+
+#pragma DTC push AAAAAAAAAA
+
+const char* MYSTRING$T = "$Concat$HE";
+
+#pragma DTC unquote $Concat$HE
+
+void test_fn$x$y() {}
+void test_fn$$int$$int$z() {}
+
+void test_fn2$$int$$float$$char() {}
+void test_fn2$T$$float$$long() {}
+
+#pragma DTC instantiate test_fn2$int$floa*$*
+
+void test_fn3$T$$$float$$long() {}
+
+#pragma DTC instantiate test_fn3$int$$$floa*$*
+
+#pragma DTC quote
+
+void user2_no() {
+	test_fn2$int$float$char();
+	test_fn2$int$float$long();
+	test_fn3$int$$float$long();
+}
+
+#pragma DTC unquote
 
 int main()
 {
+	test_fn$int$int();
+
 	user$int();
 	user$float();
-	//user$$Ref$int(); // quote
+	user$$Ref$int(); // quote
+
+	MYSTRING$int;
+	MYSTRING$int2;
 
 	demo_basic_types();
 
