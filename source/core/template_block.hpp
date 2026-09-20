@@ -16,10 +16,6 @@ private:
 
 public:
 
-	Template_Block()
-	{
-	}
-
 	Template_Block(size_t id, std::string_view pattern, Block block)
 	{
 		_id = id;
@@ -56,7 +52,7 @@ public:
 	{
 		if (block_part.empty())
 		{
-			return block_part;
+			return {};
 		}
 
 		auto part_index = block_part.data() - block.name.data();

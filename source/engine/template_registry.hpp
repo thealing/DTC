@@ -6,9 +6,9 @@ private:
 
 	struct Trie_Node
 	{
-		size_t generic_index = 0;
+		size_t generic_index = SIZE_MAX;
 
-		size_t end_index = 0;
+		size_t end_index = SIZE_MAX;
 
 		std::map<std::string_view, size_t> map;
 	};
@@ -23,7 +23,7 @@ private:
 
 public:
 
-	Template_Registry() : _template_blocks(1), _trie(1)
+	Template_Registry()
 	{
 	}
 
@@ -53,7 +53,7 @@ public:
 
 			if (par_it->second == 0)
 			{
-				if (trie_node.generic_index == 0)
+				if (trie_node.generic_index == SIZE_MAX)
 				{
 					trie_node.generic_index = trie_index;
 
@@ -81,7 +81,7 @@ public:
 
 		auto& trie_node = _trie[trie_index];
 
-		if (trie_node.end_index != 0)
+		if (trie_node.end_index != SIZE_MAX)
 		{
 			auto template_index = trie_node.end_index;
 
@@ -127,7 +127,7 @@ public:
 
 			if (trie_it != trie_end)
 			{
-				if (trie_node.generic_index != 0)
+				if (trie_node.generic_index != SIZE_MAX)
 				{
 					auto arg_index = arg_it - arg_start;
 
@@ -143,7 +143,7 @@ public:
 				continue;
 			}
 
-			if (trie_node.generic_index != 0)
+			if (trie_node.generic_index != SIZE_MAX)
 			{
 				trie_index = trie_node.generic_index;
 
@@ -170,7 +170,7 @@ public:
 
 		auto& trie_node = _trie[trie_index];
 
-		if (trie_node.end_index != 0)
+		if (trie_node.end_index != SIZE_MAX)
 		{
 			auto template_index = trie_node.end_index;
 
@@ -189,7 +189,7 @@ public:
 
 			if (arg_it == arg_end)
 			{
-				if (trie_node.end_index != 0)
+				if (trie_node.end_index != SIZE_MAX)
 				{
 					*inserter = instance;
 				}
@@ -219,11 +219,13 @@ public:
 					arg.remove_prefix(1);
 				}
 
-				for (const auto& [key, value] : trie_node.map)
+				for (auto it = trie_node.map.lower_bound(arg); it != trie_node.map.end(); it++)
 				{
+					const auto& [key, value] = *it;
+
 					if (key.starts_with(arg) == false)
 					{
-						continue;
+						break;
 					}
 
 					auto instance_size = instance.size();
@@ -253,7 +255,7 @@ public:
 				instance.erase(instance_size);
 			}
 
-			if (trie_node.generic_index == 0)
+			if (trie_node.generic_index == SIZE_MAX)
 			{
 				break;
 			}
