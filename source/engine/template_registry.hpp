@@ -246,26 +246,26 @@ public:
 
 			if (trie_it != trie_end)
 			{
-				trie_index = trie_it->second;
+				auto instance_size = instance.size();
 
-				continue;
+				find_specials(trie_it->second, arg_it, arg_end, instance, inserter);
+
+				instance.erase(instance_size);
 			}
 
-			if (trie_node.generic_index != 0)
+			if (trie_node.generic_index == 0)
 			{
-				trie_index = trie_node.generic_index;
-
-				for (ptrdiff_t arg_index = 1; arg_index < arg_count; arg_index++)
-				{
-					instance += arg_it->first;
-
-					arg_it++;
-				}
-
-				continue;
+				break;
 			}
 
-			break;
+			trie_index = trie_node.generic_index;
+
+			for (ptrdiff_t arg_index = 1; arg_index < arg_count; arg_index++)
+			{
+				instance += arg_it->first;
+
+				arg_it++;
+			}
 		}
 	}
 
