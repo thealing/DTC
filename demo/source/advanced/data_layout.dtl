@@ -17,11 +17,11 @@ typedef int Sprite_Field_Type$$layer;
 
 typedef float Sprite_Field_Type$$opacity;
 
-#pragma DTC disable
+#pragma DTC quote
 
 #pragma DTC push Declare$field Field$Layout$$Sprite_Field_Type$$field $field
 
-#pragma DTC enable
+#pragma DTC unquote
 
 typedef struct _Sprite$Layout Sprite$Layout;
 
@@ -90,17 +90,17 @@ void Sprite_Array_SOA_Uninitialize$field(Sprite_Array$SOA* character_array)
 void Sprite_Array$$SOA$$Destroy(Sprite_Array$SOA* character_array)
 {
 	Sprite_Array_SOA_Uninitialize$position_x(character_array);
-	
+
 	Sprite_Array_SOA_Uninitialize$position_y(character_array);
-	
+
 	Sprite_Array_SOA_Uninitialize$position_z(character_array);
-	
+
 	Sprite_Array_SOA_Uninitialize$scale_horizontal(character_array);
-	
+
 	Sprite_Array_SOA_Uninitialize$scale_vertical(character_array);
-	
+
 	Sprite_Array_SOA_Uninitialize$layer(character_array);
-	
+
 	Sprite_Array_SOA_Uninitialize$opacity(character_array);
 }
 
@@ -159,17 +159,17 @@ void Sprite_List$Layout$$SetValue$field(Sprite_List$Layout* character_list, Inde
 void set_values$List($List* list, Index index, int base_value)
 {
 	$List$SetValue$position_x(list, index, base_value + 1);
-	
+
 	$List$SetValue$position_y(list, index, base_value + 2);
-	
+
 	$List$SetValue$position_z(list, index, base_value + 3);
-	
+
 	$List$SetValue$scale_horizontal(list, index, base_value + 4);
-	
+
 	$List$SetValue$scale_vertical(list, index, base_value + 5);
-	
+
 	$List$SetValue$layer(list, index, base_value + 6);
-	
+
 	$List$SetValue$opacity(list, index, base_value + 7);
 }
 

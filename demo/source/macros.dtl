@@ -32,7 +32,7 @@ void test_declarations()
 
 #pragma DTC push stringify$X$Y "$X$Y"
 
-#pragma DTC push compare_strings$X$Y strcmp(message_$X, message_$Y) == 0
+#pragma DTC push compare_messages$X$Y strcmp(message_$X, message_$Y) == 0
 
 #pragma DTC push eval_now$X $$X
 
@@ -44,13 +44,13 @@ void test_strings()
 
 	const char* message_2 = $stringify$dc$ba;
 
-	Assert($compare_strings$1$2);
+	Assert($compare_messages$1$2);
 
 	const char* message_3 = "$Forward$$append_eat$Rep$a";
 
 	const char* message_4 = "aaa";
 
-	Assert($compare_strings$3$4);
+	Assert($compare_messages$3$4);
 }
 
 enum
@@ -98,7 +98,7 @@ enum
 
 #pragma DTC instantiate SPECIAL_3_$$$Add$1$9$*
 
-#pragma DTC disable
+#pragma DTC quote
 
 const int global_constant_11 = ENUM_$1;
 
@@ -127,7 +127,85 @@ void test_constants()
 	Assert(global_constant_14 == 14);
 }
 
-#pragma DTC enable
+#pragma DTC unquote
+
+#pragma DTC quote TAG_Ref$double
+
+#pragma DTC quote TAG_Ref$char
+
+enum
+{
+	TAG_int,
+
+	TAG_float,
+
+	TAG_Ref$double,
+
+	TAG_Ref$char,
+
+	TAG_COUNT
+};
+
+#pragma DTC quote get_index_Ref$double
+
+#pragma DTC quote get_index_Ref$char
+
+int get_index_int()
+{
+	return TAG_int;
+}
+
+int get_index_float()
+{
+	return TAG_float;
+}
+
+int get_index_Ref$double()
+{
+	return TAG_Ref$double;
+}
+
+int get_index_Ref$char()
+{
+	return TAG_Ref$char;
+}
+
+#pragma DTC unquote TAG_Ref$double
+
+#pragma DTC unquote TAG_Ref$char
+
+int get_tag$T()
+{
+	return $Concat$get_index_$T();
+}
+
+#pragma DTC unquote get_index_Ref$double
+
+#pragma DTC unquote get_index_Ref$char
+
+void test_template_suppression()
+{
+	Assert(get_tag$int() == 0);
+
+	Assert(get_tag$float() == 1);
+
+	Assert(get_tag$$Ref$double() == 2);
+
+	Assert(get_tag$$Ref$char() == 3);
+}
+
+const char* global_string_1 = "test $Concat$1$2";
+
+#pragma DTC quote $Concat$1$2
+
+const char* global_string_2 = "test $Concat$1$2";
+
+#pragma DTC unquote $Concat$1$2
+
+void test_macro_suppression()
+{
+	Assert(strcmp(global_string_1, global_string_2) != 0);
+}
 
 #pragma DTC push square$X $$$Multiply$$X$$X
 
@@ -144,6 +222,10 @@ void demo_macros()
 	test_strings();
 
 	test_constants();
+
+	test_template_suppression();
+
+	test_macro_suppression();
 }
 
 #pragma DTC pop square
