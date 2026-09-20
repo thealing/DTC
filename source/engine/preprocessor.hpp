@@ -139,6 +139,11 @@ public:
 
 			const auto& [par_list, replacement, replace_content] = *definition;
 
+			if (replacement.empty())
+			{
+				continue;
+			}
+
 			auto par_it = par_list.begin();
 
 			auto par_end = par_list.end();
