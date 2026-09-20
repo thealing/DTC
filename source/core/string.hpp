@@ -277,8 +277,8 @@ bool string_skip_template(It& it, It end)
 	return false;
 }
 
-template<typename It, typename Inserter>
-void string_copy_block(It start, It end, Inserter inserter)
+template<typename It>
+void string_remove_line_directives(It start, It end)
 {
 	auto it = start;
 
@@ -310,22 +310,45 @@ void string_copy_block(It start, It end, Inserter inserter)
 
 		bool found_newline = string_find(it, end, '\n');
 
-		if (is_line_directive == false)
+		if (is_line_directive)
 		{
-			std::copy(start_it, it, inserter);
+			std::fill(start_it, it, ' ');
 		}
 
 		if (found_newline)
 		{
-			*inserter = *it;
-
 			it++;
 		}
 	}
 }
 
-template<typename Inserter>
-void string_copy_block(std::string_view string, Inserter inserter)
+void string_remove_line_directives(std::string& string)
 {
-	string_copy_block(string.begin(), string.end(), inserter);
+	string_remove_line_directives(string.begin(), string.end());
+}
+
+template<typename It>
+void string_remove_dollar_signs(It start, It end)
+{
+	auto it = start;
+
+	while (it != end)
+	{
+		if (string_skip_string(it, end))
+		{
+			continue;
+		}
+
+		if (*it == '$')
+		{
+			*it = '_';
+		}
+
+		it++;
+	}
+}
+
+void string_remove_dollar_signs(std::string& string)
+{
+	string_remove_dollar_signs(string.begin(), string.end());
 }

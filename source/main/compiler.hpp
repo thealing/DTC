@@ -299,6 +299,16 @@ public:
 			it = block_end;
 		}
 
+		if (_arguments.insert_line_directives == false)
+		{
+			string_remove_line_directives(_result);
+		}
+
+		if (_arguments.conformance_mode)
+		{
+			string_remove_dollar_signs(_result);
+		}
+
 		return std::move(_result);
 	}
 
@@ -854,8 +864,6 @@ private:
 			instantiate_template(instance, get_instance_line_offset);
 		}
 
-		auto result_size = _result.size();
-
 		if (_arguments.insert_line_directives)
 		{
 			if (_set_line_number)
@@ -864,22 +872,9 @@ private:
 
 				emit_line_directive();
 			}
-
-			_result += block;
-		}
-		else
-		{
-			string_copy_block(block, std::back_inserter(_result));
 		}
 
-		if (_arguments.conformance_mode)
-		{
-			auto result_start = _result.begin() + result_size;
-
-			auto result_end = _result.end();
-
-			std::replace(result_start, result_end, '$', '_');
-		}
+		_result += block;
 	}
 
 	template<typename It>

@@ -24,37 +24,44 @@ void cli_run(const std::vector<std::string>& arguments)
 
 	for (std::string_view argument : arguments)
 	{
-		if (argument == "-e")
-		{
-			compiler_arguments.stop_on_error = true;
-
-			continue;
-		}
-
-		if (argument == "-l")
-		{
-			compiler_arguments.insert_line_directives = true;
-
-			continue;
-		}
-
-		if (argument == "-c")
-		{
-			compiler_arguments.conformance_mode = true;
-
-			continue;
-		}
-
-		if (argument == "-n")
-		{
-			compiler_arguments.expand_macros_in_definitions = true;
-
-			continue;
-		}
-
 		if (argument.starts_with('-'))
 		{
-			std::cerr << "invalid argument: " << argument << std::endl;
+			bool valid_argument = true;
+
+			for (auto c : argument.substr(1))
+			{
+				if (c == 'e')
+				{
+					compiler_arguments.stop_on_error = true;
+
+					continue;
+				}
+
+				if (c == 'l')
+				{
+					compiler_arguments.insert_line_directives = true;
+
+					continue;
+				}
+
+				if (c == 'c')
+				{
+					compiler_arguments.conformance_mode = true;
+
+					continue;
+				}
+
+				if (c == 'n')
+				{
+					compiler_arguments.expand_macros_in_definitions = true;
+
+					continue;
+				}
+
+				std::cerr << "invalid flag: " << c << std::endl;
+
+				throw 1;
+			}
 
 			continue;
 		}
@@ -73,14 +80,14 @@ void cli_run(const std::vector<std::string>& arguments)
 	{
 		std::cerr << "missing output file" << std::endl;
 
-		return;
+		throw 1;
 	}
 
 	if (source_path_views.empty())
 	{
 		std::cerr << "missing source files" << std::endl;
 
-		return;
+		throw 1;
 	}
 
 	fs::path output_path = output_path_view;
@@ -95,7 +102,7 @@ void cli_run(const std::vector<std::string>& arguments)
 	{
 		std::cerr << "invalid output file: " << cli_path_to_string(output_path) << std::endl;
 
-		return;
+		throw 1;
 	}
 
 	std::cout << "output file: " << cli_path_to_string(output_path) << std::endl;
@@ -112,7 +119,7 @@ void cli_run(const std::vector<std::string>& arguments)
 		{
 			std::cerr << "invalid source file: " << cli_path_to_string(source_path) << std::endl;
 
-			return;
+			throw 1;
 		}
 
 		std::cout << "compiling: " << cli_path_to_string(source_path) << std::endl;
