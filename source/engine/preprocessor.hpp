@@ -195,7 +195,7 @@ public:
 			{
 				std::swap(local_time, _time);
 
-				replace_definitions<Trim_Start>(content);
+				replace_definitions<false>(content);
 
 				std::swap(local_time, _time);
 			}
@@ -215,11 +215,6 @@ public:
 					if (string_is_word(last_character))
 					{
 						is_word_start = false;
-					}
-
-					if (last_character == '$')
-					{
-						macro_start = last_character_it;
 					}
 				}
 
