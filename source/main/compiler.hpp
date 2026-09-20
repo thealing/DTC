@@ -326,310 +326,18 @@ private:
 			{
 				string_skip_space(pragma_it, it);
 
-				auto command_start = pragma_it;
-
-				string_skip_word(pragma_it, it);
-
-				std::string_view command(command_start, pragma_it);
-
-				if (command == "quote")
+				if (parse_pragma(pragma_it, it, line_iterator))
 				{
-					string_skip_space(pragma_it, it);
-
-					auto pattern_start = pragma_it;
-
-					string_skip_word(pragma_it, it);
-
-					std::string_view pattern(pattern_start, pragma_it);
-
-					string_skip_space(pragma_it, it);
-
-					if (pragma_it == it)
-					{
-						if (pattern.empty())
-						{
-							_suppression_level++;
-						}
-						else
-						{
-							auto definition_it = _quote_definition_map.find(pattern);
-
-							if (definition_it == _quote_definition_map.end())
-							{
-								Definition_Stack<Quote_Definition> stack;
-
-								auto result = _quote_definition_map.emplace(pattern, std::move(stack));
-
-								definition_it = result.first;
-							}
-
-							Quote_Definition definition;
-
-							size_t version = _template_locations.size();
-
-							definition_it->second.add_definition(std::move(definition), version, _definition_counter);
-						}
-
-						return;
-					}
+					return;
 				}
 
-				if (command == "unquote")
-				{
-					string_skip_space(pragma_it, it);
-
-					auto pattern_start = pragma_it;
-
-					string_skip_word(pragma_it, it);
-
-					std::string_view pattern(pattern_start, pragma_it);
-
-					string_skip_space(pragma_it, it);
-
-					if (pragma_it == it)
-					{
-						if (pattern.empty() && _suppression_level > 0)
-						{
-							_suppression_level--;
-
-							return;
-						}
-
-						auto definition_it = _quote_definition_map.find(pattern);
-
-						if (definition_it != _quote_definition_map.end())
-						{
-							size_t version = _template_locations.size();
-
-							if (definition_it->second.remove_definition(version, _definition_counter))
-							{
-								return;
-							}
-						}
-					}
-				}
-
-				if (command == "push")
-				{
-					string_skip_space(pragma_it, it);
-
-					auto pattern_start = pragma_it;
-
-					string_skip_word(pragma_it, it);
-
-					std::string_view pattern(pattern_start, pragma_it);
-
-					bool valid_pattern = true;
-
-					if (pattern.empty())
-					{
-						valid_pattern = false;
-					}
-
-					if (pattern.starts_with('$') || pattern.ends_with('$'))
-					{
-						valid_pattern = false;
-					}
-
-					if (pattern.find("$$") != SIZE_MAX)
-					{
-						valid_pattern = false;
-					}
-
-					if (valid_pattern)
-					{
-						auto base_length = pattern.find('$');
-
-						if (base_length == SIZE_MAX)
-						{
-							base_length = pattern.size();
-						}
-
-						auto base = pattern.substr(0, base_length);
-
-						auto par_list = pattern.substr(base_length);
-
-						string_skip_space(pragma_it, it);
-
-						std::string_view replacement(pragma_it, it);
-
-						auto definition_it = _macro_definition_map.find(base);
-
-						if (definition_it == _macro_definition_map.end())
-						{
-							Definition_Stack<Macro_Definition> stack;
-
-							auto result = _macro_definition_map.emplace(base, std::move(stack));
-
-							definition_it = result.first;
-						}
-
-						Macro_Definition definition;
-
-						definition.par_list = par_list;
-
-						definition.replacement = replacement;
-
-						if (_suppression_level == 0)
-						{
-							definition.replace_content = true;
-						}
-
-						size_t version = _template_locations.size();
-
-						definition_it->second.add_definition(std::move(definition), version, _definition_counter);
-
-						return;
-					}
-				}
-
-				if (command == "pop")
-				{
-					string_skip_space(pragma_it, it);
-
-					auto pattern_start = pragma_it;
-
-					string_skip_word(pragma_it, it);
-
-					std::string_view pattern(pattern_start, pragma_it);
-
-					string_skip_space(pragma_it, it);
-
-					if (pattern.empty() == false && pragma_it == it)
-					{
-						auto definition_it = _macro_definition_map.find(pattern);
-
-						if (definition_it != _macro_definition_map.end())
-						{
-							size_t version = _template_locations.size();
-
-							if (definition_it->second.remove_definition(version, _definition_counter))
-							{
-								return;
-							}
-						}
-
-						auto line_number = line_iterator.get_line_number(it);
-
-						std::cerr << _current_file_name << "(" << line_number << "): ";
-
-						std::cerr << "error: macro not defined: " << pattern << std::endl;
-
-						indicate_error();
-
-						return;
-					}
-				}
-
-				if (command == "instantiate")
-				{
-					string_skip_space(pragma_it, it);
-
-					auto is_pattern = [](char c)
-					{
-						return string_is_word(c) || c == '*';
-					};
-
-					auto pattern_start = pragma_it;
-
-					string_skip(pragma_it, it, is_pattern);
-
-					std::string_view pattern(pattern_start, pragma_it);
-
-					string_skip_space(pragma_it, it);
-
-					bool valid_pattern = true;
-
-					if (pattern.empty())
-					{
-						valid_pattern = false;
-					}
-
-					if (pattern.find("**") != SIZE_MAX)
-					{
-						valid_pattern = false;
-					}
-
-					if (valid_pattern && pragma_it == it)
-					{
-						auto line_number = line_iterator.get_line_number(it);
-
-						Origin origin = {};
-
-						origin.template_location = { _current_file_name, line_number };
-
-						origin.instance_location = { _current_file_name, line_number };
-
-						origin.instance_name = "pragma";
-
-						_origin_stack.push_back(origin);
-
-						auto get_instance_line_offset = [&]()
-						{
-							return 0;
-						};
-
-						if (pattern.find('*') != SIZE_MAX)
-						{
-							_split_buffer.clear();
-
-							auto& args = _split_buffer;
-
-							bool valid_template = template_split_pattern(pattern, args);
-
-							if (valid_template == false)
-							{
-								std::cerr << _current_file_name << "(" << line_number << "): ";
-
-								std::cerr << "error: invalid template pattern: " << pattern << std::endl;
-
-								indicate_error();
-
-								return;
-							}
-
-							auto arg_start = args.begin();
-
-							auto arg_end = args.end();
-
-							std::vector<std::string> instances;
-
-							_template_registry.find_specials(arg_start, arg_end, std::back_inserter(instances));
-
-							if (instances.empty())
-							{
-								std::cerr << _current_file_name << "(" << line_number << "): ";
-
-								std::cerr << "error: pattern not found: " << pattern << std::endl;
-
-								indicate_error();
-
-								return;
-							}
-
-							for (const auto& instance : instances)
-							{
-								instantiate_template(instance, get_instance_line_offset);
-							}
-						}
-						else
-						{
-							instantiate_template(pattern, get_instance_line_offset);
-						}
-
-						_origin_stack.pop_back();
-
-						return;
-					}
-				}
-
-				std::string_view directive(command_start, it);
+				std::string_view pragma(pragma_it, it);
 
 				auto line_number = line_iterator.get_line_number(it);
 
 				std::cerr << _current_file_name << "(" << line_number << "): ";
 
-				std::cerr << "error: invalid pragma: " << directive << std::endl;
+				std::cerr << "error: invalid pragma: " << pragma << std::endl;
 
 				indicate_error();
 
@@ -649,6 +357,309 @@ private:
 		std::string_view line(line_start, it);
 
 		_result += line;
+	}
+
+	template<typename It>
+	bool parse_pragma(It it, It end, Line_Iterator<It>& line_iterator)
+	{
+		auto command_start = it;
+
+		string_skip_word(it, end);
+
+		std::string_view command(command_start, it);
+
+		if (command == "quote")
+		{
+			string_skip_space(it, end);
+
+			auto pattern_start = it;
+
+			string_skip_word(it, end);
+
+			std::string_view pattern(pattern_start, it);
+
+			string_skip_space(it, end);
+
+			if (it == end)
+			{
+				if (pattern.empty())
+				{
+					_suppression_level++;
+				}
+				else
+				{
+					auto definition_it = _quote_definition_map.find(pattern);
+
+					if (definition_it == _quote_definition_map.end())
+					{
+						Definition_Stack<Quote_Definition> stack;
+
+						auto result = _quote_definition_map.emplace(pattern, std::move(stack));
+
+						definition_it = result.first;
+					}
+
+					Quote_Definition definition;
+
+					size_t version = _template_locations.size();
+
+					definition_it->second.add_definition(std::move(definition), version, _definition_counter);
+				}
+
+				return true;
+			}
+		}
+
+		if (command == "unquote")
+		{
+			string_skip_space(it, end);
+
+			auto pattern_start = it;
+
+			string_skip_word(it, end);
+
+			std::string_view pattern(pattern_start, it);
+
+			string_skip_space(it, end);
+
+			if (it == end)
+			{
+				if (pattern.empty() && _suppression_level > 0)
+				{
+					_suppression_level--;
+
+					return true;
+				}
+
+				auto definition_it = _quote_definition_map.find(pattern);
+
+				if (definition_it != _quote_definition_map.end())
+				{
+					size_t version = _template_locations.size();
+
+					if (definition_it->second.remove_definition(version, _definition_counter))
+					{
+						return true;
+					}
+				}
+			}
+		}
+
+		if (command == "push")
+		{
+			string_skip_space(it, end);
+
+			auto pattern_start = it;
+
+			string_skip_word(it, end);
+
+			std::string_view pattern(pattern_start, it);
+
+			bool valid_pattern = true;
+
+			if (pattern.empty())
+			{
+				valid_pattern = false;
+			}
+
+			if (pattern.starts_with('$') || pattern.ends_with('$'))
+			{
+				valid_pattern = false;
+			}
+
+			if (pattern.find("$$") != SIZE_MAX)
+			{
+				valid_pattern = false;
+			}
+
+			if (valid_pattern)
+			{
+				auto base_length = pattern.find('$');
+
+				if (base_length == SIZE_MAX)
+				{
+					base_length = pattern.size();
+				}
+
+				auto base = pattern.substr(0, base_length);
+
+				auto par_list = pattern.substr(base_length);
+
+				string_skip_space(it, end);
+
+				std::string_view replacement(it, end);
+
+				auto definition_it = _macro_definition_map.find(base);
+
+				if (definition_it == _macro_definition_map.end())
+				{
+					Definition_Stack<Macro_Definition> stack;
+
+					auto result = _macro_definition_map.emplace(base, std::move(stack));
+
+					definition_it = result.first;
+				}
+
+				Macro_Definition definition;
+
+				definition.par_list = par_list;
+
+				definition.replacement = replacement;
+
+				if (_suppression_level == 0)
+				{
+					definition.replace_content = true;
+				}
+
+				size_t version = _template_locations.size();
+
+				definition_it->second.add_definition(std::move(definition), version, _definition_counter);
+
+				return true;
+			}
+		}
+
+		if (command == "pop")
+		{
+			string_skip_space(it, end);
+
+			auto pattern_start = it;
+
+			string_skip_word(it, end);
+
+			std::string_view pattern(pattern_start, it);
+
+			string_skip_space(it, end);
+
+			if (pattern.empty() == false && it == end)
+			{
+				auto definition_it = _macro_definition_map.find(pattern);
+
+				if (definition_it != _macro_definition_map.end())
+				{
+					size_t version = _template_locations.size();
+
+					if (definition_it->second.remove_definition(version, _definition_counter))
+					{
+						return true;
+					}
+				}
+
+				auto line_number = line_iterator.get_line_number(end);
+
+				std::cerr << _current_file_name << "(" << line_number << "): ";
+
+				std::cerr << "error: macro not defined: " << pattern << std::endl;
+
+				indicate_error();
+
+				return true;
+			}
+		}
+
+		if (command == "instantiate")
+		{
+			string_skip_space(it, end);
+
+			auto is_pattern = [](char c)
+			{
+				return string_is_word(c) || c == '*';
+			};
+
+			auto pattern_start = it;
+
+			string_skip(it, end, is_pattern);
+
+			std::string_view pattern(pattern_start, it);
+
+			string_skip_space(it, end);
+
+			bool valid_pattern = true;
+
+			if (pattern.empty())
+			{
+				valid_pattern = false;
+			}
+
+			if (pattern.find("**") != SIZE_MAX)
+			{
+				valid_pattern = false;
+			}
+
+			if (valid_pattern && it == end)
+			{
+				auto line_number = line_iterator.get_line_number(end);
+
+				Origin origin = {};
+
+				origin.template_location = { _current_file_name, line_number };
+
+				origin.instance_location = { _current_file_name, line_number };
+
+				origin.instance_name = "pragma";
+
+				_origin_stack.push_back(origin);
+
+				auto get_instance_line_offset = [&]()
+				{
+					return 0;
+				};
+
+				if (pattern.find('*') != SIZE_MAX)
+				{
+					_split_buffer.clear();
+
+					auto& args = _split_buffer;
+
+					bool valid_template = template_split_pattern(pattern, args);
+
+					if (valid_template == false)
+					{
+						std::cerr << _current_file_name << "(" << line_number << "): ";
+
+						std::cerr << "error: invalid template pattern: " << pattern << std::endl;
+
+						indicate_error();
+
+						return true;
+					}
+
+					auto arg_start = args.begin();
+
+					auto arg_end = args.end();
+
+					std::vector<std::string> instances;
+
+					_template_registry.find_specials(arg_start, arg_end, std::back_inserter(instances));
+
+					if (instances.empty())
+					{
+						std::cerr << _current_file_name << "(" << line_number << "): ";
+
+						std::cerr << "error: pattern not found: " << pattern << std::endl;
+
+						indicate_error();
+
+						return true;
+					}
+
+					for (const auto& instance : instances)
+					{
+						instantiate_template(instance, get_instance_line_offset);
+					}
+				}
+				else
+				{
+					instantiate_template(pattern, get_instance_line_offset);
+				}
+
+				_origin_stack.pop_back();
+
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	template<typename Get_Instance_Line_Offset>
