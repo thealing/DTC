@@ -204,13 +204,18 @@ public:
 
 			if constexpr (Trim_Start)
 			{
-				char last_character = 0;
+				bool is_word_start = true;
 
-				if (last_character == 0 && macro_start != block_start)
+				if (macro_start != block_start)
 				{
 					auto last_character_it = macro_start - 1;
 
-					last_character = *last_character_it;
+					auto last_character = *last_character_it;
+
+					if (string_is_word(last_character))
+					{
+						is_word_start = false;
+					}
 
 					if (last_character == '$')
 					{
@@ -218,12 +223,7 @@ public:
 					}
 				}
 
-				if (last_character == 0 && replace_buffer.empty() == false)
-				{
-					last_character = replace_buffer.back();
-				}
-
-				if (string_is_word(last_character) == false)
+				if (is_word_start)
 				{
 					auto content_start = content.begin();
 
