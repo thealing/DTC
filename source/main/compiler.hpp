@@ -23,19 +23,6 @@ public:
 	}
 };
 
-struct Macro_Definition
-{
-	std::string par_list;
-
-	std::string replacement;
-
-	bool replace_content = false;
-};
-
-struct Quote_Definition
-{
-};
-
 class Compiler
 {
 private:
@@ -43,10 +30,6 @@ private:
 	Template_Registry _template_registry;
 
 	std::set<std::string> _template_instances;
-
-	std::map<std::string, Definition_Stack<Macro_Definition>, std::less<>> _macro_definition_map;
-
-	std::map<std::string, Definition_Stack<Quote_Definition>, std::less<>> _quote_definition_map;
 
 	std::string _result;
 
@@ -59,6 +42,10 @@ private:
 	std::vector<Template_Location> _template_locations;
 
 	std::vector<Origin> _origin_stack;
+
+	Macro_Definition_Map _macro_definition_map;
+
+	Quote_Definition_Map _quote_definition_map;
 
 	size_t _definition_counter = 0;
 
@@ -573,7 +560,9 @@ public:
 
 					auto print_error = std::bind_front(&Compiler::print_definition_error, this);
 
-					Preprocessor preprocessor(print_error, nullptr, &_macro_definition_map, SIZE_MAX);
+					Definition_State definition_state = { &_macro_definition_map, &_quote_definition_map, SIZE_MAX };
+
+					Preprocessor preprocessor(print_error, nullptr, definition_state);
 
 					std::string_view block_content = block.content;
 
@@ -849,7 +838,9 @@ private:
 
 		auto print_error = std::bind_front(&Compiler::print_definition_error, this);
 
-		Preprocessor preprocessor(print_error, process_content, &_macro_definition_map, template_id);
+		Definition_State definition_state = { &_macro_definition_map, &_quote_definition_map, template_id };
+
+		Preprocessor preprocessor(print_error, process_content, definition_state);
 
 		preprocessor.preprocess(content);
 

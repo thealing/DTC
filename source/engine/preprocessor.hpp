@@ -1,6 +1,32 @@
 #pragma once
 
-template<typename Print_Error, typename Process_Content, typename Definition_Map>
+struct Macro_Definition
+{
+	std::string par_list;
+
+	std::string replacement;
+
+	bool replace_content = false;
+};
+
+struct Quote_Definition
+{
+};
+
+using Macro_Definition_Map = std::map<std::string, Definition_Stack<Macro_Definition>, std::less<>>;
+
+using Quote_Definition_Map = std::map<std::string, Definition_Stack<Quote_Definition>, std::less<>>;
+
+struct Definition_State
+{
+	const Macro_Definition_Map* macro_definition_map;
+
+	const Quote_Definition_Map* quote_definition_map;
+
+	size_t definition_version;
+};
+
+template<typename Print_Error, typename Process_Content>
 class Preprocessor
 {
 private:
@@ -9,7 +35,9 @@ private:
 
 	Process_Content _process_content;
 
-	const Definition_Map* _map;
+	const Macro_Definition_Map* _macro_definition_map;
+
+	const Quote_Definition_Map* _quote_definition_map;
 
 	Definition_Time _time;
 
@@ -17,11 +45,13 @@ private:
 
 public:
 
-	Preprocessor(Print_Error print_error, Process_Content process_content, const Definition_Map* map, size_t version) : _print_error(print_error), _process_content(process_content)
+	Preprocessor(Print_Error print_error, Process_Content process_content, Definition_State state) : _print_error(print_error), _process_content(process_content)
 	{
-		_map = map;
+		_macro_definition_map = state.macro_definition_map;
 
-		_time = { version, SIZE_MAX };
+		_quote_definition_map = state.quote_definition_map;
+
+		_time = { state.definition_version, SIZE_MAX };
 
 		_line_offset = 0;
 	}
@@ -74,9 +104,9 @@ public:
 
 			std::string_view base(instance_start, it);
 
-			auto definition_it = _map->find(base);
+			auto definition_it = _macro_definition_map->find(base);
 
-			if (definition_it == _map->end())
+			if (definition_it == _macro_definition_map->end())
 			{
 				continue;
 			}
@@ -90,6 +120,23 @@ public:
 				continue;
 			}
 
+			auto arg_list_start = it;
+
+			string_skip_word(it, block_end);
+
+			auto rit = std::reverse_iterator(instance_start);
+
+			auto rend = std::reverse_iterator(block_start);
+
+			string_skip_word(rit, rend);
+
+			std::string_view word(rit.base(), it);
+
+			if (is_word_quoted(word, _time))
+			{
+				continue;
+			}
+
 			const auto& [par_list, replacement, replace_content] = *definition;
 
 			auto par_it = par_list.begin();
@@ -97,10 +144,6 @@ public:
 			auto par_end = par_list.end();
 
 			_line_offset = start_line_offset + line_iterator.get_line_number(it);
-
-			auto arg_list_start = it;
-
-			string_skip_word(it, block_end);
 
 			std::string_view arg_list(arg_list_start, it);
 
@@ -211,5 +254,24 @@ public:
 		_line_offset = start_line_offset;
 
 		return replace_buffer;
+	}
+
+private:
+
+	bool is_word_quoted(std::string_view word, Definition_Time time) const
+	{
+		auto definition_it = _quote_definition_map->find(word);
+
+		if (definition_it != _quote_definition_map->end())
+		{
+			auto definition = definition_it->second.get_definition(time);
+
+			if (definition != nullptr)
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 };
