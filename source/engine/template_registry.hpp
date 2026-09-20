@@ -214,7 +214,10 @@ public:
 					break;
 				}
 
-				arg.remove_suffix(1);
+				if (arg[1] == '$')
+				{
+					arg.remove_prefix(1);
+				}
 
 				for (const auto& [key, value] : trie_node.map)
 				{
