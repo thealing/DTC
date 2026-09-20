@@ -23,9 +23,22 @@ public:
 	}
 };
 
+struct Compiler_Arguments
+{
+	bool stop_on_error;
+
+	bool insert_line_directives;
+
+	bool conformance_mode;
+
+	bool expand_macros_in_definitions;
+};
+
 class Compiler
 {
 private:
+
+	Compiler_Arguments _arguments;
 
 	Template_Registry _template_registry;
 
@@ -55,7 +68,7 @@ private:
 
 public:
 
-	Compiler()
+	Compiler(Compiler_Arguments arguments) : _arguments(arguments)
 	{
 	}
 
@@ -101,7 +114,7 @@ public:
 
 			if (process_block == false)
 			{
-				if (compiler_arguments.insert_line_directives && _set_line_number)
+				if (_arguments.insert_line_directives && _set_line_number)
 				{
 					if (*it != '\n' && _result.back() == '\n')
 					{
@@ -132,7 +145,7 @@ public:
 
 			std::string renamed_block_buffer;
 
-			if (compiler_arguments.expand_macros_in_definitions)
+			if (_arguments.expand_macros_in_definitions)
 			{
 				auto print_error = std::bind_front(&Compiler::print_definition_error, this);
 
@@ -336,7 +349,7 @@ private:
 				_current_file_name = *file_name_result.first;
 			}
 
-			if (compiler_arguments.insert_line_directives == false)
+			if (_arguments.insert_line_directives == false)
 			{
 				return;
 			}
@@ -375,7 +388,7 @@ private:
 			}
 		}
 
-		if (compiler_arguments.insert_line_directives && _set_line_number)
+		if (_arguments.insert_line_directives && _set_line_number)
 		{
 			_set_line_number = false;
 
@@ -843,7 +856,7 @@ private:
 
 		auto result_size = _result.size();
 
-		if (compiler_arguments.insert_line_directives)
+		if (_arguments.insert_line_directives)
 		{
 			if (_set_line_number)
 			{
@@ -859,7 +872,7 @@ private:
 			string_copy_block(block, std::back_inserter(_result));
 		}
 
-		if (compiler_arguments.conformance_mode)
+		if (_arguments.conformance_mode)
 		{
 			auto result_start = _result.begin() + result_size;
 
@@ -896,7 +909,7 @@ private:
 
 	void emit_line_directive()
 	{
-		if (compiler_arguments.insert_line_directives)
+		if (_arguments.insert_line_directives)
 		{
 			auto location = get_current_block_location();
 
@@ -939,7 +952,7 @@ private:
 
 	void indicate_error() const
 	{
-		if (compiler_arguments.stop_on_error)
+		if (_arguments.stop_on_error)
 		{
 			throw 1;
 		}

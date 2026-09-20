@@ -20,6 +20,8 @@ void cli_run(const std::vector<std::string>& arguments)
 
 	std::vector<std::string_view> source_path_views;
 
+	Compiler_Arguments compiler_arguments = {};
+
 	for (std::string_view argument : arguments)
 	{
 		if (argument == "-e")
@@ -98,7 +100,7 @@ void cli_run(const std::vector<std::string>& arguments)
 
 	std::cout << "output file: " << cli_path_to_string(output_path) << std::endl;
 
-	Compiler compiler;
+	Compiler compiler(compiler_arguments);
 
 	for (auto source_path_view : source_path_views)
 	{
