@@ -38,6 +38,8 @@ void test_declarations()
 
 #pragma DTC push append_eat$X $eval_now$$Concat$$X$eat
 
+#pragma DTC pop eval_now
+
 void test_strings()
 {
 	const char* message_1 = "$Concat$Swap$$Concat$Swap$a$b$$Concat$Swap$c$d";
@@ -129,6 +131,22 @@ void test_constants()
 
 #pragma DTC unquote
 
+#pragma DTC push prefix$name subtract_$name
+
+int $prefix$arguments$$Concat$A$Swap$B$C()
+{
+	return $AC - $B;
+}
+
+#pragma DTC pop prefix
+
+void test_name_replacement()
+{
+	Assert(subtract_arguments$6$4() == 2);
+}
+
+#pragma DTC push get_tag$T TAG_$T
+
 #pragma DTC quote TAG_Ref$double
 
 #pragma DTC quote TAG_Ref$char
@@ -152,27 +170,29 @@ enum
 
 int get_index_int()
 {
-	return TAG_int;
+	return $get_tag$int;
 }
 
 int get_index_float()
 {
-	return TAG_float;
+	return $get_tag$float;
 }
 
 int get_index_Ref$double()
 {
-	return TAG_Ref$double;
+	return $get_tag$$Ref$double;
 }
 
 int get_index_Ref$char()
 {
-	return TAG_Ref$char;
+	return $get_tag$$Ref$char;
 }
 
 #pragma DTC unquote TAG_Ref$double
 
 #pragma DTC unquote TAG_Ref$char
+
+#pragma DTC pop get_tag
 
 int get_tag$T()
 {
@@ -215,13 +235,15 @@ void demo_macros()
 {
 	test_values$square$5$$$Add$cube$3$$Negate$2();
 
-	test_values$$$Swap$1$Increment$2();
+	test_values$$Swap$1$Increment$2();
 
 	test_declarations();
 
 	test_strings();
 
 	test_constants();
+
+	test_name_replacement();
 
 	test_template_suppression();
 

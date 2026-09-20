@@ -43,6 +43,13 @@ void cli_run(const std::vector<std::string>& arguments)
 			continue;
 		}
 
+		if (argument == "-n")
+		{
+			compiler_arguments.expand_macros_in_definitions = true;
+
+			continue;
+		}
+
 		if (argument.starts_with('-'))
 		{
 			std::cerr << "invalid argument: " << argument << std::endl;

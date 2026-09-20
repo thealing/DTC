@@ -10,6 +10,8 @@ public:
 
 	bool conformance_mode;
 
+	bool expand_macros_in_definitions;
+
 public:
 
 	Compiler_Arguments()

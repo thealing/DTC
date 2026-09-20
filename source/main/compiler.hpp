@@ -128,6 +128,36 @@ public:
 
 			auto block_name_line_number = line_iterator.get_line_number(block_name_it);
 
+			auto block_end = it + block.content.size();
+
+			std::string renamed_block_buffer;
+
+			if (compiler_arguments.expand_macros_in_definitions)
+			{
+				auto print_error = std::bind_front(&Compiler::print_definition_error, this);
+
+				Definition_State definition_state = { &_macro_definition_map, &_quote_definition_map, SIZE_MAX };
+
+				Preprocessor preprocessor(print_error, nullptr, definition_state);
+
+				std::string_view block_name = block.name;
+
+				auto preprocess_buffer = preprocessor.preprocess(block_name);
+
+				if (preprocess_buffer.empty() == false)
+				{
+					size_t name_offset = block.name.data() - block.content.data();
+
+					renamed_block_buffer = block.content;
+
+					renamed_block_buffer.replace(name_offset, block.name.size(), block_name);
+
+					block.content = renamed_block_buffer;
+
+					block.name = block.content.substr(name_offset, block_name.size());
+				}
+			}
+
 			_split_buffer.clear();
 
 			auto& pars = _split_buffer;
@@ -186,7 +216,7 @@ public:
 
 					_origin_stack.pop_back();
 
-					it += block.content.size();
+					it = block_end;
 
 					continue;
 				}
@@ -253,7 +283,7 @@ public:
 
 			_set_line_number = true;
 
-			it += block.content.size();
+			it = block_end;
 		}
 
 		return std::move(_result);
