@@ -262,11 +262,25 @@ public:
 
 			trie_index = trie_node.generic_index;
 
+			bool valid_specialization = true;
+
 			for (ptrdiff_t arg_index = 1; arg_index < arg_count; arg_index++)
 			{
+				if (arg_it->first.find('*') != SIZE_MAX)
+				{
+					valid_specialization = false;
+
+					break;
+				}
+
 				instance += arg_it->first;
 
 				arg_it++;
+			}
+
+			if (valid_specialization == false)
+			{
+				break;
 			}
 		}
 	}
