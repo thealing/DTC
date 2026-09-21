@@ -472,7 +472,7 @@ It parser_parse(It start, It end, Block& block)
 
 	if (result != start)
 	{
-		string_skip(result, end, '\n');
+		string_skip_space(result, end);
 
 		block.content = { start, result };
 	}

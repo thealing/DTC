@@ -86,11 +86,17 @@ public:
 
 		Line_Iterator line_iterator(it, 1);
 
+		Block block;
+
+		std::string renamed_block_buffer;
+
 		while (it != end)
 		{
 			if (*it == '#')
 			{
 				parse_directive(it, end, line_iterator);
+
+				continue;
 			}
 
 			bool process_block = true;
@@ -99,8 +105,6 @@ public:
 			{
 				process_block = false;
 			}
-
-			Block block;
 
 			if (process_block)
 			{
@@ -116,7 +120,7 @@ public:
 			{
 				if (_arguments.insert_line_directives && _set_line_number)
 				{
-					if (*it != '\n' && _result.back() == '\n')
+					if (*it != '\n' && _result.ends_with('\n'))
 					{
 						_set_line_number = false;
 
@@ -124,6 +128,15 @@ public:
 
 						emit_line_directive(_current_file_name, line_number);
 					}
+				}
+
+				auto start_it = it;
+
+				if (string_skip_string(it, end))
+				{
+					_result.append(start_it, it);
+
+					continue;
 				}
 
 				_result += *it;
@@ -143,10 +156,14 @@ public:
 
 			auto block_end = it + block.content.size();
 
-			std::string renamed_block_buffer;
-
 			if (_arguments.expand_macros_in_definitions)
 			{
+				Origin origin = {};
+
+				origin.template_location = { _current_file_name, block_name_line_number };
+
+				_origin_stack.push_back(origin);
+
 				auto print_error = std::bind_front(&Compiler::print_definition_error, this);
 
 				Definition_State definition_state = { &_macro_definition_map, &_quote_definition_map, SIZE_MAX };
@@ -169,6 +186,8 @@ public:
 
 					block.name = block.content.substr(name_offset, block_name.size());
 				}
+
+				_origin_stack.pop_back();
 			}
 
 			_split_buffer.clear();
@@ -653,7 +672,7 @@ private:
 
 				_origin_stack.push_back(origin);
 
-				auto get_instance_line_offset = [&]()
+				auto get_instance_line_offset = [&]
 				{
 					return 0;
 				};
@@ -674,6 +693,8 @@ private:
 
 						indicate_error();
 
+						_origin_stack.pop_back();
+
 						return true;
 					}
 
@@ -692,6 +713,8 @@ private:
 						std::cerr << "error: pattern not found: " << pattern << std::endl;
 
 						indicate_error();
+
+						_origin_stack.pop_back();
 
 						return true;
 					}
@@ -718,6 +741,13 @@ private:
 	template<typename Get_Instance_Line_Offset>
 	void instantiate_template(std::string_view instance, Get_Instance_Line_Offset get_instance_line_offset)
 	{
+		auto result = _template_instances.emplace(instance);
+
+		if (result.second == false)
+		{
+			return;
+		}
+
 		auto report_error = [&](std::string_view label)
 		{
 			const auto& current_origin = _origin_stack.back();
@@ -766,13 +796,6 @@ private:
 			return;
 		}
 
-		auto result = _template_instances.emplace(instance);
-
-		if (result.second == false)
-		{
-			return;
-		}
-
 		std::string_view end_arg(instance.end(), instance.end());
 
 		args.emplace_back(end_arg, 0);
@@ -795,6 +818,8 @@ private:
 			{
 				report_error("template not found");
 			}
+
+			_template_instances.erase(result.first);
 
 			return;
 		}
@@ -838,7 +863,7 @@ private:
 
 		for (auto instance : instances)
 		{
-			auto get_instance_line_offset = [&]()
+			auto get_instance_line_offset = [&]
 			{
 				auto instance_offset = instance.data() - block.data();
 

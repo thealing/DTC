@@ -26,8 +26,6 @@ void cli_run(const std::vector<std::string>& arguments)
 	{
 		if (argument.starts_with('-'))
 		{
-			bool valid_argument = true;
-
 			for (auto c : argument.substr(1))
 			{
 				if (c == 'e')
