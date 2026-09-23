@@ -11,6 +11,8 @@ private:
 
 	std::vector<std::pair<Definition_Time, size_t>> _event_history;
 
+	std::vector<Definition_Time> _definition_times;
+
 public:
 
 	template<typename Forward_Definition>
@@ -19,6 +21,8 @@ public:
 		_definitions.push_back(std::forward<Forward_Definition>(definition));
 
 		Definition_Time time(version, counter);
+
+		_definition_times.push_back(time);
 
 		auto depth = _definitions.size();
 
@@ -93,7 +97,7 @@ public:
 			return nullptr;
 		}
 
-		time = it->first;
+		time = _definition_times[depth - 1];
 
 		const auto& definition = _definitions[depth - 1];
 
