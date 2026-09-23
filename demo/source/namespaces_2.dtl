@@ -1,0 +1,92 @@
+
+typedef const char* String;
+
+#pragma DTC push ns$X $name$ns_paste$$X
+
+#pragma DTC push ns_paste$X $X
+
+#pragma DTC push name 
+
+int $ns$global_2()
+{
+	return 1;
+}
+
+#pragma DTC push name $ns$a_
+
+String $ns$get_string$T()
+{
+	return "a.$T";
+}
+
+#pragma DTC push name $ns$b_
+
+String $ns$get_string$T()
+{
+	return "a::b.$T";
+}
+
+#pragma DTC pop name
+
+#pragma DTC push name $ns$c_
+
+String $ns$get_string$T()
+{
+	return "a::c.$T";
+}
+
+#pragma DTC pop name
+
+#pragma DTC pop name
+
+String $ns$get_string$T()
+{
+	return ".$T";
+}
+
+#pragma DTC push name $ns$d_e_
+
+String $ns$get_string$T()
+{
+	return "d::e.$T";
+}
+
+#pragma DTC pop name
+
+#pragma DTC push name $ns$d_f_
+
+String $ns$get_string$T()
+{
+	return "d::f.$T";
+}
+
+#pragma DTC pop name
+
+#pragma region DEMO
+
+#define CHECK_NAMESPACE(x, y) Assert(strcmp(x ## get_string$TEST(), #y ".TEST") == 0)
+
+void demo_namespaces_2()
+{
+	Assert(global_2() == 1);
+
+	Assert($ns$global_2() == 1);
+
+	CHECK_NAMESPACE(a_, a);
+
+	CHECK_NAMESPACE(a_b_, a::b);
+
+	CHECK_NAMESPACE(a_c_, a::c);
+
+	CHECK_NAMESPACE(, );
+
+	CHECK_NAMESPACE(d_e_, d::e);
+
+	CHECK_NAMESPACE(d_f_, d::f);
+}
+
+#pragma DTC pop name
+
+#pragma DTC pop ns
+
+#pragma endregion
