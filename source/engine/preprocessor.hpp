@@ -198,6 +198,8 @@ public:
 				replace_definitions<false>(content);
 
 				std::swap(local_time, _time);
+
+				replace_definitions<false>(content);
 			}
 
 			auto macro_start = instance_start - 1;
