@@ -660,6 +660,14 @@ private:
 
 			if (valid_pattern && it == end)
 			{
+				auto print_error = std::bind_front(&Compiler::print_definition_error, this);
+
+				Definition_State definition_state = { &_macro_definition_map, &_quote_definition_map, SIZE_MAX };
+
+				Preprocessor preprocessor(print_error, nullptr, definition_state);
+
+				auto pattern_buffer = preprocessor.preprocess(pattern);
+
 				auto line_number = line_iterator.get_line_number(end);
 
 				Origin origin = {};
@@ -791,7 +799,7 @@ private:
 
 		if (valid_template == false)
 		{
-			report_error("invalid template instantiation");
+			report_error("invalid template instance");
 
 			return;
 		}
