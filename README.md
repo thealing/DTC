@@ -1,71 +1,73 @@
-# Dollar Template Compiler
-A pre-compiler that turns **Dollar Template Language (DTL)** code into standard C for further compilation.
-
-**DTL** is a superset of the C language, with native support for **generic containers and algorithms, reference counting, dependent names, external polymorphism, and more...** achieved by just one simple addition: giving special meaning to the `$` symbol within identifiers.
+# Dollar-C
+**Dollar-C** is a superset of the C language, with native support for building **generic containers and algorithms, reference counting, dependent names, external polymorphism, namespaces, and more**, achieved by just one simple addition: giving special meaning to `$` symbols within identifiers.
 
 ## Features
 - **Simplicity**: The only extensions used beyond regular C syntax are `$` characters and pragmas.
 - **Flexibility**: Template arguments can be anything: a type, a number, or even a method/field name.
 - **Expressiveness**: Recursive templates and specializations reach C++ level generality while staying fully explicit.
-- **Ergonomics**: Friendly error messages help to find syntax errors easily.
+- **Ergonomics**: Friendly diagnostics help to find template syntax errors easily.
 - **Scalability**: Unambiguous template semantics allow fast compilation of templated code.
-- **Debuggability**: Both the original **DTL** and the generated C code can be inspected in a C-compatible debugger.
-- **Compatibility**: Any conformant C code can be used from **DTL**, without modifications.
+- **Debuggability**: Both the original **Dollar-C** and the generated C code can be inspected in the debugger.
+- **Compatibility**: Any conformant C code can be used from **Dollar-C**, without modifications.
 
-## Usage
-`dtc [flags] <output file> <input files...>`
+## Pre-Compiler Usage
+`dcc [flags] <output file> <input files...>`
 
 ### Additional Flags
-- -e : Stop compilation when the first error is detected, and return with exit code 1.
-- -l : Emit line directives, so compilation errors map into the original **DTL** files, instead of the generated C code.
-- -c : Replace `$` signs with `_` in the output, for compilers that don't support `$` characters within symbols.
+
+| Flag | Description |
+|------|-------------|
+| `-e` | Stop compilation when the first error is detected, and return with exit code 1. |
+| `-l` | Emit line directives, so compilation errors map into the original **Dollar-C** files, instead of the generated C code. |
+| `-c` | Replace `$` signs with `_` in the output, for compilers that don't support `$` characters within symbols. |
+| `-n` | Expand macros within declaration identifiers, for namespace prefixing or similar name generation. |
+
 ### Input Requirements
-The **DTL** pre-compiler is intended to run after the preprocessor, just before the C compilation step.
-This means that the input files must contain pre-processed **DTL** code, which may include pragmas and line directives.
+The **Dollar-C** pre-compiler is intended to run after the preprocessor, just before the C compilation step.
+This means that the input files must contain pre-processed **Dollar-C** code, which may include pragmas and line directives.
+
+### Output Guarantees
+The **Dollar-C** pre-compiler removes all template definitions and instantiates them where necessary, producing standard C output.
+It is possible to pre-compile all translation units separately or as a unity build.
 
 ## Language Mechanics
 ### Template System
-In **DTL**, template parameters are part of the block's name, which makes instance name generation straightforward (template parameters are just replaced with the given arguments).
+In **Dollar-C**, template parameters are part of the declaration's identifier, which makes instance name generation straightforward (template parameters are just replaced with the given arguments).
 
-The name of each block is the primary symbol that is used when referring to it:
-- For struct, union, and typedef templates, it is the introduced type name.
-- For function templates, it is the function name.
-- For global variable templates, it is the variable name.
-
-Template definitions consist of a base name and the parameter list (including wildcards and specializations):
+Template definitions consist of a base name and a parameter list (including wildcards and specializations):
 ```c
-// a list with a generic item type
+// list with a generic item type
 typedef struct {
 	$Item* items;
 	Count item_count;
 } List$Item;
 
-// a create method for generic lists
+// create method for generic lists
 void List$Item$$Create(List$Item* list, Count item_count)
 {
 	list->items = Allocate$Item(item_count);
 	list->item_count = item_count;
 }
 
-// a pair with two template parameters
+// pair with two template parameters
 typedef struct {
-	$First first;
-	$Second second;
-} Pair$First$Second;
+	$A first;
+	$B second;
+} Pair$A$B;
 
-// a generic print function
+// generic print function
 void Print$T($T* value)
 {
 	printf("$T(%p)\n", value);
 }
 
-// a print function specialization for strings
+// print function specialization for strings
 void Print$$String(String* string)
 {
 	printf("%s\n", string->content);
 }
 
-// a print function specialization for lists of any type
+// print function specialization for lists of any type
 void Print$$$List$Item(List$Item* list)
 {
 	for (Index i = 0; i < list->item_count; i++) {
@@ -73,7 +75,7 @@ void Print$$$List$Item(List$Item* list)
 	}
 }
 
-// a print function specialization for integer lists
+// print function specialization for integer lists
 void Print$$$List$$int(List$int* list)
 {
 	for (Index i = 0; i < list->item_count; i++) {
@@ -82,17 +84,17 @@ void Print$$$List$$int(List$int* list)
 }
 ```
 
-Template instantiations consist of a base name and the argument list:
+Template instantiations consist of a base name and an argument list:
 ```c
 void example()
 {
-	// an array of 5 integers
+	// array of 5 integers
 	Array$int$5 numbers;
 
-	// a pointer to a read-only integer
+	// pointer to a read-only integer
 	Ref$$Const$int pointer;
 
-	// a generic construct method called with a string-to-float map
+	// construct method called with a string-to-float map
 	Map$String$float map;
 	Construct$$$Map$String$float(&map);
 }
@@ -103,15 +105,15 @@ Some advanced constructs require token concatenation and other forms of text man
 To facilitate these use cases, the macro system can be used with the following pragmas:
 ```c
 // define a macro with optional template parameters (no specialization allowed)
-#pragma DTC push <base name>[parameter list] [replacement]
+#pragma DCC push <base name>[parameter list] [replacement]
 // undefine a macro
-#pragma DTC pop <base name>
+#pragma DCC pop <base name>
 ```
 
 A macro can be used by prepending `$` to its name (this works within other symbols as well). Some examples:
 ```c
-#pragma DTC push Concat$X$Y $X$Y
-#pragma DTC push Swap$X$Y $$Y$$X
+#pragma DCC push Concat$X$Y $X$Y
+#pragma DCC push Swap$X$Y $$Y$$X
 
 void example()
 {
@@ -120,26 +122,27 @@ void example()
 }
 ```
 
-A global region can be escaped by pragmas (for code using compiler extensions or `$` characters not intended to be part of a template):
+A global region or a specific word can be quoted (for code using compiler extensions or `$` characters not intended to be part of a template):
 ```c
-#pragma DTC disable
-
+#pragma DCC quote
 #include <stdio.h>
-const char* string_10$ = "10 dollars";
+#pragma DCC unquote
 
-#pragma DTC enable
+#pragma DCC quote string_10$
+const char* string_10$ = "10 dollars";
+#pragma DCC unquote string_10$
 ```
 
 Templates can be explicitly instantiated (for header declarations or just to organize the generated code):
 ```c
 typedef struct {
-	$First first;
-	$Second second;
-} Pair$First$Second;
+	$A first;
+	$B second;
+} Pair$A$B;
 
 // instantiate some concrete pair structures
-#pragma DTC instantiate Pair$int$int
-#pragma DTC instantiate Pair$float$double
+#pragma DCC instantiate Pair$int$int
+#pragma DCC instantiate Pair$float$double
 
 typedef struct {
 	int values[2];
@@ -175,10 +178,10 @@ void Vector$$256$$Add(Vector$256* result, Vector$256* a, Vector$256* b)
 }
 
 // instantiate all Vector specializations
-#pragma DTC instantiate Vector$*
+#pragma DCC instantiate Vector$*
 
 // instantiate all Vector methods
-#pragma DTC instantiate Vector$*$*
+#pragma DCC instantiate Vector$*$*
 ```
 
 ## Complete Examples
