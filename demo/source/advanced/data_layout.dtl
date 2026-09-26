@@ -17,32 +17,28 @@ typedef int Sprite_Field_Type$$layer;
 
 typedef float Sprite_Field_Type$$opacity;
 
-#pragma DTC quote
-
-#pragma DTC push Declare$field Field$Layout$$Sprite_Field_Type$$field $field
-
-#pragma DTC unquote
+#define DECLARE_FIELD(x) Field$Layout$$Sprite_Field_Type$ ## x x
 
 typedef struct _Sprite$Layout Sprite$Layout;
 
 struct _Sprite$Layout
 {
-	$Declare$position_x;
+	DECLARE_FIELD(position_x);
 
-	$Declare$position_y;
+	DECLARE_FIELD(position_y);
 
-	$Declare$position_z;
+	DECLARE_FIELD(position_z);
 
-	$Declare$scale_horizontal;
+	DECLARE_FIELD(scale_horizontal);
 
-	$Declare$scale_vertical;
+	DECLARE_FIELD(scale_vertical);
 
-	$Declare$layer;
+	DECLARE_FIELD(layer);
 
-	$Declare$opacity;
+	DECLARE_FIELD(opacity);
 };
 
-#pragma DTC pop Declare
+#undef DECLARE_FIELD
 
 typedef $T* Array$$AOS$T;
 

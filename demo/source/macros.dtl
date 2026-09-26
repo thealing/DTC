@@ -10,11 +10,11 @@
 
 #pragma region DEMO
 
-#pragma DTC push to_int$X (int)$X
+int to_int$X = (int)$X;
 
 void test_values$A$B()
 {
-	Assert($to_int$A == $to_int$B);
+	Assert(to_int$A == to_int$B);
 }
 
 #pragma DTC push const_int $Forward$$Const$int
@@ -30,10 +30,6 @@ void test_declarations()
 	Assert(const_int == 2);
 }
 
-#pragma DTC push stringify$X$Y "$X$Y"
-
-#pragma DTC push compare_messages$X$Y strcmp(message_$X, message_$Y) == 0
-
 #pragma DTC push eval_now$X $$X
 
 #pragma DTC push append_eat$X $eval_now$$Concat$$X$eat
@@ -44,15 +40,15 @@ void test_strings()
 {
 	const char* message_1 = "$Concat$Swap$$Concat$Swap$a$b$$Concat$Swap$c$d";
 
-	const char* message_2 = $stringify$dc$ba;
+	const char* message_2 = "$Concat$dc$ba";
 
-	Assert($compare_messages$1$2);
+	Assert(strcmp(message_1, message_2) == 0);
 
 	const char* message_3 = "$Forward$$append_eat$Rep$a";
 
 	const char* message_4 = "aaa";
 
-	Assert($compare_messages$3$4);
+	Assert(strcmp(message_3, message_4) == 0);
 }
 
 enum

@@ -527,6 +527,14 @@ private:
 
 			std::string_view pattern(pattern_start, it);
 
+			string_skip_space(it, end);
+
+			auto replacement_start = it;
+
+			string_skip_word(it, end);
+
+			std::string_view replacement(replacement_start, it);
+
 			bool valid_pattern = true;
 
 			if (pattern.empty())
@@ -544,7 +552,7 @@ private:
 				valid_pattern = false;
 			}
 
-			if (valid_pattern)
+			if (valid_pattern && it == end)
 			{
 				auto base_length = pattern.find('$');
 
@@ -556,10 +564,6 @@ private:
 				auto base = pattern.substr(0, base_length);
 
 				auto par_list = pattern.substr(base_length);
-
-				string_skip_space(it, end);
-
-				std::string_view replacement(it, end);
 
 				auto definition_it = _macro_definition_map.find(base);
 

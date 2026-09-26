@@ -71,22 +71,18 @@ $T* ToDerived$T(Base* base)
 
 #pragma region DEMO
 
-#pragma DTC push GetName$X '$X'
-
 Base* CreateDerived$T()
 {
 	$T* derived = calloc(1, sizeof($T));
 
 	derived->base.type = $Concat$RUNTIME_TYPE_$T;
 
-	derived->base.name = $GetName$T;
+	derived->base.name = '$T';
 
 	Construct$T(derived);
 
 	return &derived->base;
 }
-
-#pragma DTC pop GetName
 
 void InsertDerived$T(List$$Ref$Base* list)
 {
