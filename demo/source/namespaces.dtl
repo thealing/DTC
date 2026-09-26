@@ -83,4 +83,10 @@ void demo_namespaces()
 	CHECK_NAMESPACE(d$f$, d::f);
 }
 
+#undef CHECK_NAMESPACE
+
+#pragma DTC pop ns
+
+#pragma DTC pop name
+
 #pragma endregion

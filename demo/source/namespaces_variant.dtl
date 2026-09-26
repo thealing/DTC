@@ -1,13 +1,17 @@
 
 typedef const char* String;
 
+#pragma DTC push global $global_variant
+
+#pragma DTC push get_string $get_string_variant
+
 #pragma DTC push ns$X $name$ns_paste$$X
 
 #pragma DTC push ns_paste$X $X
 
 #pragma DTC push name 
 
-int $ns$global_2()
+int $ns$global()
 {
 	return 1;
 }
@@ -64,13 +68,13 @@ String $ns$get_string$T()
 
 #pragma region DEMO
 
-#define CHECK_NAMESPACE(x, y) Assert(strcmp(x ## get_string$TEST(), #y ".TEST") == 0)
+#define CHECK_NAMESPACE(x, y) Assert(strcmp(x ## get_string_variant$TEST(), #y ".TEST") == 0)
 
-void demo_namespaces_2()
+void demo_namespaces_variant()
 {
-	Assert(global_2() == 1);
+	Assert($global() == 1);
 
-	Assert($ns$global_2() == 1);
+	Assert($ns$global() == 1);
 
 	CHECK_NAMESPACE(a_, a);
 
@@ -85,8 +89,16 @@ void demo_namespaces_2()
 	CHECK_NAMESPACE(d_f_, d::f);
 }
 
-#pragma DTC pop name
+#undef CHECK_NAMESPACE
+
+#pragma DTC pop global
+
+#pragma DTC pop get_string
 
 #pragma DTC pop ns
+
+#pragma DTC pop ns_paste
+
+#pragma DTC pop name
 
 #pragma endregion

@@ -31,6 +31,8 @@
 
 #include "source/namespaces.dtl"
 
+#include "source/namespaces_variant.dtl"
+
 #include "source/advanced/dynamic_cast.dtl"
 
 #include "source/advanced/data_layout.dtl"
@@ -54,6 +56,8 @@ int main()
 	demo_macros();
 
 	demo_namespaces();
+
+	demo_namespaces_variant();
 
 	demo_advanced_dynamic_cast();
 
