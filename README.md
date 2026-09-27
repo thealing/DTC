@@ -1,5 +1,5 @@
 # Dollar-C
-**Dollar-C** is a superset of the C language, with native support for **generic containers and algorithms, dependent names, external polymorphism, namespaces, and more**, achieved by just one simple addition: giving special meaning to `$` symbols within identifiers.
+**Dollar-C** is a superset of the C language, with native support for **generic containers and algorithms, dependent names, external polymorphism, namespaces, and more...** achieved by just one simple addition: giving special meaning to `$` symbols within identifiers.
 
 ## Features
 - **Simplicity**: The only extensions used beyond regular C syntax are `$` characters and pragmas.
