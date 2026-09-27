@@ -51,12 +51,12 @@ void cli_run(const std::vector<std::string>& arguments)
 
 				if (c == 'n')
 				{
-					compiler_arguments.expand_macros_in_definitions = true;
+					compiler_arguments.literal_declarations = true;
 
 					continue;
 				}
 
-				std::cerr << "invalid flag: " << c << std::endl;
+				std::cerr << "error: invalid flag: " << c << std::endl;
 
 				throw 1;
 			}
@@ -76,14 +76,14 @@ void cli_run(const std::vector<std::string>& arguments)
 
 	if (output_path_view.empty())
 	{
-		std::cerr << "missing output file" << std::endl;
+		std::cerr << "error: missing output file" << std::endl;
 
 		throw 1;
 	}
 
 	if (source_path_views.empty())
 	{
-		std::cerr << "missing source files" << std::endl;
+		std::cerr << "error: missing source files" << std::endl;
 
 		throw 1;
 	}
@@ -98,7 +98,7 @@ void cli_run(const std::vector<std::string>& arguments)
 
 	if (output_file.is_open() == false)
 	{
-		std::cerr << "invalid output file: " << cli_path_to_string(output_path) << std::endl;
+		std::cerr << "error: invalid output file: " << cli_path_to_string(output_path) << std::endl;
 
 		throw 1;
 	}
@@ -115,7 +115,7 @@ void cli_run(const std::vector<std::string>& arguments)
 
 		if (source_file.is_open() == false)
 		{
-			std::cerr << "invalid source file: " << cli_path_to_string(source_path) << std::endl;
+			std::cerr << "error: invalid source file: " << cli_path_to_string(source_path) << std::endl;
 
 			throw 1;
 		}

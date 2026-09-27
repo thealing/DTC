@@ -31,7 +31,7 @@ struct Compiler_Arguments
 
 	bool conformance_mode;
 
-	bool expand_macros_in_definitions;
+	bool literal_declarations;
 };
 
 class Compiler
@@ -156,7 +156,7 @@ public:
 
 			auto block_end = it + block.content.size();
 
-			if (_arguments.expand_macros_in_definitions)
+			if (_arguments.literal_declarations == false)
 			{
 				Origin origin = {};
 
