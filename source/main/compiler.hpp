@@ -190,6 +190,27 @@ public:
 				_origin_stack.pop_back();
 			}
 
+			if (block.name.find('$') != SIZE_MAX)
+			{
+				auto definition_it = _quote_definition_map.find(block.name);
+
+				if (definition_it != _quote_definition_map.end())
+				{
+					Definition_Time time(SIZE_MAX, SIZE_MAX);
+
+					auto definition = definition_it->second.get_definition(time);
+
+					if (definition != nullptr)
+					{
+						emit_block(block, block_line_number, block_name_line_number);
+
+						it = block_end;
+
+						continue;
+					}
+				}
+			}
+
 			_split_buffer.clear();
 
 			auto& pars = _split_buffer;
@@ -198,55 +219,9 @@ public:
 
 			if (valid_template)
 			{
-				bool is_template = true;
-
 				if (pars.size() == 1)
 				{
-					is_template = false;
-				}
-
-				if (is_template)
-				{
-					auto definition_it = _quote_definition_map.find(block.name);
-
-					if (definition_it != _quote_definition_map.end())
-					{
-						Definition_Time time(SIZE_MAX, SIZE_MAX);
-
-						auto definition = definition_it->second.get_definition(time);
-
-						if (definition != nullptr)
-						{
-							is_template = false;
-						}
-					}
-				}
-
-				if (is_template == false)
-				{
-					Origin origin = {};
-
-					origin.template_location = { _current_file_name, block_line_number };
-
-					origin.instance_location = { _current_file_name, block_name_line_number };
-
-					origin.instance_name = block.name;
-
-					_origin_stack.push_back(origin);
-
-					auto print_error = std::bind_front(&Compiler::print_definition_error, this);
-
-					Definition_State definition_state = { &_macro_definition_map, &_quote_definition_map, SIZE_MAX };
-
-					Preprocessor preprocessor(print_error, nullptr, definition_state);
-
-					std::string_view block_content = block.content;
-
-					auto preprocess_buffer = preprocessor.preprocess(block_content);
-
-					emit_block(block_content, nullptr);
-
-					_origin_stack.pop_back();
+					emit_block(block, block_line_number, block_name_line_number);
 
 					it = block_end;
 
@@ -880,6 +855,33 @@ private:
 		_origin_stack.push_back(origin);
 
 		emit_template(std::move(content), template_block, arg_start + 1, arg_end);
+
+		_origin_stack.pop_back();
+	}
+
+	void emit_block(Block block, size_t line_number, size_t name_line_number)
+	{
+		Origin origin = {};
+
+		origin.template_location = { _current_file_name, line_number };
+
+		origin.instance_location = { _current_file_name, name_line_number };
+
+		origin.instance_name = block.name;
+
+		_origin_stack.push_back(origin);
+
+		auto print_error = std::bind_front(&Compiler::print_definition_error, this);
+
+		Definition_State definition_state = { &_macro_definition_map, &_quote_definition_map, SIZE_MAX };
+
+		Preprocessor preprocessor(print_error, nullptr, definition_state);
+
+		std::string_view block_content = block.content;
+
+		auto preprocess_buffer = preprocessor.preprocess(block_content);
+
+		emit_block(block_content, nullptr);
 
 		_origin_stack.pop_back();
 	}
