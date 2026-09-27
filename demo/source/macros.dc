@@ -1,12 +1,12 @@
 #pragma once
 
-#pragma DTC push Swap$X$Y $$Y$$X
+#pragma DCC push Swap$X$Y $$Y$$X
 
-#pragma DTC push Concat$X$Y $X$Y
+#pragma DCC push Concat$X$Y $X$Y
 
-#pragma DTC push Forward$X $$X
+#pragma DCC push Forward$X $$X
 
-#pragma DTC push Repeat$X $X$X$X
+#pragma DCC push Repeat$X $X$X$X
 
 #pragma region DEMO
 
@@ -17,7 +17,7 @@ void test_values$A$B()
 	Assert(to_int$A == to_int$B);
 }
 
-#pragma DTC push const_int $Forward$$Const$int
+#pragma DCC push const_int $Forward$$Const$int
 
 void test_declarations()
 {
@@ -30,11 +30,11 @@ void test_declarations()
 	Assert(const_int == 2);
 }
 
-#pragma DTC push eval_now$X $$X
+#pragma DCC push eval_now$X $$X
 
-#pragma DTC push append_eat$X $eval_now$$Concat$$X$eat
+#pragma DCC push append_eat$X $eval_now$$Concat$$X$eat
 
-#pragma DTC pop eval_now
+#pragma DCC pop eval_now
 
 void test_strings()
 {
@@ -56,9 +56,9 @@ enum
 	ENUM_$X = $Concat$1$X
 };
 
-#pragma DTC instantiate ENUM_$1
+#pragma DCC instantiate ENUM_$1
 
-#pragma DTC instantiate ENUM_$2
+#pragma DCC instantiate ENUM_$2
 
 enum
 {
@@ -75,14 +75,14 @@ enum
 	SPECIAL_1_$$$1$$5 = 15
 };
 
-#pragma DTC instantiate SPECIAL_1_$*
+#pragma DCC instantiate SPECIAL_1_$*
 
 enum
 {
 	SPECIAL_2_$$$1$$6 = 16
 };
 
-#pragma DTC instantiate SPECIAL_2_$$$*$$*
+#pragma DCC instantiate SPECIAL_2_$$$*$$*
 
 enum
 {
@@ -94,9 +94,9 @@ enum
 	SPECIAL_3_$X$$8 = $X + 8
 };
 
-#pragma DTC instantiate SPECIAL_3_$$$Add$1$9$*
+#pragma DCC instantiate SPECIAL_3_$$$Add$1$9$*
 
-#pragma DTC quote
+#pragma DCC quote
 
 const int global_constant_11 = ENUM_$1;
 
@@ -125,27 +125,27 @@ void test_constants()
 	Assert(global_constant_14 == 14);
 }
 
-#pragma DTC unquote
+#pragma DCC unquote
 
-#pragma DTC push prefix$name subtract_$name
+#pragma DCC push prefix$name subtract_$name
 
 int $prefix$arguments$$Concat$A$Swap$B$C()
 {
 	return $AC - $B;
 }
 
-#pragma DTC pop prefix
+#pragma DCC pop prefix
 
 void test_name_replacement()
 {
 	Assert(subtract_arguments$6$4() == 2);
 }
 
-#pragma DTC push get_tag$T TAG_$T
+#pragma DCC push get_tag$T TAG_$T
 
-#pragma DTC quote TAG_Ref$double
+#pragma DCC quote TAG_Ref$double
 
-#pragma DTC quote TAG_Ref$char
+#pragma DCC quote TAG_Ref$char
 
 enum
 {
@@ -160,9 +160,9 @@ enum
 	TAG_COUNT
 };
 
-#pragma DTC quote get_index_Ref$double
+#pragma DCC quote get_index_Ref$double
 
-#pragma DTC quote get_index_Ref$char
+#pragma DCC quote get_index_Ref$char
 
 int get_index_int()
 {
@@ -184,20 +184,20 @@ int get_index_Ref$char()
 	return $get_tag$$Ref$char;
 }
 
-#pragma DTC unquote TAG_Ref$double
+#pragma DCC unquote TAG_Ref$double
 
-#pragma DTC unquote TAG_Ref$char
+#pragma DCC unquote TAG_Ref$char
 
-#pragma DTC pop get_tag
+#pragma DCC pop get_tag
 
 int get_tag$T()
 {
 	return $Concat$get_index_$T();
 }
 
-#pragma DTC unquote get_index_Ref$double
+#pragma DCC unquote get_index_Ref$double
 
-#pragma DTC unquote get_index_Ref$char
+#pragma DCC unquote get_index_Ref$char
 
 void test_template_suppression()
 {
@@ -212,20 +212,20 @@ void test_template_suppression()
 
 const char* global_string_1 = "test $Concat$1$2";
 
-#pragma DTC quote $Concat$1$2
+#pragma DCC quote $Concat$1$2
 
 const char* global_string_2 = "test $Concat$1$2";
 
-#pragma DTC unquote $Concat$1$2
+#pragma DCC unquote $Concat$1$2
 
 void test_macro_suppression()
 {
 	Assert(strcmp(global_string_1, global_string_2) != 0);
 }
 
-#pragma DTC push square$X $$$Multiply$$X$$X
+#pragma DCC push square$X $$$Multiply$$X$$X
 
-#pragma DTC push cube$X $$$$Multiply$$X$$X$$X
+#pragma DCC push cube$X $$$$Multiply$$X$$X$$X
 
 void demo_macros()
 {
@@ -246,8 +246,8 @@ void demo_macros()
 	test_macro_suppression();
 }
 
-#pragma DTC pop square
+#pragma DCC pop square
 
-#pragma DTC pop cube
+#pragma DCC pop cube
 
 #pragma endregion

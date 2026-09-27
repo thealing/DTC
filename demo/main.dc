@@ -1,0 +1,67 @@
+
+#pragma DCC quote
+
+#include <stdbool.h>
+
+#include <stdio.h>
+
+#include <stdlib.h>
+
+#include <string.h>
+
+#pragma DCC unquote
+
+#include "source/assert.dc"
+
+#include "source/basic_types.dc"
+
+#include "source/object_semantics.dc"
+
+#include "source/memory.dc"
+
+#include "source/containers.dc"
+
+#include "source/algorithms.dc"
+
+#include "source/constant_expressions.dc"
+
+#include "source/reference_counting.dc"
+
+#include "source/macros.dc"
+
+#include "source/namespaces.dc"
+
+#include "source/namespaces_variant.dc"
+
+#include "source/advanced/dynamic_cast.dc"
+
+#include "source/advanced/data_layout.dc"
+
+#include "source/advanced/type_erasure.dc"
+
+int main()
+{
+	demo_basic_types();
+
+	demo_object_semantics();
+
+	demo_containers();
+
+	demo_algorithms();
+
+	demo_constant_expressions();
+
+	demo_reference_counting();
+
+	demo_macros();
+
+	demo_namespaces();
+
+	demo_namespaces_variant();
+
+	demo_advanced_dynamic_cast();
+
+	demo_advanced_data_layout();
+
+	demo_advanced_type_erasure();
+}

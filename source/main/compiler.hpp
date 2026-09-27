@@ -394,7 +394,7 @@ private:
 
 			std::string_view pragma_name(directive_name_end, pragma_it);
 
-			if (pragma_name == "DTC")
+			if (pragma_name == "DCC")
 			{
 				string_skip_space(pragma_it, it);
 

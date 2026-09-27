@@ -40,7 +40,7 @@ void Construct$$$Zero_Initialized$T($T* value)
 	*value = 0;
 }
 
-#pragma DTC push Int $$Zero_Initialized$int
+#pragma DCC push Int $$Zero_Initialized$int
 
 void demo_object_semantics()
 {
@@ -57,6 +57,6 @@ void demo_object_semantics()
 	Assert(zero_initialized == 0);
 }
 
-#pragma DTC pop Int
+#pragma DCC pop Int
 
 #pragma endregion
