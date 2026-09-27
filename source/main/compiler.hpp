@@ -244,7 +244,7 @@ public:
 
 					auto preprocess_buffer = preprocessor.preprocess(block_content);
 
-					emit_block(block_content, SIZE_MAX);
+					emit_block(block_content, nullptr);
 
 					_origin_stack.pop_back();
 
@@ -287,7 +287,7 @@ public:
 
 					std::cerr << "  " << previous_template_location.file_name << "(" << previous_template_location.name_line_number << "): ";
 
-					std::cerr << "note: previous definition is here: " << previous_template->get_name() << std::endl;
+					std::cerr << "previous definition is here: " << previous_template->get_name() << std::endl;
 
 					indicate_error();
 				}
@@ -753,6 +753,14 @@ private:
 	template<typename Get_Instance_Line_Offset>
 	void instantiate_template(std::string_view instance, Get_Instance_Line_Offset get_instance_line_offset)
 	{
+		const Template_Block* source_template = nullptr;
+
+		instantiate_template(instance, source_template, get_instance_line_offset);
+	}
+
+	template<typename Get_Instance_Line_Offset>
+	void instantiate_template(std::string_view instance, const Template_Block* source_template, Get_Instance_Line_Offset get_instance_line_offset)
+	{
 		auto result = _template_instances.emplace(instance);
 
 		if (result.second == false)
@@ -774,6 +782,19 @@ private:
 
 			std::cerr << "error: " << label << ": " << instance << std::endl;
 
+			if (source_template != nullptr)
+			{
+				auto source_name = source_template->get_name();
+
+				auto source_id = source_template->get_id();
+
+				auto source_location = _template_locations[source_id];
+
+				std::cerr << "  " << source_location.file_name << "(" << source_location.name_line_number << "): ";
+
+				std::cerr << "in template: " << source_name << std::endl;
+			}
+
 			size_t stack_top_index = _origin_stack.size() - 1;
 
 			for (size_t stack_index = stack_top_index; stack_index <= stack_top_index; stack_index--)
@@ -784,11 +805,11 @@ private:
 
 				if (stack_index == 0)
 				{
-					std::cerr << "note: instantiation origin: " << origin.instance_name << std::endl;
+					std::cerr << "origin: " << origin.instance_name << std::endl;
 				}
 				else
 				{
-					std::cerr << "note: instantiated from here: " << origin.instance_name << std::endl;
+					std::cerr << "required from here: " << origin.instance_name << std::endl;
 				}
 			}
 
@@ -803,7 +824,9 @@ private:
 
 		if (valid_template == false)
 		{
-			report_error("invalid template instance");
+			report_error("invalid template reference");
+
+			_template_instances.erase(result.first);
 
 			return;
 		}
@@ -856,12 +879,12 @@ private:
 
 		_origin_stack.push_back(origin);
 
-		emit_template(std::move(content), template_block->get_pattern(), arg_start + 1, arg_end, template_id);
+		emit_template(std::move(content), template_block, arg_start + 1, arg_end);
 
 		_origin_stack.pop_back();
 	}
 
-	void emit_block(std::string_view block, size_t version)
+	void emit_block(std::string_view block, const Template_Block* template_block)
 	{
 		auto start = block.begin();
 
@@ -888,7 +911,12 @@ private:
 
 			if (definition_it != _quote_definition_map.end())
 			{
-				Definition_Time time(version, SIZE_MAX);
+				Definition_Time time(SIZE_MAX, SIZE_MAX);
+
+				if (template_block != nullptr)
+				{
+					time.first = template_block->get_id();
+				}
 
 				auto definition = definition_it->second.get_definition(time);
 
@@ -898,7 +926,14 @@ private:
 				}
 			}
 
-			instantiate_template(instance, get_instance_line_offset);
+			if (template_block != nullptr)
+			{
+				instantiate_template(instance, template_block, get_instance_line_offset);
+			}
+			else
+			{
+				instantiate_template(instance, get_instance_line_offset);
+			}
 		}
 
 		if (_arguments.insert_line_directives)
@@ -915,16 +950,20 @@ private:
 	}
 
 	template<typename It>
-	void emit_template(std::string content, std::string_view pattern, It arg_start, It arg_end, size_t template_id)
+	void emit_template(std::string content, const Template_Block* template_block, It arg_start, It arg_end)
 	{
 		_set_line_number = true;
 
 		auto process_content = [&](std::string& template_content)
 		{
+			auto pattern = template_block->get_pattern();
+
 			template_replace(template_content, pattern, arg_start, arg_end);
 		};
 
 		process_content(content);
+
+		auto template_id = template_block->get_id();
 
 		auto print_error = std::bind_front(&Compiler::print_definition_error, this);
 
@@ -934,7 +973,7 @@ private:
 
 		preprocessor.preprocess(content);
 
-		emit_block(content, template_id);
+		emit_block(content, template_block);
 
 		_set_line_number = true;
 	}
