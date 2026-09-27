@@ -1,5 +1,5 @@
 # Dollar-C
-**Dollar-C** is a superset of the C language, with native support for building **generic containers and algorithms, reference counting, dependent names, external polymorphism, namespaces, and more**, achieved by just one simple addition: giving special meaning to `$` symbols within identifiers.
+**Dollar-C** is a superset of the C language, with native support for **generic containers and algorithms, dependent names, external polymorphism, namespaces, and more**, achieved by just one simple addition: giving special meaning to `$` symbols within identifiers.
 
 ## Features
 - **Simplicity**: The only extensions used beyond regular C syntax are `$` characters and pragmas.
@@ -10,7 +10,7 @@
 - **Debuggability**: Both the original **Dollar-C** and the generated C code can be inspected in the debugger.
 - **Compatibility**: Any conformant C code can be used from **Dollar-C**, without modifications.
 
-## Pre-Compiler Usage
+## Compiler Usage
 `dcc [flags] <output file> <input files...>`
 
 ### Additional Flags
@@ -20,15 +20,14 @@
 | `-e` | Stop compilation when the first error is detected, and return with exit code 1. |
 | `-l` | Emit line directives, so compilation errors map into the original **Dollar-C** files, instead of the generated C code. |
 | `-c` | Replace `$` signs with `_` in the output, for compilers that don't support `$` characters within symbols. |
-| `-n` | Expand macros within declaration identifiers, for namespace prefixing or similar name generation. |
 
 ### Input Requirements
-The **Dollar-C** pre-compiler is intended to run after the preprocessor, just before the C compilation step.
+The **Dollar-C** compiler is intended to run after the preprocessor, just before the C compilation step.
 This means that the input files must contain pre-processed **Dollar-C** code, which may include pragmas and line directives.
 
 ### Output Guarantees
-The **Dollar-C** pre-compiler removes all template definitions and instantiates them where necessary, producing standard C output.
-It is possible to pre-compile all translation units separately or as a unity build.
+The **Dollar-C** compiler removes all template definitions and instantiates them where necessary, producing standard C output.
+It is possible to compile all translation units separately or as a unity build.
 
 ## Language Mechanics
 ### Template System
