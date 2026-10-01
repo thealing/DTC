@@ -1,3 +1,5 @@
 .vs
 _
 build
+temp
+vs17/build.c
