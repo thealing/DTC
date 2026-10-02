@@ -608,6 +608,40 @@ private:
 			}
 		}
 
+		if (command == "print")
+		{
+			string_skip_space(it, end);
+
+			std::string_view message(it, end);
+
+			if (message.empty() == false)
+			{
+				auto line_number = line_iterator.get_line_number(end);
+
+				Origin origin = {};
+
+				origin.template_location = { _current_file_name, line_number };
+
+				_origin_stack.push_back(origin);
+
+				auto print_error = std::bind_front(&Compiler::print_definition_error, this);
+
+				Definition_State definition_state = { &_macro_definition_map, &_quote_definition_map, SIZE_MAX };
+
+				Preprocessor preprocessor(print_error, nullptr, definition_state);
+
+				auto message_buffer = preprocessor.preprocess(message);
+
+				std::cerr << _current_file_name << "(" << line_number << "): ";
+
+				std::cerr << message << std::endl;
+
+				_origin_stack.pop_back();
+
+				return true;
+			}
+		}
+
 		if (command == "instantiate")
 		{
 			string_skip_space(it, end);
@@ -639,14 +673,6 @@ private:
 
 			if (valid_pattern && it == end)
 			{
-				auto print_error = std::bind_front(&Compiler::print_definition_error, this);
-
-				Definition_State definition_state = { &_macro_definition_map, &_quote_definition_map, SIZE_MAX };
-
-				Preprocessor preprocessor(print_error, nullptr, definition_state);
-
-				auto pattern_buffer = preprocessor.preprocess(pattern);
-
 				auto line_number = line_iterator.get_line_number(end);
 
 				Origin origin = {};
@@ -658,6 +684,14 @@ private:
 				origin.instance_name = "pragma";
 
 				_origin_stack.push_back(origin);
+
+				auto print_error = std::bind_front(&Compiler::print_definition_error, this);
+
+				Definition_State definition_state = { &_macro_definition_map, &_quote_definition_map, SIZE_MAX };
+
+				Preprocessor preprocessor(print_error, nullptr, definition_state);
+
+				auto pattern_buffer = preprocessor.preprocess(pattern);
 
 				auto get_instance_line_offset = [&]
 				{
