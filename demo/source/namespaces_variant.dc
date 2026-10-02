@@ -5,66 +5,64 @@ typedef const char* String;
 
 #pragma DCC push get_string $get_string_variant
 
-#pragma DCC push ns$X $name$ns_paste$$X
+#pragma DCC push name$X$Y $ns$$X$Concat$_$$Y
 
-#pragma DCC push ns_paste$X $X
-
-#pragma DCC push name 
+#pragma DCC push ns 
 
 int $ns$global()
 {
 	return 1;
 }
 
-#pragma DCC push name $ns$a_
+#pragma DCC push ns $name$a
 
 String $ns$get_string$T()
 {
 	return "a.$T";
 }
 
-#pragma DCC push name $ns$b_
+#pragma DCC push ns $name$b
 
 String $ns$get_string$T()
 {
 	return "a::b.$T";
 }
 
-#pragma DCC pop name
+#pragma DCC pop ns
 
-#pragma DCC push name $ns$c_
+#pragma DCC push ns $name$c
 
 String $ns$get_string$T()
 {
 	return "a::c.$T";
 }
 
-#pragma DCC pop name
+#pragma DCC pop ns
 
-#pragma DCC pop name
+#pragma DCC pop ns
 
 String $ns$get_string$T()
 {
 	return ".$T";
 }
 
-#pragma DCC push name $ns$d_e_
+#pragma DCC push ns $name$d_e
 
 String $ns$get_string$T()
 {
 	return "d::e.$T";
 }
 
-#pragma DCC pop name
+#pragma DCC pop ns
 
-#pragma DCC push name $ns$d_f_
+#pragma DCC push ns $name$d_f
 
 String $ns$get_string$T()
 {
 	return "d::f.$T";
 }
 
-#pragma DCC pop name
+#pragma DCC pop ns
 
 #pragma region DEMO
 
@@ -96,8 +94,6 @@ void demo_namespaces_variant()
 #pragma DCC pop get_string
 
 #pragma DCC pop ns
-
-#pragma DCC pop ns_paste
 
 #pragma DCC pop name
 
